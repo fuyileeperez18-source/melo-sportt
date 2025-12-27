@@ -175,8 +175,8 @@ router.post(
       res.json({
         success: true,
         data: {
-          ...productImage,
-          cloudinary: uploadResult,
+          ...(productImage as object),
+          public_id: uploadResult.public_id,
         },
       });
     } catch (error) {
@@ -220,13 +220,15 @@ router.post(
       // Agregar imágenes al producto en la base de datos
       const productImages = await Promise.all(
         uploadResults.map(async (result, index) => {
-          const isPrimary = index === 0 && req.body.first_is_primary === 'true';
-          return productService.addImage(productId, {
+          const isPrimary =
+            index === 0 && (req.body.first_is_primary === 'true' || files.length === 1);
+          const productImage = await productService.addImage(productId, {
             url: result.secure_url,
             alt_text: '',
             position: index,
             is_primary: isPrimary,
           });
+          return { ...(productImage as object), public_id: result.public_id };
         })
       );
 

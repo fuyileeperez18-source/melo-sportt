@@ -133,8 +133,8 @@ export interface Product {
   description: string;
   short_description: string;
   price: number;
-  compare_at_price?: number;
-  cost_per_item?: number;
+  compare_at_price?: number | null;
+  cost_per_item?: number | null;
   sku: string;
   barcode?: string;
   quantity: number;
@@ -142,7 +142,7 @@ export interface Product {
   continue_selling_when_out_of_stock: boolean;
   category_id: string;
   category?: Category;
-  brand?: string;
+  brand?: string | null;
   tags: string[];
   images?: ProductImage[];
   variants?: ProductVariant[];
@@ -155,8 +155,8 @@ export interface Product {
   product_type?: ProductType;
   sizes?: string[];  // ['XS', 'S', 'M', 'L', 'XL', 'XXL']
   colors?: string[]; // ['Negro', 'Blanco', 'Azul']
-  material?: string; // 'Algodón', 'Poliéster', etc.
-  weight?: number;   // Peso en gramos
+  material?: string | null; // 'Algodón', 'Poliéster', etc.
+  weight?: number | null; // Peso en gramos
   created_at: string;
   updated_at: string;
 }
@@ -176,7 +176,7 @@ export interface ProductVariant {
   name: string;
   sku: string;
   price: number;
-  compare_at_price?: number;
+  compare_at_price?: number | null;
   quantity: number;
   options: VariantOption[];
   image_url?: string;

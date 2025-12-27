@@ -137,6 +137,74 @@ export const productService = {
     return result.rows as Product[];
   },
 
+  // Get all products for admin (includes inactive)
+  async getAllAdmin(filters?: ProductFilters & { includeInactive?: boolean }): Promise<Product[]> {
+    let sql = `
+      SELECT p.*,
+        json_build_object(
+          'id', c.id,
+          'name', c.name,
+          'slug', c.slug
+        ) as category,
+        COALESCE(
+          (SELECT json_agg(pi ORDER BY pi.position)
+           FROM product_images pi
+           WHERE pi.product_id = p.id), '[]'
+        ) as images,
+        COALESCE(
+          (SELECT json_agg(pv)
+           FROM product_variants pv
+           WHERE pv.product_id = p.id), '[]'
+        ) as variants
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE 1=1
+    `;
+
+    const params: unknown[] = [];
+    let paramIndex = 1;
+
+    if (filters?.category) {
+      sql += ` AND p.category_id = $${paramIndex}`;
+      params.push(filters.category);
+      paramIndex++;
+    }
+
+    if (filters?.search) {
+      sql += ` AND (p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex} OR p.brand ILIKE $${paramIndex} OR p.sku ILIKE $${paramIndex})`;
+      params.push(`%${filters.search}%`);
+      paramIndex++;
+    }
+
+    if (filters?.minPrice) {
+      sql += ` AND p.price >= $${paramIndex}`;
+      params.push(filters.minPrice);
+      paramIndex++;
+    }
+
+    if (filters?.maxPrice) {
+      sql += ` AND p.price <= $${paramIndex}`;
+      params.push(filters.maxPrice);
+      paramIndex++;
+    }
+
+    sql += ' ORDER BY p.created_at DESC';
+
+    if (filters?.limit) {
+      sql += ` LIMIT $${paramIndex}`;
+      params.push(filters.limit);
+      paramIndex++;
+    }
+
+    if (filters?.offset) {
+      sql += ` OFFSET $${paramIndex}`;
+      params.push(filters.offset);
+    }
+
+    const result = await query(sql, params);
+    return result.rows as Product[];
+  },
+
   async getBySlug(slug: string): Promise<Product> {
     const result = await query(
       `SELECT p.*,

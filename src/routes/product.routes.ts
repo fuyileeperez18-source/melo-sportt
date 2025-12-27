@@ -50,6 +50,25 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
+// Get all products for admin (includes inactive) - MUST be before /:id route
+router.get('/admin', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const filters = {
+      category: req.query.category as string,
+      search: req.query.search as string,
+      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
+      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+      includeInactive: true,
+    };
+    const products = await productService.getAllAdmin(filters);
+    res.json({ success: true, data: products });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get product by slug
 router.get('/slug/:slug', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -89,20 +108,27 @@ const productSchema = z.object({
   description: z.string().optional(),
   short_description: z.string().optional(),
   price: z.number().positive(),
-  compare_at_price: z.number().optional(),
-  cost_per_item: z.number().optional(),
+  compare_at_price: z.number().optional().nullable(),
+  cost_per_item: z.number().optional().nullable(),
   sku: z.string().min(1),
   barcode: z.string().optional(),
   quantity: z.number().int().min(0).default(0),
   track_quantity: z.boolean().default(true),
   continue_selling_when_out_of_stock: z.boolean().default(false),
   category_id: z.string().uuid().optional(),
-  brand: z.string().optional(),
+  brand: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().default(false),
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
+  // Campos adicionales para ropa
+  gender: z.enum(['hombre', 'mujer', 'unisex', 'nino', 'nina']).optional(),
+  product_type: z.enum(['camiseta', 'camisa', 'pantalon', 'chaqueta', 'sudadera', 'short', 'accesorio', 'zapato', 'vestido', 'falda', 'otro']).optional(),
+  sizes: z.array(z.string()).default([]),
+  colors: z.array(z.string()).default([]),
+  material: z.string().optional().nullable(),
+  weight: z.number().optional().nullable(),
 });
 
 // Create product (Admin)

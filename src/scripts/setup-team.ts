@@ -4,27 +4,82 @@ async function setupTeam() {
   try {
     console.log('Configurando equipo de MELO SPORTT...\n');
 
-    // 1. Buscar usuarios por email
-    const walmerResult = await query(
-      `SELECT id, email, full_name, role FROM users WHERE email ILIKE '%walmer%' OR full_name ILIKE '%walmer%' LIMIT 1`
-    );
+    // Obtener argumentos de linea de comandos
+    const args = process.argv.slice(2);
+    let walmerEmail = '';
+    let fuyiEmail = '';
 
-    const fuyiResult = await query(
-      `SELECT id, email, full_name, role FROM users WHERE email ILIKE '%fuyi%' OR full_name ILIKE '%fuyi%' OR email ILIKE '%lee%' LIMIT 1`
-    );
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--walmer' && args[i + 1]) {
+        walmerEmail = args[i + 1];
+      }
+      if (args[i] === '--fuyi' && args[i + 1]) {
+        fuyiEmail = args[i + 1];
+      }
+    }
 
+    // 1. Buscar usuario Walmer (propietario)
+    let walmerResult;
+    if (walmerEmail) {
+      walmerResult = await query(
+        `SELECT id, email, full_name, role FROM users WHERE email = $1 LIMIT 1`,
+        [walmerEmail]
+      );
+    } else {
+      // Buscar por patrones comunes
+      walmerResult = await query(
+        `SELECT id, email, full_name, role FROM users
+         WHERE email ILIKE '%walmer%'
+         OR full_name ILIKE '%walmer%'
+         OR email ILIKE '%melo%'
+         OR full_name ILIKE '%melo%'
+         LIMIT 1`
+      );
+    }
+
+    // 2. Buscar usuario Fuyi/Lee (developer)
+    let fuyiResult;
+    if (fuyiEmail) {
+      fuyiResult = await query(
+        `SELECT id, email, full_name, role FROM users WHERE email = $1 LIMIT 1`,
+        [fuyiEmail]
+      );
+    } else {
+      // Buscar por patrones comunes
+      fuyiResult = await query(
+        `SELECT id, email, full_name, role FROM users
+         WHERE email ILIKE '%fuyi%'
+         OR full_name ILIKE '%fuyi%'
+         OR email ILIKE '%lee%'
+         OR full_name ILIKE '%lee%'
+         LIMIT 1`
+      );
+    }
+
+    // Listar todos los usuarios si no se encuentran
+    if (walmerResult.rows.length === 0 || fuyiResult.rows.length === 0) {
+      console.log('\n📋 Usuarios disponibles en el sistema:');
+      const allUsers = await query('SELECT id, email, full_name, role FROM users ORDER BY created_at DESC LIMIT 20');
+      allUsers.rows.forEach((u: any, i: number) => {
+        console.log(`   ${i + 1}. ${u.full_name || 'Sin nombre'} (${u.email}) - Rol: ${u.role}`);
+      });
+      console.log('\n💡 Puedes especificar los emails exactos asi:');
+      console.log('   npm run setup:team -- --walmer walmer@email.com --fuyi fuyi@email.com\n');
+    }
+
+    // Configurar Walmer
     if (walmerResult.rows.length === 0) {
-      console.log('⚠️  No se encontró usuario Walmer. Asegúrate de que tenga una cuenta.');
+      console.log('⚠️  No se encontro usuario Walmer. Asegurate de que tenga una cuenta.');
     } else {
       const walmer = walmerResult.rows[0];
       console.log(`✅ Usuario Walmer encontrado: ${walmer.full_name} (${walmer.email})`);
 
-      // Actualizar rol a super_admin
+      // Actualizar rol a super_admin (esto le da acceso al panel admin)
       await query(
         `UPDATE users SET role = 'super_admin' WHERE id = $1`,
         [walmer.id]
       );
-      console.log('   → Rol actualizado a: super_admin (Propietario)');
+      console.log('   -> Rol actualizado a: super_admin (Propietario)');
 
       // Crear o actualizar team_member
       await query(
@@ -44,7 +99,7 @@ async function setupTeam() {
         [
           walmer.id,
           'owner',
-          0, // El owner no tiene comisión, recibe todo
+          0, // El owner no tiene comision, recibe todo
           true,
           true,
           true,
@@ -54,11 +109,12 @@ async function setupTeam() {
           'Propietario de MELO SPORTT'
         ]
       );
-      console.log('   → Configurado como Owner del equipo\n');
+      console.log('   -> Configurado como Owner del equipo\n');
     }
 
+    // Configurar Fuyi
     if (fuyiResult.rows.length === 0) {
-      console.log('⚠️  No se encontró usuario Fuyi/Lee. Asegúrate de que tenga una cuenta.');
+      console.log('⚠️  No se encontro usuario Fuyi/Lee. Asegurate de que tenga una cuenta.');
     } else {
       const fuyi = fuyiResult.rows[0];
       console.log(`✅ Usuario Fuyi encontrado: ${fuyi.full_name} (${fuyi.email})`);
@@ -68,7 +124,7 @@ async function setupTeam() {
         `UPDATE users SET role = 'developer' WHERE id = $1`,
         [fuyi.id]
       );
-      console.log('   → Rol actualizado a: developer');
+      console.log('   -> Rol actualizado a: developer');
 
       // Crear o actualizar team_member
       await query(
@@ -89,23 +145,32 @@ async function setupTeam() {
         [
           fuyi.id,
           'developer',
-          12, // 12% de comisión
+          12, // 12% de comision
           false, // No puede gestionar productos
           false, // No puede gestionar pedidos
           true,  // Puede ver analytics (para ver sus comisiones)
           false, // No puede gestionar clientes
-          false, // No puede gestionar configuración
+          false, // No puede gestionar configuracion
           false, // No puede gestionar equipo
-          'Desarrollador del proyecto - 12% de comisión por ventas'
+          'Desarrollador del proyecto - 12% de comision por ventas'
         ]
       );
-      console.log('   → Configurado como Developer con 12% de comisión\n');
+      console.log('   -> Configurado como Developer con 12% de comision\n');
     }
 
-    console.log('✅ Configuración del equipo completada!');
+    console.log('✅ Configuracion del equipo completada!');
     console.log('\nPermisos:');
-    console.log('  Walmer (Owner): Control total de la tienda');
+    console.log('  Walmer (Owner/super_admin): Control total de la tienda');
+    console.log('    - Puede ver/crear/editar/eliminar productos');
+    console.log('    - Puede gestionar ordenes');
+    console.log('    - Puede ver analytics');
+    console.log('    - Puede gestionar clientes');
+    console.log('    - Puede gestionar configuracion');
+    console.log('    - Puede gestionar equipo y pagar comisiones');
+    console.log('');
     console.log('  Fuyi (Developer): Ver analytics y comisiones (12%)');
+    console.log('    - Puede ver sus comisiones en /account/my-commissions');
+    console.log('    - Recibe 12% de cada venta completada');
 
   } catch (error: any) {
     console.error('❌ Error configurando equipo:', error.message);
