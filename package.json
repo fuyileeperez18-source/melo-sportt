@@ -8,10 +8,10 @@
     "build": "tsc",
     "start": "node backend/dist/index.js",
     "typecheck": "tsc --noEmit",
-    "seed:admins": "tsx backend/scripts/seed-admins.ts",
-    "migrate": "tsx backend/scripts/run-migration.ts",
-    "migrate:all": "tsx backend/scripts/run-migration.ts",
-    "setup:team": "tsx backend/scripts/setup-team.ts",
+    "seed:admins": "node backend/dist/scripts/seed-admins.js",
+    "migrate": "node backend/dist/scripts/run-migration.js",
+    "migrate:all": "node backend/dist/scripts/run-migration.js",
+    "setup:team": "node backend/dist/scripts/setup-team.js",
     "db:setup": "npm run migrate:all && npm run seed:admins"
   },
   "keywords": [
