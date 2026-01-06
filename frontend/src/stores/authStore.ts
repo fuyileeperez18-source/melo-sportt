@@ -149,52 +149,28 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
-          // Primero, verificar si hay datos persistidos en localStorage
-          const persistedState = localStorage.getItem('melo-sportt-auth');
-          console.log('🔄 [authStore.initialize] Estado persistido encontrado:', !!persistedState);
-
-          if (persistedState) {
-            try {
-              const parsed = JSON.parse(persistedState);
-              console.log('🔄 [authStore.initialize] Estado parseado:', {
-                hasUser: !!parsed.state?.user,
-                hasProfile: !!parsed.state?.profile,
-                isAuthenticated: parsed.state?.isAuthenticated,
-                userRole: parsed.state?.user?.role,
-                profileRole: parsed.state?.profile?.role
-              });
-
-              // Si hay datos persistidos, usarlos primero
-              if (parsed.state?.user && parsed.state?.isAuthenticated) {
-                console.log('✅ [authStore.initialize] Usando datos persistidos');
-                set({
-                  user: parsed.state.user,
-                  profile: parsed.state.profile || parsed.state.user,
-                  isAuthenticated: true,
-                  isLoading: false
-                });
-                return; // No necesitamos llamar al servidor si tenemos datos válidos
-              }
-            } catch (parseError) {
-              console.error('❌ [authStore.initialize] Error al parsear estado persistido:', parseError);
-            }
+          // Fuente de verdad: si no hay token, no hay sesión válida.
+          const token = localStorage.getItem('melo_sportt_token');
+          if (!token) {
+            set({ user: null, profile: null, isAuthenticated: false });
+            return;
           }
 
-          // Si no hay datos persistidos, intentar obtener sesión del servidor
-          console.log('🔄 [authStore.initialize] Obteniendo sesión del servidor...');
+          // Validar token con el servidor para evitar que el estado persistido deje la app
+          // en "logueado" cuando el token expiró/cambió.
           const user = await authService.getSession();
-          console.log('🔄 [authStore.initialize] User from session:', user);
-          console.log('🔄 [authStore.initialize] User role:', user?.role);
 
           if (user) {
-            console.log('✅ [authStore.initialize] Sesión válida, guardando usuario');
             set({ user, profile: user, isAuthenticated: true });
           } else {
-            console.log('❌ [authStore.initialize] No hay sesión válida');
+            localStorage.removeItem('melo-sportt-auth');
+            localStorage.removeItem('melo_sportt_token');
             set({ user: null, profile: null, isAuthenticated: false });
           }
         } catch (error) {
           console.error('❌ [authStore.initialize] Error initializing auth:', error);
+          localStorage.removeItem('melo-sportt-auth');
+          localStorage.removeItem('melo_sportt_token');
           set({ user: null, profile: null, isAuthenticated: false });
         } finally {
           set({ isLoading: false });

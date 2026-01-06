@@ -44,8 +44,7 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const { user } = useAuthStore();
-  const token = localStorage.getItem('melo_sportt_token');
+  const { user, isAuthenticated } = useAuthStore();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const newMessageCallbacksRef = useRef<((message: Message) => void)[]>([]);
@@ -55,8 +54,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const messageNotificationCallbacksRef = useRef<((data: { conversationId: string; message: Message }) => void)[]>([]);
 
   useEffect(() => {
-    if (!token || !user) {
-      // Disconnect if no token
+    const token = localStorage.getItem('melo_sportt_token');
+
+    if (!isAuthenticated || !token || !user) {
+      // Disconnect if no token/session
       if (socket) {
         socket.disconnect();
         setSocket(null);
@@ -141,7 +142,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Cleaning up WebSocket connection');
       newSocket.disconnect();
     };
-  }, [token, user]);
+  }, [isAuthenticated, user?.id]);
 
   const joinConversation = useCallback((conversationId: string) => {
     if (socket && isConnected) {

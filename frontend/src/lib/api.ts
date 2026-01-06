@@ -70,6 +70,13 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token inválido/expirado: limpiar credenciales para evitar bucles de 401
+          this.setToken(null);
+          localStorage.removeItem('melo-sportt-auth');
+          // Notificar a la app para que cierre sesión (evita estado "logueado" sin token)
+          window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+        }
         throw new Error(data.error || 'Request failed');
       }
 
@@ -126,9 +133,13 @@ class ApiClient {
       });
     }
 
+    // Releer el token desde localStorage para evitar desincronización
+    // (por ejemplo, si el token se actualizó después de instanciar el ApiClient).
+    const token = localStorage.getItem('melo_sportt_token');
+
     const headers: HeadersInit = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     try {
@@ -141,6 +152,11 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.setToken(null);
+          localStorage.removeItem('melo-sportt-auth');
+          window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+        }
         throw new Error(data.error || 'Upload failed');
       }
 
@@ -167,9 +183,13 @@ class ApiClient {
       });
     }
 
+    // Releer el token desde localStorage para evitar desincronización
+    // (por ejemplo, si el token se actualizó después de instanciar el ApiClient).
+    const token = localStorage.getItem('melo_sportt_token');
+
     const headers: HeadersInit = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     try {
@@ -182,6 +202,11 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.setToken(null);
+          localStorage.removeItem('melo-sportt-auth');
+          window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+        }
         throw new Error(data.error || 'Upload failed');
       }
 

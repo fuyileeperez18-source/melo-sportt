@@ -60,7 +60,7 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
         return next(new Error('Authentication error: No token provided'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
       socket.userId = decoded.userId || decoded.id;
       socket.userRole = decoded.role;
 

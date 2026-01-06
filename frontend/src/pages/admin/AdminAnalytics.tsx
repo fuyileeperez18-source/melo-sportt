@@ -176,8 +176,9 @@ export function AdminAnalytics() {
         {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold text-black mb-6">Ingresos y Pedidos</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={revenueData}>
+          <div className="h-[300px] min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
+              <AreaChart data={revenueData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#000000" stopOpacity={0.2} />
@@ -210,17 +211,18 @@ export function AdminAnalytics() {
                 dot={{ fill: '#3b82f6', r: 4 }}
                 name="Pedidos"
               />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
 
         {/* Category Distribution */}
         <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold text-black mb-6">Ventas por Categoría</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={categoryData}
+          <div className="h-[200px] min-h-[200px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+              <PieChart>
+                <Pie
+                  data={categoryData}
                 cx="50%"
                 cy="50%"
                 innerRadius={50}
@@ -236,8 +238,9 @@ export function AdminAnalytics() {
                 contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
                 itemStyle={{ color: '#000' }}
               />
-            </PieChart>
-          </ResponsiveContainer>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
           <div className="grid grid-cols-2 gap-2 mt-4">
             {categoryData.map((item) => (
               <div key={item.name} className="flex items-center gap-2">
@@ -279,19 +282,21 @@ export function AdminAnalytics() {
         {/* Conversion Rate */}
         <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
           <h3 className="text-lg font-semibold text-black mb-6">Tasa de Conversión</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={conversionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-              <XAxis dataKey="name" stroke="#666" style={{ fontSize: '12px' }} />
-              <YAxis stroke="#666" style={{ fontSize: '12px' }} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
-                labelStyle={{ color: '#000', fontWeight: 600 }}
-                itemStyle={{ color: '#666' }}
-              />
-              <Bar dataKey="rate" fill="#000000" radius={[4, 4, 0, 0]} name="Conversión %" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[250px] min-h-[250px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+              <BarChart data={conversionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <XAxis dataKey="name" stroke="#666" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#666" style={{ fontSize: '12px' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
+                  labelStyle={{ color: '#000', fontWeight: 600 }}
+                  itemStyle={{ color: '#666' }}
+                />
+                <Bar dataKey="rate" fill="#000000" radius={[4, 4, 0, 0]} name="Conversión %" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

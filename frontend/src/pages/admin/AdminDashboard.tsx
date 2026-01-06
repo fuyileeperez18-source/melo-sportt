@@ -103,7 +103,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       {/* Sidebar */}
       <motion.aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 flex flex-col shadow-xl',
+          'fixed top-0 left-0 z-50 h-full w-72 max-w-[85vw] bg-white border-r border-gray-200 flex flex-col shadow-xl',
           'lg:translate-x-0 lg:static',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}

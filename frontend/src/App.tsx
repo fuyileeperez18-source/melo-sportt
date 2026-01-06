@@ -131,6 +131,16 @@ function App() {
   useEffect(() => {
     // Initialize auth state from stored token
     initialize();
+
+    const onUnauthorized = () => {
+      // Asegura que el estado global se alinee con el token (si se limpió por 401)
+      useAuthStore.getState().signOut();
+    };
+
+    window.addEventListener('melo:unauthorized', onUnauthorized as EventListener);
+    return () => {
+      window.removeEventListener('melo:unauthorized', onUnauthorized as EventListener);
+    };
   }, [initialize]);
 
   return (

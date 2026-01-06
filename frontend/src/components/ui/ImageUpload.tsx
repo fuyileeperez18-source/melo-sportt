@@ -35,9 +35,17 @@ export function ImageUpload({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const resetFileInput = useCallback(() => {
+    // Permite volver a seleccionar la misma imagen en móvil (iOS/Android)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
   const handleFiles = useCallback(
     async (files: FileList | null) => {
       if (!files || files.length === 0) return;
+      resetFileInput();
 
       const remainingSlots = maxImages - images.length;
       if (remainingSlots <= 0) {
@@ -138,7 +146,7 @@ export function ImageUpload({
         setIsUploading(false);
       }
     },
-    [images, maxImages, onChange, productId]
+    [images, maxImages, onChange, productId, resetFileInput]
   );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -238,7 +246,6 @@ export function ImageUpload({
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
         className={cn(
           'relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200',
           dragActive
@@ -247,14 +254,24 @@ export function ImageUpload({
           isUploading && 'pointer-events-none opacity-60'
         )}
       >
+        {/*
+          En móvil (sobre todo iOS Safari) abrir el selector de archivos puede fallar
+          si el input está display:none y se intenta disparar con .click().
+          Por eso dejamos el <input> visible para el navegador (opacity-0) y lo
+          ponemos encima del dropzone para que el tap funcione.
+        */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           multiple
+          capture="environment"
           onChange={(e) => handleFiles(e.target.files)}
-          className="hidden"
+          disabled={isUploading}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
+
+        {/* Content */}
 
         {isUploading ? (
           <div className="flex flex-col items-center gap-3">
