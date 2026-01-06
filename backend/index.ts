@@ -183,23 +183,25 @@ async function runAutoSeed() {
 // Start server
 const PORT = parseInt(env.PORT);
 
-// Ejecutar migraciones y seed automáticamente al iniciar
-(async () => {
-  await runAutoMigrations();
-  await runAutoSeed();
+// Initialize WebSocket
+initializeWebSocket(httpServer);
 
-  // Initialize WebSocket
-  initializeWebSocket(httpServer);
+// En Render el proceso debe abrir el puerto rápidamente.
+// Ejecutamos migraciones/seed en segundo plano para no bloquear el bind del puerto.
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${env.NODE_ENV}`);
+  console.log(`🔗 Frontend URL: ${env.FRONTEND_URL}`);
+  console.log(`📊 Database: Connected`);
+  console.log(`🔄 Auto-migrations: Enabled`);
+  console.log(`💬 WebSocket: Initialized`);
 
-  httpServer.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌍 Environment: ${env.NODE_ENV}`);
-    console.log(`🔗 Frontend URL: ${env.FRONTEND_URL}`);
-    console.log(`📊 Database: Connected`);
-    console.log(`🔄 Auto-migrations: Enabled`);
-    console.log(`💬 WebSocket: Initialized`);
-  });
-})();
+  // Fire-and-forget: no bloquea el inicio del servidor
+  void (async () => {
+    await runAutoMigrations();
+    await runAutoSeed();
+  })();
+});
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
