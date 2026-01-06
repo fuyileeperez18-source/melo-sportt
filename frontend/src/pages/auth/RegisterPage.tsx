@@ -54,10 +54,20 @@ export function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       await signUp(data.email, data.password, data.fullName);
-      toast.success('¡Cuenta creada! Por favor revisa tu correo para verificar.');
+      toast.success('¡Cuenta creada! Ya puedes iniciar sesión.');
       navigate('/login');
     } catch (error) {
-      toast.error('Error al crear la cuenta');
+      const message = error instanceof Error ? error.message : 'Error al crear la cuenta';
+
+      if (message.toLowerCase().includes('email already registered')) {
+        toast.error('Ese correo ya está registrado. Intenta iniciar sesión.');
+      } else if (message.toLowerCase().includes('validation error')) {
+        toast.error(message);
+      } else {
+        toast.error(message);
+      }
+
+      console.error('[RegisterPage] Sign up error:', error);
     }
   };
 

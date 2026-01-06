@@ -99,6 +99,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     newSocket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
       setIsConnected(false);
+
+      // Si el backend rechaza el handshake por token inválido/expirado, forzar logout global.
+      // Mantiene el estado de la app consistente con el servidor.
+      if (error instanceof Error && error.message.includes('Authentication error')) {
+        window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+      }
     });
 
     // Listen for new messages

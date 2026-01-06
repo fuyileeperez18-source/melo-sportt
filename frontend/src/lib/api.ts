@@ -77,7 +77,21 @@ class ApiClient {
           // Notificar a la app para que cierre sesión (evita estado "logueado" sin token)
           window.dispatchEvent(new CustomEvent('melo:unauthorized'));
         }
-        throw new Error(data.error || 'Request failed');
+
+        // Intentar dar un mensaje más útil (especialmente para errores de validación)
+        const baseMessage = data?.error || data?.message || 'Request failed';
+        const detailsMessage = Array.isArray(data?.details)
+          ? data.details
+              .map((d: any) => {
+                const path = Array.isArray(d?.path) ? d.path.join('.') : undefined;
+                const msg = d?.message;
+                return path && msg ? `${path}: ${msg}` : msg || path;
+              })
+              .filter(Boolean)
+              .join(', ')
+          : '';
+
+        throw new Error(detailsMessage ? `${baseMessage} (${detailsMessage})` : baseMessage);
       }
 
       return data;

@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
+import { env } from '../config/env.js';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -60,7 +61,7 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
         return next(new Error('Authentication error: No token provided'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as any;
       socket.userId = decoded.userId || decoded.id;
       socket.userRole = decoded.role;
 

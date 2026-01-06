@@ -135,6 +135,12 @@ function App() {
     const onUnauthorized = () => {
       // Asegura que el estado global se alinee con el token (si se limpió por 401)
       useAuthStore.getState().signOut();
+
+      // Si el usuario estaba dentro de una ruta protegida, hacemos hard-redirect
+      // para evitar estados intermedios con data cacheada (React Query) y sockets.
+      if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/account')) {
+        window.location.replace('/login');
+      }
     };
 
     window.addEventListener('melo:unauthorized', onUnauthorized as EventListener);
