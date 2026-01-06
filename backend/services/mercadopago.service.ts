@@ -97,13 +97,10 @@ export const mercadopagoService = {
    * Create a payment preference with optional split payment support
    * This generates a checkout link where the user can pay
    *
-   * For marketplace/split payments, include:
-   * - marketplace: Your marketplace identifier
-   * - marketplace_fee: Fixed fee amount in cents
-   * - application_fee: Percentage fee (use calculateMarketplaceFee helper)
-   * - collector_id: Seller's Mercado Pago account ID
+   * @param data Preference data
+   * @param sellerAccessToken Optional access token from the seller (required for Split)
    */
-  async createPreference(data: CreatePreferenceData) {
+  async createPreference(data: CreatePreferenceData, sellerAccessToken?: string) {
     // SIMULATED MODE - for testing without real Mercado Pago
     if (SIMULATED_MODE) {
       console.log('🧪 [SIMULATED MERCADOPAGO] Creating preference:', data);
@@ -138,12 +135,24 @@ export const mercadopagoService = {
     }
 
     // REAL MODE - using actual Mercado Pago
-    if (!client) {
-      throw new AppError('Mercado Pago is not configured', 500);
+    // If sellerAccessToken is provided, we use it. Otherwise we fallback to the marketplace token.
+    const effectiveToken = sellerAccessToken || env.MERCADOPAGO_ACCESS_TOKEN;
+
+    if (!effectiveToken) {
+      throw new AppError('Mercado Pago is not configured. Missing access token.', 500);
+    }
+
+    // Initialize client for this specific request if using a different token
+    const requestClient = sellerAccessToken
+      ? new MercadoPagoConfig({ accessToken: sellerAccessToken, options: { timeout: 5000 } })
+      : client;
+
+    if (!requestClient) {
+      throw new AppError('Mercado Pago client initialization failed', 500);
     }
 
     try {
-      const preference = new Preference(client);
+      const preference = new Preference(requestClient);
 
       const preferenceBody: any = {
         items: data.items.map(item => ({
@@ -164,17 +173,21 @@ export const mercadopagoService = {
       };
 
       // Add marketplace/split payment configuration if provided
+      // NOTE: marketplace is the platform ID in some contexts,
+      // but "application_fee" is the key for Split Payments.
       if (data.marketplace) {
         preferenceBody.marketplace = data.marketplace;
       }
-      if (data.marketplace_fee) {
-        preferenceBody.marketplace_fee = data.marketplace_fee;
-      }
+
+      // Calculate 10% automatically if not provided but requested
+      const totalAmount = data.items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+      const feePercentage = parseInt(env.MERCADOPAGO_MARKETPLACE_FEE_PERCENTAGE || '10');
+
       if (data.application_fee) {
         preferenceBody.application_fee = data.application_fee;
-      }
-      if (data.collector_id) {
-        preferenceBody.collector_id = data.collector_id;
+      } else if (sellerAccessToken) {
+        // Only apply automatic split if we are charging on behalf of a seller
+        preferenceBody.application_fee = this.calculateMarketplaceFee(totalAmount, feePercentage);
       }
 
       const response = await preference.create({
@@ -185,9 +198,11 @@ export const mercadopagoService = {
         id: response.id,
         init_point: response.init_point,
         sandbox_init_point: response.sandbox_init_point,
+        application_fee: preferenceBody.application_fee,
+        seller_amount: totalAmount - (preferenceBody.application_fee || 0)
       };
     } catch (error: any) {
-      console.error('Mercado Pago API Error:', error);
+      console.error('Mercado Pago API Error:', error.response?.data || error);
       throw new AppError(
         `Failed to create payment preference: ${error.message}`,
         500
@@ -293,7 +308,11 @@ export const mercadopagoService = {
       return null;
     }
 
-    return await this.getPayment(paymentId);
+    const payment = await this.getPayment(paymentId);
+
+    // Logic to sync with database will be handled in the route/controller
+    // but we return the payment data for downstream processing
+    return payment;
   },
 
   /**

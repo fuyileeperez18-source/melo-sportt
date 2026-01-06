@@ -1,12 +1,14 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { env } from '../config/env.js';
 import { orderService } from '../services/order.service.js';
 import { stripeService } from '../services/stripe.service.js';
 import { mercadopagoService } from '../services/mercadopago.service.js';
 import { wompiService } from '../services/wompi.service.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import type { AuthRequest, OrderStatus } from '../types/index.js';
-import { env } from '../config/env.js';
+import { Stripe } from 'stripe'; // If needed, or just keep as is
+import { sellerService } from '../services/seller.service.js';
 
 const router = Router();
 
@@ -150,7 +152,11 @@ router.post('/mercadopago/create-preference', authenticate, async (req: AuthRequ
       }).optional(),
     }).parse(req.body);
 
-    const preference = await mercadopagoService.createPreference({
+    // Get valid seller access token (refreshes if needed)
+    const sellerAccessToken = await sellerService.getValidAccessToken();
+    const sellerAccount = await sellerService.getPrimarySellerAccount();
+
+    const preferenceData: any = {
       items: items.map((item, index) => ({
         id: `item_${index}`,
         title: item.title,
@@ -161,20 +167,38 @@ router.post('/mercadopago/create-preference', authenticate, async (req: AuthRequ
       })),
       payer,
       back_urls: {
-        success: `${env.FRONTEND_URL}/checkout/success`,
-        failure: `${env.FRONTEND_URL}/checkout/failure`,
-        pending: `${env.FRONTEND_URL}/checkout/pending`,
+        success: `${env.FRONTEND_URL}/checkout/mercadopago/callback?status=approved`,
+        failure: `${env.FRONTEND_URL}/checkout/mercadopago/callback?status=failed`,
+        pending: `${env.FRONTEND_URL}/checkout/mercadopago/callback?status=pending`,
       },
       auto_return: 'approved',
       external_reference: orderId,
       metadata: {
         user_id: req.user!.id,
         order_id: orderId || '',
+        seller_id: sellerAccount?.mp_user_id || '',
       },
-    });
+    };
+
+    // If we have a seller account, MercadoPago service will automatically calculate 10% fee
+    const preference = await mercadopagoService.createPreference(
+      preferenceData,
+      sellerAccessToken
+    );
+
+    // Update order with split details if orderId is provided
+    if (orderId && preference.id && preference.application_fee !== undefined) {
+      await orderService.updateSplitDetails(orderId, {
+        application_fee: preference.application_fee,
+        seller_amount: preference.seller_amount ?? 0,
+        mp_preference_id: preference.id,
+        mp_seller_id: sellerAccount?.mp_user_id || null
+      });
+    }
 
     res.json({ success: true, data: preference });
   } catch (error) {
+    console.error('Preference Error:', error);
     next(error);
   }
 });
@@ -192,19 +216,58 @@ router.get('/mercadopago/payment/:paymentId', authenticate, async (req: AuthRequ
 // Mercado Pago Webhook (IPN - Instant Payment Notification)
 router.post('/mercadopago/webhook', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { type, data } = req.body;
+    const { type, data, action } = req.body;
 
-    console.log('📬 [MERCADOPAGO WEBHOOK] Received:', { type, data });
+    // Support both older and newer MP webhook formats
+    const resourceType = type || action?.split('.')?.[0];
+    const resourceId = data?.id || req.body.resource?.split('/')?.pop();
 
-    // Mercado Pago sends different types of notifications
-    if (type === 'payment') {
-      const paymentId = data.id;
-      const payment = await mercadopagoService.processWebhook(paymentId, type);
+    console.log('📬 [MERCADOPAGO WEBHOOK] Received:', { resourceType, resourceId, action });
 
-      if (payment && payment.status === 'approved') {
-        console.log('✅ [MERCADOPAGO WEBHOOK] Payment approved:', paymentId);
-        // Update order status if needed
-        // You can add logic here to update your order based on external_reference
+    if (resourceType === 'payment') {
+      const payment = await mercadopagoService.getPayment(resourceId);
+
+      if (payment && payment.metadata?.order_id) {
+        const orderId = payment.metadata.order_id;
+
+        // Update order payment status
+        const statusMap: Record<string, string> = {
+          'approved': 'paid',
+          'pending': 'pending',
+          'in_process': 'pending',
+          'rejected': 'failed',
+          'cancelled': 'cancelled',
+          'refunded': 'refunded',
+          'charged_back': 'refunded'
+        };
+
+        const paymentStatus = payment.status || 'pending';
+        const newPaymentStatus = statusMap[paymentStatus] || 'pending';
+
+        await orderService.updatePaymentStatus(orderId, newPaymentStatus, resourceId);
+
+        if (payment.status === 'approved') {
+          console.log(`✅ [MERCADOPAGO WEBHOOK] Order ${orderId} marked as PAID`);
+
+          // Register marketplace commission if split payment was used
+          if (payment.metadata?.seller_id || (payment as any).application_fee) {
+            const totalAmount = payment.transaction_amount || 0;
+            const applicationFee = ((payment as any).application_fee as number | undefined) || 0;
+
+            await orderService.registerMercadoPagoCommission({
+              order_id: orderId,
+              payment_id: resourceId,
+              total_amount: totalAmount,
+              commission_amount: applicationFee,
+              seller_amount: totalAmount - applicationFee,
+              seller_mp_id: payment.metadata?.seller_id || null
+            });
+
+            console.log(`💰 [MERCADOPAGO COMMISSION] Registered ${applicationFee} COP commission for Order ${orderId}`);
+          }
+
+          await orderService.updateStatus(orderId, 'confirmed');
+        }
       }
     }
 
@@ -212,7 +275,7 @@ router.post('/mercadopago/webhook', async (req: Request, res: Response, next: Ne
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('❌ [MERCADOPAGO WEBHOOK] Error:', error);
-    // Still respond 200 to avoid retries
+    // Still respond 200 to avoid infinite retries
     res.status(200).json({ success: false });
   }
 });
@@ -318,7 +381,8 @@ router.get('/wompi/transaction/:transactionId', authenticate, async (req: AuthRe
 // Wompi Webhook
 router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const signature = req.headers['x-wompi-signature'] as string;
+    // Wompi sends SHA256 events checksum in x-event-checksum header
+    const signature = req.headers['x-event-checksum'] as string;
     const timestamp = req.headers['x-wompi-timestamp'] as string;
     const eventData = req.body;
 
@@ -327,8 +391,34 @@ router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunc
     const result = await wompiService.processWebhook(eventData, signature, timestamp);
 
     if (result && result.status === 'APPROVED') {
-      console.log('✅ [WOMPI WEBHOOK] Transaction approved:', result.id);
-      // Update order status if needed based on reference
+      const transactionId = result.id;
+      const orderNumber = result.reference;
+
+      console.log(`✅ [WOMPI WEBHOOK] Transaction approved: ${transactionId} for Order: ${orderNumber}`);
+
+      // Find order by reference (order_number)
+      const order = await orderService.getByOrderNumber(orderNumber);
+
+      if (order && order.payment_status !== 'paid') {
+        // Update order status
+        await orderService.updatePaymentStatus(order.id, 'paid', transactionId);
+        await orderService.updateStatus(order.id, 'confirmed');
+
+        // Register commission (10%)
+        const totalAmount = result.amount_in_cents / 100;
+        const commissionData = wompiService.calculateCommission(result.amount_in_cents);
+
+        await orderService.registerWompiCommission({
+          order_id: order.id,
+          transaction_id: transactionId,
+          total_amount: totalAmount,
+          commission_amount: commissionData.commission / 100,
+          merchant_amount: commissionData.merchantAmount / 100,
+          fuyi_phone: env.FUYI_PHONE_NUMBER || '573238020198'
+        });
+
+        console.log(`💰 [WOMPI COMMISSION] Registered 10% for Order ${orderNumber}`);
+      }
     }
 
     // Always respond 200 to acknowledge receipt
@@ -337,6 +427,24 @@ router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunc
     console.error('❌ [WOMPI WEBHOOK] Error:', error);
     // Still respond 200 to avoid retries
     res.status(200).json({ success: false });
+  }
+});
+
+// Wompi Tokenize card (Helper for frontend)
+router.post('/wompi/tokenize', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const data = z.object({
+      number: z.string(),
+      cvc: z.string(),
+      exp_month: z.string(),
+      exp_year: z.string(),
+      card_holder: z.string(),
+    }).parse(req.body);
+
+    const token = await wompiService.tokenizeCard(data);
+    res.json({ success: true, data: token });
+  } catch (error) {
+    next(error);
   }
 });
 

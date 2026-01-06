@@ -15,6 +15,8 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   MERCADOPAGO_ACCESS_TOKEN: z.string().optional(),
   MERCADOPAGO_PUBLIC_KEY: z.string().optional(),
+  MERCADOPAGO_CLIENT_ID: z.string().optional(),
+  MERCADOPAGO_CLIENT_SECRET: z.string().optional(),
   MERCADOPAGO_WEBHOOK_SECRET: z.string().optional(),
   MERCADOPAGO_MARKETPLACE_ID: z.string().optional(),
   MERCADOPAGO_MARKETPLACE_FEE_PERCENTAGE: z.string().default('10'),

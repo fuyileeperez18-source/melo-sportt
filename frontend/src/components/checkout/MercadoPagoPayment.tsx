@@ -34,9 +34,12 @@ export function MercadoPagoPayment({
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('melo_sportt_token');
 
-      // Create preference
+      // Create preference with seller's cart if available
+      const cartData = localStorage.getItem('melo_sportt_cart');
+      const itemsFromCart = cartData ? JSON.parse(cartData) : items;
+
       const response = await fetch(`${API_URL}/orders/mercadopago/create-preference`, {
         method: 'POST',
         headers: {

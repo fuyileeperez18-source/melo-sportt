@@ -36,10 +36,16 @@ export const analyticsService = {
       [today]
     );
 
+    // Get marketplace commissions
+    const commissionsResult = await query(
+      `SELECT COALESCE(SUM(application_fee), 0) as total FROM orders WHERE payment_status = 'paid'`
+    );
+
     const todayRevenue = parseFloat(todayResult.rows[0].revenue) || 0;
     const yesterdayRevenue = parseFloat(yesterdayResult.rows[0].revenue) || 0;
     const todayOrders = parseInt(todayResult.rows[0].order_count) || 0;
     const yesterdayOrders = parseInt(yesterdayResult.rows[0].order_count) || 0;
+    const marketplaceCommissions = parseFloat(commissionsResult.rows[0].total) || 0;
 
     const revenueChange = yesterdayRevenue > 0
       ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
@@ -57,6 +63,7 @@ export const analyticsService = {
       new_customers_today: parseInt(newCustomersResult.rows[0].count) || 0,
       revenue_change: revenueChange,
       orders_change: ordersChange,
+      marketplace_commissions: marketplaceCommissions,
     };
   },
 

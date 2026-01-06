@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { analyticsService } from '../services/analytics.service.js';
+import { orderService } from '../services/order.service.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
@@ -121,6 +122,28 @@ router.get('/recent-orders', authenticate, requireAdmin, async (req: Request, re
 router.get('/sales-by-gender', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await analyticsService.getSalesByGender();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ==================== MERCADO PAGO COMMISSIONS ====================
+
+// Get Mercado Pago commissions summary (for marketplace owner)
+router.get('/mercadopago-commissions', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { startDate, endDate, sellerMpId } = z.object({
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      sellerMpId: z.string().optional().transform(v => v ? parseInt(v) : undefined),
+    }).parse(req.query);
+
+    const data = await orderService.getMercadoPagoCommissionsSummary({
+      startDate,
+      endDate,
+      seller_mp_id: sellerMpId,
+    });
     res.json({ success: true, data });
   } catch (error) {
     next(error);

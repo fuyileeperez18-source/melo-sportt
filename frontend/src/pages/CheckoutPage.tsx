@@ -719,9 +719,11 @@ export function CheckoutPage() {
                         )}
                       >
                         {/* Badge de recomendado */}
-                        <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                          RECOMENDADO - SPLIT PAYMENT
-                        </div>
+                        {user?.role === 'super_admin' && (
+                          <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                            RECOMENDADO - SPLIT PAYMENT
+                          </div>
+                        )}
 
                         <div className="flex items-start justify-between mt-2">
                           <div className="flex items-start gap-3 flex-1 pr-4">
@@ -732,7 +734,9 @@ export function CheckoutPage() {
                                 Paga con tarjeta débito/crédito, Nequi, Daviplata o transferencia bancaria
                               </p>
                               <ul className="text-xs text-gray-400 space-y-1">
-                                <li>✓ <span className="text-green-400 font-semibold">Split Payment automático (12% comisión)</span></li>
+                                {user?.role === 'super_admin' && (
+                                  <li>✓ <span className="text-green-400 font-semibold">Split Payment automático (12% comisión)</span></li>
+                                )}
                                 <li>✓ Pago seguro y protegido</li>
                                 <li>✓ Acepta todas las tarjetas débito/crédito</li>
                                 <li>✓ Incluye Nequi, Daviplata y PSE</li>
@@ -828,7 +832,7 @@ export function CheckoutPage() {
                       <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
                         <p className="text-blue-400 text-sm">
                           ⚠️ Con el pago contra entrega, pagarás el total de tu pedido en efectivo cuando lo recibas.
-                          Tu comisión del 12% se registrará automáticamente una vez el pedido sea entregado.
+                          {user?.role === 'super_admin' && ' Tu comisión del 12% se registrará automáticamente una vez el pedido sea entregado.'}
                         </p>
                       </div>
                       <div className="flex gap-4">

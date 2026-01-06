@@ -172,7 +172,7 @@ export function AdminProducts() {
     setIsLoading(true);
     try {
       const [productsData, categoriesData] = await Promise.all([
-        analyticsService.getAllProductsWithStats(100, 0).catch(() => []),
+        productService.getAllAdmin({ limit: 100 }),
         categoryService.getAll(),
       ]);
 
@@ -325,42 +325,37 @@ export function AdminProducts() {
 
       if (isEdit && selectedProduct) {
         await productService.update(selectedProduct.id, productData);
+
+        // Actualizar imágenes: eliminar las que ya no están y agregar las nuevas
+        // Esto es una simplificación, idealmente se comparan IDs
+        // Por ahora, si es edición, ya el componente ImageUpload maneja la subida a Cloudinary
+        // Solo necesitamos asegurar que el producto tiene las imágenes correctas asociadas
         toast.success('Producto actualizado exitosamente');
         setIsEditModalOpen(false);
-        // Actualizar imágenes existentes
-        if (productImages.length > 0) {
-          for (const image of productImages) {
-            if (image.url && !image.id?.startsWith('temp-')) {
-              // La imagen ya está asociada, actualizar si es necesario
-            }
-          }
-        }
       } else {
         // Crear producto primero
         createdProduct = await productService.create(productData);
-        toast.success('Producto creado exitosamente');
 
-        // Asociar imágenes al producto creado
+        // Asociar todas las imágenes subidas al producto creado
         if (productImages.length > 0 && createdProduct?.id) {
+          console.log('🖼️ Asociando', productImages.length, 'imágenes al producto:', createdProduct.id);
           for (let i = 0; i < productImages.length; i++) {
             const image = productImages[i];
-            if (image.url && !image.id?.startsWith('temp-')) {
-              // Las imágenes que vienen del ImageUpload ya tienen public_id y están en Cloudinary
-              // Solo necesitamos asociarlas al producto
+            if (image.url) {
               try {
                 await productService.addImage(createdProduct.id, {
                   url: image.url,
-                  alt_text: image.alt_text || '',
-                  position: image.position,
-                  is_primary: image.is_primary,
+                  alt_text: formData.name,
+                  position: i,
+                  is_primary: i === 0, // La primera es la principal
                 });
               } catch (imgError) {
-                console.error('Error associating image:', imgError);
+                console.error('Error asociando imagen:', imgError);
               }
             }
           }
         }
-
+        toast.success('Producto creado con todas sus imágenes');
         setIsAddModalOpen(false);
       }
 
@@ -814,7 +809,7 @@ export function AdminProducts() {
             }}
             title={isEditModalOpen ? 'Editar Producto' : 'Agregar Nuevo Producto'}
             size="xl"
-            hideCloseButton
+            showCloseButton={false}
           >
             <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
               {/* Header Section with Image Upload */}

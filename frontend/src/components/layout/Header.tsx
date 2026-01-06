@@ -139,7 +139,7 @@ export function Header() {
                   alt="MELO SPORTT"
                   className="h-10 md:h-12 w-auto"
                 />
-                <span className="text-xl md:text-2xl font-bold text-white tracking-wider hidden sm:block">
+                <span className="text-xl md:text-2xl font-bold text-white tracking-wider">
                   MELO SPORTT
                 </span>
                 <motion.span

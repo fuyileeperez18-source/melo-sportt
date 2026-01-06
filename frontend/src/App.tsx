@@ -29,6 +29,8 @@ import { AdminAnalytics } from '@/pages/admin/AdminAnalytics';
 import { AdminSettings } from '@/pages/admin/AdminSettings';
 import { AdminMessages } from '@/pages/admin/AdminMessages';
 import { AdminCoupons } from '@/pages/admin/AdminCoupons';
+import { SellerCallback } from '@/pages/SellerCallback';
+import { MercadoPagoCallback } from '@/pages/MercadoPagoCallback';
 import { DebugPage } from '@/pages/DebugPage';
 
 // Account Pages
@@ -161,6 +163,8 @@ function App() {
           <Route path="/checkout/failure" element={<CheckoutFailurePage />} />
           <Route path="/checkout/pending" element={<CheckoutSuccessPage />} />
           <Route path="/checkout/wompi/callback" element={<WompiCallbackPage />} />
+          <Route path="/checkout/mercadopago/callback" element={<MercadoPagoCallback />} />
+          <Route path="/seller/callback" element={<SellerCallback />} />
 
           {/* Admin routes */}
           <Route

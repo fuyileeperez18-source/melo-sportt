@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
+import { MercadoPagoCommissions } from '@/components/admin/MercadoPagoCommissions';
 
 const tabs = [
   { id: 'general', label: 'General', icon: Store },
@@ -188,6 +189,20 @@ export function AdminSettings() {
             {activeTab === 'payments' && (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-black mb-6">Configuración de Pagos</h2>
+
+
+                {/* Mercado Pago Commissions */}
+                <div className="mt-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-blue-600 rounded-lg">
+                      <CreditCard className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="font-bold text-black text-lg">
+                      Comisiones de Mercado Pago
+                    </h3>
+                  </div>
+                  <MercadoPagoCommissions />
+                </div>
 
                 {/* Stripe */}
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

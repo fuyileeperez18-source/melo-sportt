@@ -317,4 +317,5 @@ export interface DashboardMetrics {
   new_customers_today: number;
   revenue_change: number;
   orders_change: number;
+  marketplace_commissions: number;
 }

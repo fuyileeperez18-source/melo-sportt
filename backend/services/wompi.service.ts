@@ -196,8 +196,57 @@ export const wompiService = {
   },
 
   /**
-   * Get transaction information
+   * Tokenize a credit card
+   * NUNCA enviar datos de tarjeta directamente al backend en producción
+   * pero este método sirve para el flujo de tokenización desde el servidor si es necesario
    */
+  async tokenizeCard(data: {
+    number: string;
+    cvc: string;
+    exp_month: string;
+    exp_year: string;
+    card_holder: string;
+  }) {
+    if (SIMULATED_MODE) {
+      return {
+        id: `tok_test_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        status: 'CREATED'
+      };
+    }
+
+    try {
+      const response = await axios.post(
+        `${WOMPI_API_URL}/tokens/cards`,
+        data,
+        {
+          headers: {
+            'Authorization': `Bearer ${env.WOMPI_PUBLIC_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Wompi Tokenization Error:', error.response?.data || error.message);
+      throw new AppError(`Error en tokenización: ${error.response?.data?.error?.reason || error.message}`, 400);
+    }
+  },
+
+  /**
+   * Calculate commission (10%)
+   */
+  calculateCommission(totalAmountInCents: number) {
+    const commissionPercentage = 0.10; // 10%
+    const commission = Math.round(totalAmountInCents * commissionPercentage);
+    const merchantAmount = totalAmountInCents - commission;
+
+    return {
+      total: totalAmountInCents,
+      commission,
+      merchantAmount
+    };
+  },
+
   async getTransaction(transactionId: string) {
     // SIMULATED MODE
     if (SIMULATED_MODE) {
@@ -253,6 +302,7 @@ export const wompiService = {
 
   /**
    * Verify event signature from webhook
+   * According to Wompi docs: SHA256(event.data.transaction.id + event.data.transaction.status + event.data.transaction.amount_in_cents + event.timestamp + WOMPI_EVENTS_SECRET)
    */
   verifyEventSignature(
     signature: string,
@@ -268,16 +318,19 @@ export const wompiService = {
       throw new AppError('Wompi events secret is not configured', 500);
     }
 
-    // Concatenate the event properties
-    const concatenated = `${eventData.event}.${timestamp}.${JSON.stringify(eventData.data)}`;
+    const transaction = eventData.data.transaction;
 
-    // Generate HMAC signature
+    // Wompi sends events checksum in x-event-checksum header (which is passed as signature here)
+    // The concatenation order for transaction events is specific
+    const concatenated = `${transaction.id}${transaction.status}${transaction.amount_in_cents}${timestamp}${env.WOMPI_EVENTS_SECRET}`;
+
+    // Generate SHA256 signature
     const expectedSignature = crypto
-      .createHmac('sha256', env.WOMPI_EVENTS_SECRET)
+      .createHash('sha256')
       .update(concatenated)
       .digest('hex');
 
-    return signature === expectedSignature;
+    return signature.toLowerCase() === expectedSignature.toLowerCase();
   },
 
   /**
