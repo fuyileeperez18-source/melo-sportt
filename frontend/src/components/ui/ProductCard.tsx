@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Star } from 'lucide-react';
 import { cn, formatCurrency, calculateDiscount } from '@/lib/utils';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useToggleWishlist, useWishlistIds } from '@/hooks/useWishlist';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -17,10 +19,18 @@ export function ProductCard({
   variant = 'default',
   className,
 }: ProductCardProps) {
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+
+  const { user, profile, isAuthenticated } = useAuthStore();
+  const currentUser = user || profile;
+  const userId = currentUser?.id;
+
+  const { data: wishlistIds } = useWishlistIds(userId);
+  const { toggle } = useToggleWishlist(userId);
+  const isWishlisted = !!wishlistIds?.includes(product.id);
 
   const primaryImage = product.images?.find((img) => img.is_primary)?.url ||
     product.images?.[0]?.url ||
@@ -41,7 +51,13 @@ export function ProductCard({
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+
+    if (!isAuthenticated || !userId) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
+
+    toggle(product.id);
   };
 
   if (variant === 'minimal') {

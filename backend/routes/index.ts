@@ -12,6 +12,8 @@ import messagesRoutes from './messages.routes.js';
 import couponsRoutes from './coupons.routes.js';
 import whatsappRoutes from './whatsapp.routes.js';
 import sellerRoutes from './seller.routes.js';
+import wishlistRoutes from './wishlist.routes.js';
+import invoiceRoutes from './invoice.routes.js';
 
 const router = Router();
 
@@ -26,7 +28,9 @@ router.use('/upload', uploadRoutes);
 router.use('/commissions', commissionRoutes);
 router.use('/messages', messagesRoutes);
 router.use('/coupons', couponsRoutes);
+router.use('/wishlist', wishlistRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/sellers', sellerRoutes);
+router.use('/invoices', invoiceRoutes);
 
 export default router;

@@ -32,6 +32,7 @@ import { AdminCoupons } from '@/pages/admin/AdminCoupons';
 import { SellerCallback } from '@/pages/SellerCallback';
 import { MercadoPagoCallback } from '@/pages/MercadoPagoCallback';
 import { DebugPage } from '@/pages/DebugPage';
+import { WishlistPage } from '@/pages/WishlistPage';
 
 // Account Pages
 import {
@@ -308,7 +309,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/wishlist" element={<div className="min-h-screen bg-black py-20 text-center text-white">Wishlist</div>} />
+            <Route
+              path="/wishlist"
+              element={
+                <ProtectedRoute>
+                  <WishlistPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* 404 */}

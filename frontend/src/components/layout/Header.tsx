@@ -210,7 +210,7 @@ export function Header() {
               <IconButton
                 onClick={toggleSearch}
                 aria-label="Search"
-                className="hidden sm:flex"
+                className="text-white"
               >
                 <Search className="h-5 w-5" />
               </IconButton>
@@ -218,7 +218,7 @@ export function Header() {
               <IconButton
                 onClick={() => navigate('/wishlist')}
                 aria-label="Wishlist"
-                className="hidden md:flex"
+                className="text-white"
               >
                 <Heart className="h-5 w-5" />
               </IconButton>

@@ -291,6 +291,18 @@ export const orderService = {
       throw new AppError('Order not found', 404);
     }
 
+    // Auto-create invoice when payment is confirmed
+    if (paymentStatus === 'paid') {
+      try {
+        const { invoiceService } = await import('./invoice.service.js');
+        await invoiceService.createFromOrder(id);
+        console.log(`✅ Invoice auto-created for order ${id}`);
+      } catch (error) {
+        console.error(`⚠️  Failed to auto-create invoice for order ${id}:`, error);
+        // Don't throw - invoice creation failure shouldn't block payment confirmation
+      }
+    }
+
     return result.rows[0] as Order;
   },
 

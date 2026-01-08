@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { CartDrawer } from '@/components/sections/CartDrawer';
 import { ChatWidget } from '@/components/chat/ChatWidget';
+import { LiveSupportChat } from '@/components/chat/LiveSupportChat';
 import { WhatsAppButton } from '@/components/chat/WhatsAppButton';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { PageTransition } from '@/components/animations/PageTransition';
@@ -54,6 +55,9 @@ export function Layout() {
 
       {/* Chat widget */}
       <ChatWidget />
+
+      {/* Live Support Chat */}
+      <LiveSupportChat />
 
       {/* WhatsApp button */}
       <WhatsAppButton />

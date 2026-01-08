@@ -287,6 +287,38 @@ export const orderService = {
 
 import type { TeamMember, Commission, CommissionSummary, UserNotification } from '@/types';
 
+// ============================================
+// WISHLIST SERVICE
+// ============================================
+
+import type { WishlistItem } from '@/types';
+
+export const wishlistService = {
+  async getIds() {
+    const response = await api.get<string[]>('/wishlist/ids');
+    return response.data || [];
+  },
+
+  async getAll(filters?: { limit?: number; offset?: number }) {
+    const params: Record<string, string> = {};
+    if (filters?.limit !== undefined) params.limit = String(filters.limit);
+    if (filters?.offset !== undefined) params.offset = String(filters.offset);
+
+    const response = await api.get<WishlistItem[]>('/wishlist', params);
+    return { data: response.data || [], count: (response as any).count || 0 };
+  },
+
+  async add(productId: string) {
+    const response = await api.post<{ added: boolean }>('/wishlist', { productId });
+    return response.data || { added: true };
+  },
+
+  async remove(productId: string) {
+    const response = await api.delete<{ removed: boolean }>(`/wishlist/${productId}`);
+    return response.data || { removed: true };
+  },
+};
+
 export const userService = {
   async getProfile(userId: string) {
     const response = await api.get<User & { addresses: Address[]; team_member?: TeamMember }>('/users/profile');

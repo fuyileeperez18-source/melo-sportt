@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Thumbs, Zoom, FreeMode } from 'swiper/modules';
@@ -28,6 +28,8 @@ import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ani
 import { Button, IconButton } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useToggleWishlist, useWishlistIds } from '@/hooks/useWishlist';
 import { cn, formatCurrency, calculateDiscount } from '@/lib/utils';
 import type { Product, ProductVariant } from '@/types';
 
@@ -177,19 +179,27 @@ const reviews = [
 ];
 
 export function ProductPage() {
+  const navigate = useNavigate();
   const { slug } = useParams();
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [isZoomed, setIsZoomed] = useState(false);
 
   const addItem = useCartStore((state) => state.addItem);
 
+  const { user, profile, isAuthenticated } = useAuthStore();
+  const currentUser = user || profile;
+  const userId = currentUser?.id;
+
   // In real app, fetch product by slug from Supabase
   const product = mockProduct;
+
+  const { data: wishlistIds } = useWishlistIds(userId);
+  const { toggle } = useToggleWishlist(userId);
+  const isWishlisted = !!wishlistIds?.includes(product.id);
 
   // Extract unique sizes and colors from variants
   const sizes = [...new Set(product.variants.map((v) => v.options.find((o) => o.name === 'Size')?.value).filter(Boolean))];
@@ -514,7 +524,13 @@ export function ProductPage() {
                     {isInStock ? 'Add to Cart' : 'Out of Stock'}
                   </Button>
                   <IconButton
-                    onClick={() => setIsWishlisted(!isWishlisted)}
+                    onClick={() => {
+                      if (!isAuthenticated || !userId) {
+                        navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+                        return;
+                      }
+                      toggle(product.id);
+                    }}
                     className={cn(
                       'h-14 w-14 border border-primary-700',
                       isWishlisted && 'bg-red-500 border-red-500'

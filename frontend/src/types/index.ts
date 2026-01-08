@@ -194,6 +194,11 @@ export interface Category {
 }
 
 // Cart Types
+export interface WishlistItem {
+  product: Product;
+  added_at: string;
+}
+
 export interface CartItem {
   id: string;
   product: Product;
