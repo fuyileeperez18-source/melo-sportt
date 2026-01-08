@@ -34,9 +34,9 @@ export function ProductCard({
 
   const primaryImage = product.images?.find((img) => img.is_primary)?.url ||
     product.images?.[0]?.url ||
-    'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop';
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=500&fit=crop';
 
-  const secondaryImage = product.images?.[1]?.url;
+  const secondaryImage = product.images?.length > 1 ? (product.images[1]?.url || null) : null;
 
   const discount = product.compare_at_price
     ? calculateDiscount(product.compare_at_price, product.price)
@@ -73,6 +73,11 @@ export function ProductCard({
               src={primaryImage}
               alt={product.name}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                console.warn(`Error loading minimal view image for product ${product.name}:`, e);
+                target.src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=500&fit=crop';
+              }}
             />
           </div>
         </motion.div>
@@ -106,7 +111,9 @@ export function ProductCard({
             transition={{ duration: 0.5 }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop';
+              console.warn(`Error loading primary image for product ${product.name}:`, e);
+              // Intentar con una imagen de fallback diferente
+              target.src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=500&fit=crop';
             }}
           />
 
@@ -121,6 +128,7 @@ export function ProductCard({
               transition={{ duration: 0.5 }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
+                console.warn(`Error loading secondary image for product ${product.name}:`, e);
                 target.style.display = 'none';
               }}
             />
@@ -341,6 +349,11 @@ export function FeaturedProductCard({ product }: { product: Product }) {
             src={primaryImage}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              console.warn(`Error loading featured image for product ${product.name}:`, e);
+              target.src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=600&fit=crop';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         </div>
