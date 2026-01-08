@@ -29,6 +29,7 @@ import { AdminAnalytics } from '@/pages/admin/AdminAnalytics';
 import { AdminSettings } from '@/pages/admin/AdminSettings';
 import { AdminMessages } from '@/pages/admin/AdminMessages';
 import { AdminCoupons } from '@/pages/admin/AdminCoupons';
+import { AdminManagement } from '@/pages/admin/AdminManagement';
 import { SellerCallback } from '@/pages/SellerCallback';
 import { MercadoPagoCallback } from '@/pages/MercadoPagoCallback';
 import { DebugPage } from '@/pages/DebugPage';
@@ -71,12 +72,14 @@ function ProtectedRoute({
   children,
   adminOnly = false,
   ownerOnly = false,
-  teamOnly = false
+  teamOnly = false,
+  superAdminOnly = false
 }: {
   children: React.ReactNode;
   adminOnly?: boolean;
   ownerOnly?: boolean;
   teamOnly?: boolean;
+  superAdminOnly?: boolean;
 }) {
   const { isAuthenticated, user, profile, isLoading } = useAuthStore();
 
@@ -88,7 +91,7 @@ function ProtectedRoute({
   console.log('🔐 [ProtectedRoute] User:', user);
   console.log('🔐 [ProtectedRoute] Profile:', profile);
   console.log('🔐 [ProtectedRoute] Current user role:', currentUser?.role);
-  console.log('🔐 [ProtectedRoute] Flags - adminOnly:', adminOnly, 'ownerOnly:', ownerOnly, 'teamOnly:', teamOnly);
+  console.log('🔐 [ProtectedRoute] Flags - adminOnly:', adminOnly, 'ownerOnly:', ownerOnly, 'teamOnly:', teamOnly, 'superAdminOnly:', superAdminOnly);
 
   if (isLoading) {
     console.log('⏳ [ProtectedRoute] Loading...');
@@ -102,6 +105,12 @@ function ProtectedRoute({
   if (!isAuthenticated || !currentUser) {
     console.log('❌ [ProtectedRoute] Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
+  }
+
+  // Solo super_admin
+  if (superAdminOnly && currentUser?.role !== 'super_admin') {
+    console.log('❌ [ProtectedRoute] Super admin only - redirecting to account');
+    return <Navigate to="/account" replace />;
   }
 
   // Solo propietario (super_admin)
@@ -298,6 +307,14 @@ function App() {
               element={
                 <ProtectedRoute ownerOnly>
                   <CommissionsManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account/admins"
+              element={
+                <ProtectedRoute superAdminOnly>
+                  <AdminManagement />
                 </ProtectedRoute>
               }
             />

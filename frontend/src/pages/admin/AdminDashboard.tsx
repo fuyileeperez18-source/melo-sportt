@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Clock,
   RefreshCw,
+  UserCog,
 } from 'lucide-react';
 
 import { useAuthStore } from '@/stores/authStore';
@@ -34,16 +35,29 @@ import { useOrdersRealtime, useProductRealtime } from '@/hooks/useRealtime';
 import toast from 'react-hot-toast';
 
 // Sidebar navigation
-const sidebarItems = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart, badge: 5 },
-  { name: 'Productos', href: '/admin/products', icon: Package },
-  { name: 'Clientes', href: '/admin/customers', icon: Users },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Mensajes', href: '/admin/messages', icon: MessageSquare, badge: 3 },
-  { name: 'Cupones', href: '/admin/coupons', icon: Tag },
-  { name: 'Configuración', href: '/admin/settings', icon: Settings },
-];
+const getSidebarItems = (userRole: string | undefined) => {
+  const items = [
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart, badge: 5 },
+    { name: 'Productos', href: '/admin/products', icon: Package },
+    { name: 'Clientes', href: '/admin/customers', icon: Users },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { name: 'Mensajes', href: '/admin/messages', icon: MessageSquare, badge: 3 },
+    { name: 'Cupones', href: '/admin/coupons', icon: Tag },
+    { name: 'Configuración', href: '/admin/settings', icon: Settings },
+  ];
+
+  // Solo mostrar "Gestión de Admins" para super_admin
+  if (userRole === 'super_admin') {
+    items.splice(items.length - 1, 0, {
+      name: 'Gestión de Admins',
+      href: '/account/admins',
+      icon: UserCog,
+    });
+  }
+
+  return items;
+};
 
 // Order status badge
 function OrderStatusBadge({ status }: { status: string }) {
@@ -79,6 +93,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const location = useLocation();
   const { signOut, user } = useAuthStore();
   const navigate = useNavigate();
+  const sidebarItems = getSidebarItems(user?.role);
 
   const handleSignOut = async () => {
     await signOut();

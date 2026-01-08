@@ -330,4 +330,58 @@ router.get('/dashboard/owner', authenticate, requireSuperAdmin, async (_req: Req
   }
 });
 
+// ==================== ADMIN MANAGEMENT (SUPER ADMIN ONLY) ====================
+
+// Get all admins
+router.get('/admins', authenticate, requireSuperAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const admins = await userService.getAllAdmins();
+    res.json({ success: true, data: admins });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create a new admin
+router.post('/admins', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+      full_name: z.string().min(2),
+    }).parse(req.body);
+
+    const admin = await userService.createAdmin(data);
+    res.status(201).json({ success: true, data: admin });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update an admin
+router.put('/admins/:id', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = z.object({
+      email: z.string().email().optional(),
+      password: z.string().min(8).optional(),
+      full_name: z.string().min(2).optional(),
+    }).parse(req.body);
+
+    const admin = await userService.updateAdmin(req.params.id, data);
+    res.json({ success: true, data: admin });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete an admin
+router.delete('/admins/:id', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await userService.deleteAdmin(req.params.id);
+    res.json({ success: true, message: 'Admin deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

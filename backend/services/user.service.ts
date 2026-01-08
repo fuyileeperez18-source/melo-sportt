@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 import { query } from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { User, Address, TeamMember, Commission, CommissionSummary, UserNotification } from '../types/index.js';
@@ -482,5 +484,120 @@ export const userService = {
         revenue: parseFloat(r.revenue) || 0
       }))
     };
+  },
+
+  // ==================== ADMIN MANAGEMENT ====================
+
+  async getAllAdmins(): Promise<User[]> {
+    const result = await query(
+      `SELECT id, email, full_name, phone, avatar_url, role, created_at, updated_at
+       FROM users
+       WHERE role IN ('admin', 'super_admin')
+       ORDER BY
+         CASE role
+           WHEN 'super_admin' THEN 1
+           WHEN 'admin' THEN 2
+         END,
+         created_at ASC`
+    );
+    return result.rows as User[];
+  },
+
+  async createAdmin(data: { email: string; password: string; full_name: string }): Promise<User> {
+    // Check if user already exists
+    const existingUser = await query('SELECT id FROM users WHERE email = $1', [data.email]);
+    if (existingUser.rows.length > 0) {
+      throw new AppError('Email already registered', 400);
+    }
+
+    const userId = uuidv4();
+    const hashedPassword = await bcrypt.hash(data.password, 12);
+
+    const result = await query(
+      `INSERT INTO users (id, email, full_name, password_hash, role)
+       VALUES ($1, $2, $3, $4, 'admin')
+       RETURNING id, email, full_name, phone, avatar_url, role, created_at, updated_at`,
+      [userId, data.email, data.full_name, hashedPassword]
+    );
+
+    return result.rows[0] as User;
+  },
+
+  async updateAdmin(adminId: string, updates: { full_name?: string; email?: string; password?: string }): Promise<User> {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    let paramIndex = 1;
+
+    if (updates.full_name) {
+      fields.push(`full_name = $${paramIndex}`);
+      values.push(updates.full_name);
+      paramIndex++;
+    }
+
+    if (updates.email) {
+      // Check if email is already in use by another user
+      const existing = await query('SELECT id FROM users WHERE email = $1 AND id != $2', [updates.email, adminId]);
+      if (existing.rows.length > 0) {
+        throw new AppError('Email already in use', 400);
+      }
+      fields.push(`email = $${paramIndex}`);
+      values.push(updates.email);
+      paramIndex++;
+    }
+
+    if (updates.password) {
+      const hashedPassword = await bcrypt.hash(updates.password, 12);
+      fields.push(`password_hash = $${paramIndex}`);
+      values.push(hashedPassword);
+      paramIndex++;
+    }
+
+    if (fields.length === 0) {
+      throw new AppError('No valid fields to update', 400);
+    }
+
+    values.push(adminId);
+    const result = await query(
+      `UPDATE users
+       SET ${fields.join(', ')}, updated_at = NOW()
+       WHERE id = $${paramIndex} AND role = 'admin'
+       RETURNING id, email, full_name, phone, avatar_url, role, created_at, updated_at`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      throw new AppError('Admin not found or cannot be updated', 404);
+    }
+
+    return result.rows[0] as User;
+  },
+
+  async deleteAdmin(adminId: string): Promise<void> {
+    // Check if the admin exists and is not super_admin
+    const adminCheck = await query(
+      'SELECT role FROM users WHERE id = $1',
+      [adminId]
+    );
+
+    if (adminCheck.rows.length === 0) {
+      throw new AppError('Admin not found', 404);
+    }
+
+    if (adminCheck.rows[0].role === 'super_admin') {
+      throw new AppError('Cannot delete super admin', 403);
+    }
+
+    if (adminCheck.rows[0].role !== 'admin') {
+      throw new AppError('User is not an admin', 400);
+    }
+
+    const result = await query(
+      'DELETE FROM users WHERE id = $1 AND role = \'admin\'',
+      [adminId]
+    );
+
+    if (result.rowCount === 0) {
+      throw new AppError('Failed to delete admin', 500);
+    }
   }
 };
