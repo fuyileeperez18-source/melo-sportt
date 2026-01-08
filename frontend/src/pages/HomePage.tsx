@@ -583,7 +583,7 @@ export function HomePage() {
                   <div>
                     <h4 className="text-white font-semibold text-lg mb-1">Contáctanos</h4>
                     <p className="text-gray-400">
-                      +57 300 123 4567<br />
+                      +57 304 415 5473<br />
                       <span className="text-gray-500 text-sm">WhatsApp disponible</span>
                     </p>
                   </div>

@@ -912,7 +912,7 @@ export function AdminProducts() {
                 <p className="text-xs text-gray-500 mt-2">Una buena descripción ayuda a tus clientes a conocer mejor el producto</p>
               </div>
 
-              {/* Classification - Unified Category & Type */}
+              {/* Classification */}
               <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                 <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                   <div className="p-1.5 bg-white/10 rounded-lg">
@@ -922,17 +922,17 @@ export function AdminProducts() {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Tipo de Producto</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
                     <div className="relative">
                       <select
-                        value={formData.productType}
-                        onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+                        value={formData.category_id}
+                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                         className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
                       >
-                        <option value="" className="bg-gray-900">Seleccionar tipo...</option>
-                        {productTypeOptions.filter(opt => opt.value).map((opt) => (
-                          <option key={opt.value} value={opt.value} className="bg-gray-900">
-                            {opt.label}
+                        <option value="" className="bg-gray-900">Seleccionar categoría...</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id} className="bg-gray-900">
+                            {cat.name}
                           </option>
                         ))}
                       </select>
@@ -947,27 +947,10 @@ export function AdminProducts() {
                         onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                         className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
                       >
+                        <option value="" className="bg-gray-900">Seleccionar género...</option>
                         {genderOptions.filter(opt => opt.value).map((opt) => (
                           <option key={opt.value} value={opt.value} className="bg-gray-900">
                             {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
-                    <div className="relative">
-                      <select
-                        value={formData.category_id}
-                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                        className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="" className="bg-gray-900">Sin categoría</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id} className="bg-gray-900">
-                            {cat.name}
                           </option>
                         ))}
                       </select>
@@ -982,7 +965,7 @@ export function AdminProducts() {
                         onChange={(e) => setFormData({ ...formData, material: e.target.value })}
                         className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
                       >
-                        <option value="" className="bg-gray-900">Seleccionar...</option>
+                        <option value="" className="bg-gray-900">Seleccionar material...</option>
                         {materialOptions.filter(opt => opt.value).map((opt) => (
                           <option key={opt.value} value={opt.value} className="bg-gray-900">
                             {opt.label}
@@ -991,6 +974,15 @@ export function AdminProducts() {
                       </select>
                       <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Marca</label>
+                    <Input
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      placeholder="Marca del producto"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                    />
                   </div>
                 </div>
               </div>
@@ -1067,29 +1059,18 @@ export function AdminProducts() {
                   <div className="p-1.5 bg-white/10 rounded-lg">
                     <Check className="h-4 w-4" />
                   </div>
-                  Información Adicional
+                  Etiquetas y Estilo
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Marca</label>
-                    <Input
-                      value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      placeholder="Marca del producto"
-                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Etiquetas (Tags)</label>
-                    <Input
-                      value={formData.tags}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="aesthetic, urbano, casual"
-                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Etiquetas (Tags)</label>
+                  <Input
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    placeholder="aesthetic, urbano, casual, streetwear"
+                    className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Separa las etiquetas con comas para ayudar a categorizar el producto por estilo</p>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Separa las etiquetas con comas</p>
               </div>
 
               {/* Status Toggles */}

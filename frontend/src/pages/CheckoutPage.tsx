@@ -289,6 +289,11 @@ export function CheckoutPage() {
   };
 
   const handleCashOnDelivery = async () => {
+    if (!shippingData) {
+      toast.error('Por favor completa la información de envío');
+      return;
+    }
+
     const newOrderNumber = generateOrderNumber();
     setOrderNumber(newOrderNumber);
     setIsProcessing(true);
@@ -312,16 +317,16 @@ export function CheckoutPage() {
         payment_status: 'pending' as const,
         payment_method: 'cash_on_delivery',
         shipping_address: {
-          email: shippingData?.email,
-          firstName: shippingData?.firstName,
-          lastName: shippingData?.lastName,
-          phone: shippingData?.phone,
-          address: shippingData?.address,
-          apartment: shippingData?.apartment,
-          city: shippingData?.city,
-          state: shippingData?.state,
-          postalCode: shippingData?.postalCode,
-          country: shippingData?.country,
+          email: shippingData.email,
+          firstName: shippingData.firstName,
+          lastName: shippingData.lastName,
+          phone: shippingData.phone,
+          address: shippingData.address,
+          apartment: shippingData.apartment,
+          city: shippingData.city,
+          state: shippingData.state,
+          postalCode: shippingData.postalCode,
+          country: shippingData.country,
         },
         items: items.map((item) => ({
           product_id: item.product.id,

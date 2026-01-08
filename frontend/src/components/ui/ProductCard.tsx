@@ -34,7 +34,7 @@ export function ProductCard({
 
   const primaryImage = product.images?.find((img) => img.is_primary)?.url ||
     product.images?.[0]?.url ||
-    'https://via.placeholder.com/400x500/1a1a1a/ffffff?text=WALMER';
+    'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop';
 
   const secondaryImage = product.images?.[1]?.url;
 
@@ -96,7 +96,7 @@ export function ProductCard({
         layout
       >
         {/* Image container */}
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <div className="relative aspect-[3/4] overflow-hidden bg-primary-800">
           {/* Primary image */}
           <motion.img
             src={primaryImage}
@@ -104,6 +104,10 @@ export function ProductCard({
             className="absolute inset-0 w-full h-full object-cover"
             animate={{ opacity: isHovered && secondaryImage ? 0 : 1 }}
             transition={{ duration: 0.5 }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop';
+            }}
           />
 
           {/* Secondary image (hover) */}
@@ -115,6 +119,10 @@ export function ProductCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: isHovered ? 1 : 0 }}
               transition={{ duration: 0.5 }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
             />
           )}
 
