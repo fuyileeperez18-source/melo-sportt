@@ -124,14 +124,21 @@ async function runAutoMigrations() {
         executedCount++;
 
       } catch (error: any) {
-        // Si es error de tabla ya existe, continuar
-        if (error.message.includes('already exists') ||
-            error.message.includes('ya existe') ||
-            error.message.includes('duplicate key') ||
-            error.message.includes('does not exist') ||
-            error.message.includes('column')) {
-          console.log(`⚠️  ${migrationName} ya aplicada o parte de ella (error ignorado: ${error.message.substring(0, 50)}...)`);
+        // Si es error de tabla/columna/constraint ya existe, continuar silenciosamente
+        const errorMsg = error.message.toLowerCase();
+        const isAlreadyApplied =
+          errorMsg.includes('already exists') ||
+          errorMsg.includes('ya existe') ||
+          errorMsg.includes('duplicate key') ||
+          errorMsg.includes('column') && errorMsg.includes('already exists') ||
+          errorMsg.includes('relation') && errorMsg.includes('already exists') ||
+          errorMsg.includes('constraint') && errorMsg.includes('already exists');
+
+        if (isAlreadyApplied) {
+          // Migración ya aplicada - continuar sin warning
+          console.log(`⏭️  ${migrationName} ya aplicada`);
         } else {
+          // Error real - mostrar pero continuar
           console.error(`❌ Error en ${migrationName}:`, error.message);
           // No fallar completamente, continuar con otras migraciones
         }

@@ -54,9 +54,18 @@ async function runAllMigrations() {
         await query(sql);
         console.log(`✅ ${migrationName} completada\n`);
       } catch (error: any) {
-        // Si es error de tabla ya existe, continuar
-        if (error.message.includes('already exists') || error.message.includes('ya existe')) {
-          console.log(`⚠️  ${migrationName} ya aplicada, continuando...\n`);
+        // Si es error de tabla/columna/constraint ya existe, continuar
+        const errorMsg = error.message.toLowerCase();
+        const isAlreadyApplied =
+          errorMsg.includes('already exists') ||
+          errorMsg.includes('ya existe') ||
+          errorMsg.includes('duplicate key') ||
+          errorMsg.includes('column') && errorMsg.includes('already exists') ||
+          errorMsg.includes('relation') && errorMsg.includes('already exists') ||
+          errorMsg.includes('constraint') && errorMsg.includes('already exists');
+
+        if (isAlreadyApplied) {
+          console.log(`⏭️  ${migrationName} ya aplicada, continuando...\n`);
         } else {
           throw error;
         }
