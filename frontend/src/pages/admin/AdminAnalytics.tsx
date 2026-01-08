@@ -214,6 +214,7 @@ export function AdminAnalytics() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
 
         {/* Category Distribution */}
         <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">

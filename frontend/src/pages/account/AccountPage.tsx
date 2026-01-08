@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Crown,
   Code,
-  Star
+  Star,
+  ArrowRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';

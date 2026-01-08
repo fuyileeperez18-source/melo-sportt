@@ -20,7 +20,7 @@ export function LiveSupportChat() {
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated } = useAuthStore();
-  const socket = useSocket();
+  const { socket } = useSocket();
 
   useEffect(() => {
     if (socket && isAuthenticated && isOpen) {
