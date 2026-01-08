@@ -49,8 +49,20 @@ export const productService = {
 
       if (filters?.category) {
         console.log('🔍 [PRODUCT SERVICE] Filtering by category:', filters.category);
-        sql += ` AND p.category_id = $${paramIndex}`;
-        params.push(filters.category);
+
+        // Check if the category filter is a slug or a UUID
+        // UUID pattern: 8-4-4-4-12 characters with hyphens
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+        if (uuidPattern.test(filters.category)) {
+          // It's a UUID, filter by category_id directly
+          sql += ` AND p.category_id = $${paramIndex}`;
+          params.push(filters.category);
+        } else {
+          // It's a slug, join with categories table to filter by slug
+          sql += ` AND c.slug = $${paramIndex}`;
+          params.push(filters.category);
+        }
         paramIndex++;
       }
 

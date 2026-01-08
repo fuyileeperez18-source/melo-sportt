@@ -384,4 +384,14 @@ router.delete('/admins/:id', authenticate, requireSuperAdmin, async (req: Reques
   }
 });
 
+// Fix admin roles - ensure only Fuyi has super_admin role (Super admin only)
+router.post('/fix-admin-roles', authenticate, requireSuperAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    await userService.fixAdminRoles();
+    res.json({ success: true, message: 'Admin roles fixed successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

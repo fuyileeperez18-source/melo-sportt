@@ -9,10 +9,10 @@ const router = Router();
 
 // All analytics routes require admin authentication
 
-// Get dashboard metrics
+// Get dashboard metrics (using real data)
 router.get('/dashboard', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const metrics = await analyticsService.getDashboardMetrics();
+    const metrics = await analyticsServiceReal.getDashboardData();
     res.json({ success: true, data: metrics });
   } catch (error) {
     next(error);

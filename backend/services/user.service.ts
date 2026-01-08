@@ -599,5 +599,50 @@ export const userService = {
     if (result.rowCount === 0) {
       throw new AppError('Failed to delete admin', 500);
     }
+  },
+
+  /**
+   * Fix admin roles - ensure only Fuyi has super_admin role
+   * This is a helper function to correct any role misconfigurations
+   */
+  async fixAdminRoles(): Promise<void> {
+    try {
+      console.log('🔧 [USER SERVICE] Fixing admin roles...');
+
+      // First, find all users with super_admin role
+      const superAdmins = await query(
+        'SELECT id, email, full_name FROM users WHERE role = \'super_admin\''
+      );
+
+      console.log(`Found ${superAdmins.rows.length} super admins:`, superAdmins.rows);
+
+      // If there are multiple super admins, keep only Fuyi (assuming Fuyi is the one with fuyi@yuyyg.com)
+      if (superAdmins.rows.length > 1) {
+        const fuyiUser = superAdmins.rows.find(user => user.email === 'fuyi@yuyyg.com');
+
+        if (fuyiUser) {
+          // Convert all other super admins to regular admins
+          for (const user of superAdmins.rows) {
+            if (user.email !== 'fuyi@yuyyg.com') {
+              console.log(`🔄 Converting ${user.email} from super_admin to admin`);
+              await query(
+                'UPDATE users SET role = \'admin\' WHERE id = $1',
+                [user.id]
+              );
+            }
+          }
+          console.log('✅ Admin roles fixed successfully');
+        } else {
+          console.warn('⚠️  Fuyi (fuyi@yuyyg.com) not found among super admins');
+        }
+      } else if (superAdmins.rows.length === 0) {
+        console.warn('⚠️  No super admins found');
+      } else {
+        console.log('✅ Only one super admin found (Fuyi), roles are correct');
+      }
+    } catch (error) {
+      console.error('❌ [USER SERVICE] Error fixing admin roles:', error);
+      throw error;
+    }
   }
 };

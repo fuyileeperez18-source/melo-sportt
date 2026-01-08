@@ -330,6 +330,143 @@ export const orderService = {
     return result.rows[0] as Order;
   },
 
+  /**
+   * Create an order for cash on delivery (contra entrega)
+   */
+  async createCashOnDelivery(orderData: Partial<Order> & { items: Partial<OrderItem>[] }): Promise<Order> {
+    const client = await (await import('../config/database.js')).pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Validate stock availability before creating order
+      for (const item of orderData.items || []) {
+        const productResult = await client.query(
+          `SELECT id, name, quantity, track_quantity, continue_selling_when_out_of_stock
+           FROM products WHERE id = $1`,
+          [item.product_id]
+        );
+
+        if (productResult.rows.length === 0) {
+          throw new AppError(`Producto ${item.product_id} no encontrado`, 404);
+        }
+
+        const product = productResult.rows[0];
+
+        if (product.track_quantity) {
+          if (product.quantity < (item.quantity || 0) && !product.continue_selling_when_out_of_stock) {
+            throw new AppError(`No hay suficiente stock para ${product.name}. Disponible: ${product.quantity}`, 400);
+          }
+        }
+      }
+
+      // Create order with cash on delivery details
+      const orderResult = await client.query(
+        `INSERT INTO orders (user_id, order_number, subtotal, discount, shipping_cost, tax, total, status,
+          payment_status, payment_method, shipping_address, billing_address, notes, coupon_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+         RETURNING *`,
+        [
+          orderData.user_id,
+          orderData.order_number || `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          orderData.subtotal,
+          orderData.discount || 0,
+          orderData.shipping_cost || 0,
+          orderData.tax || 0,
+          orderData.total,
+          'pending', // Status starts as pending
+          'pending', // Payment status is pending until delivery
+          'cash_on_delivery', // Payment method is cash on delivery
+          JSON.stringify(orderData.shipping_address),
+          JSON.stringify(orderData.billing_address || orderData.shipping_address),
+          orderData.notes || 'Pago contra entrega - Pago en efectivo al recibir el pedido',
+          orderData.coupon_code || null,
+        ]
+      );
+
+      const order = orderResult.rows[0] as Order;
+
+      // Create order items and reduce stock
+      for (const item of orderData.items || []) {
+        // Create order item
+        await client.query(
+          `INSERT INTO order_items (order_id, product_id, variant_id, quantity, price, total)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            order.id,
+            item.product_id,
+            item.variant_id,
+            item.quantity,
+            item.price,
+            (item.price || 0) * (item.quantity || 0),
+          ]
+        );
+
+        // Reduce product stock
+        await client.query(
+          `UPDATE products
+           SET quantity = quantity - $1,
+               total_sold = COALESCE(total_sold, 0) + $1,
+               updated_at = NOW()
+           WHERE id = $2 AND track_quantity = true`,
+          [item.quantity, item.product_id]
+        );
+
+        // Update variant stock if applicable
+        if (item.variant_id) {
+          await client.query(
+            `UPDATE product_variants
+             SET quantity = quantity - $1,
+                 updated_at = NOW()
+             WHERE id = $2`,
+            [item.quantity, item.variant_id]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+      return order;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
+   * Confirm cash on delivery payment (called when order is delivered)
+   */
+  async confirmCashOnDelivery(id: string): Promise<Order> {
+    const result = await query(
+      `UPDATE orders SET
+         payment_status = 'paid',
+         status = 'completed',
+         updated_at = NOW()
+       WHERE id = $1 AND payment_method = 'cash_on_delivery' AND status = 'pending'
+       RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      throw new AppError('Order not found or not eligible for cash on delivery confirmation', 404);
+    }
+
+    const order = result.rows[0] as Order;
+
+    // Auto-create invoice when payment is confirmed
+    try {
+      const { invoiceService } = await import('./invoice.service.js');
+      await invoiceService.createFromOrder(id);
+      console.log(`✅ Invoice auto-created for cash on delivery order ${id}`);
+    } catch (error) {
+      console.error(`⚠️  Failed to auto-create invoice for cash on delivery order ${id}:`, error);
+      // Don't throw - invoice creation failure shouldn't block payment confirmation
+    }
+
+    return order;
+  },
+
   async getByOrderNumber(orderNumber: string): Promise<Order> {
     const result = await query(
       'SELECT * FROM orders WHERE order_number = $1',

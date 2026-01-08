@@ -68,26 +68,47 @@ router.get('/my-orders', authenticate, async (req: AuthRequest, res: Response, n
 router.post('/', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = createOrderSchema.parse(req.body);
-    const order = await orderService.create({
-      user_id: data.user_id || req.user!.id,
-      order_number: data.order_number,
-      subtotal: data.subtotal,
-      discount: data.discount,
-      shipping_cost: data.shipping_cost,
-      tax: data.tax,
-      total: data.total,
-      status: data.status || 'pending',
-      payment_status: data.payment_status || 'pending',
-      payment_method: data.payment_method,
-      payment_id: data.payment_id,
-      stripe_payment_intent_id: data.stripe_payment_intent_id,
-      shipping_address: data.shipping_address as any,
-      billing_address: data.billing_address as any,
-      notes: data.notes,
-      coupon_code: data.coupon_code,
-      items: data.items as any,
-    });
-    res.status(201).json({ success: true, data: order });
+
+    // Handle cash on delivery orders
+    if (data.payment_method === 'cash_on_delivery') {
+      const order = await orderService.createCashOnDelivery({
+        user_id: data.user_id || req.user!.id,
+        order_number: data.order_number,
+        subtotal: data.subtotal,
+        discount: data.discount,
+        shipping_cost: data.shipping_cost,
+        tax: data.tax,
+        total: data.total,
+        shipping_address: data.shipping_address as any,
+        billing_address: data.billing_address as any,
+        notes: data.notes,
+        coupon_code: data.coupon_code,
+        items: data.items as any,
+      });
+      res.status(201).json({ success: true, data: order });
+    } else {
+      // Handle regular payment methods
+      const order = await orderService.create({
+        user_id: data.user_id || req.user!.id,
+        order_number: data.order_number,
+        subtotal: data.subtotal,
+        discount: data.discount,
+        shipping_cost: data.shipping_cost,
+        tax: data.tax,
+        total: data.total,
+        status: data.status || 'pending',
+        payment_status: data.payment_status || 'pending',
+        payment_method: data.payment_method,
+        payment_id: data.payment_id,
+        stripe_payment_intent_id: data.stripe_payment_intent_id,
+        shipping_address: data.shipping_address as any,
+        billing_address: data.billing_address as any,
+        notes: data.notes,
+        coupon_code: data.coupon_code,
+        items: data.items as any,
+      });
+      res.status(201).json({ success: true, data: order });
+    }
   } catch (error) {
     next(error);
   }
@@ -555,6 +576,16 @@ router.post('/:id/refund', authenticate, requireAdmin, async (req: Request, res:
     await orderService.updateStatus(req.params.id, 'refunded');
 
     res.json({ success: true, data: refund });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Confirm cash on delivery payment (Admin)
+router.post('/:id/confirm-cash-payment', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const order = await orderService.confirmCashOnDelivery(req.params.id);
+    res.json({ success: true, data: order });
   } catch (error) {
     next(error);
   }
