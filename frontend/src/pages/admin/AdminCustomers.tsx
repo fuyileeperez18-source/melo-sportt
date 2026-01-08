@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Download,
   Eye,
   Mail,
   MoreVertical,
-  ChevronLeft,
-  ChevronRight,
   UserPlus,
   ShoppingBag,
   DollarSign,
   User,
+  Edit,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 import { Button, IconButton } from '@/components/ui/Button';
@@ -37,6 +38,23 @@ export function AdminCustomers() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  // Form states
+  const [adminForm, setAdminForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+  });
+
+  const [editForm, setEditForm] = useState({
+    email: '',
+    full_name: '',
+    password: '',
+  });
 
   useEffect(() => {
     loadCustomers();
@@ -46,7 +64,6 @@ export function AdminCustomers() {
     setIsLoading(true);
     try {
       const response = await userService.getAll();
-      // Si response es un objeto con data, usar response.data, sino usar response directamente
       const data = Array.isArray(response) ? response : (response?.data || []);
       setCustomers(data);
     } catch (error) {
@@ -73,6 +90,82 @@ export function AdminCustomers() {
     setIsDetailOpen(true);
   };
 
+  const handleEmailClick = (customer: Customer) => {
+    window.location.href = `mailto:${customer.email}`;
+  };
+
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await userService.createAdmin(adminForm);
+      toast.success('Administrador creado exitosamente');
+      setIsAddAdminOpen(false);
+      setAdminForm({ email: '', password: '', full_name: '' });
+      loadCustomers();
+    } catch (error: any) {
+      console.error('Error creating admin:', error);
+      toast.error(error?.message || 'Error al crear administrador');
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer) return;
+
+    try {
+      const updates: any = {
+        email: editForm.email,
+        full_name: editForm.full_name,
+      };
+
+      if (editForm.password) {
+        updates.password = editForm.password;
+      }
+
+      await userService.updateAdmin(selectedCustomer.id, updates);
+      toast.success('Usuario actualizado exitosamente');
+      setIsEditOpen(false);
+      setEditForm({ email: '', full_name: '', password: '' });
+      setSelectedCustomer(null);
+      loadCustomers();
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast.error(error?.message || 'Error al actualizar usuario');
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      await userService.deleteAdmin(selectedCustomer.id);
+      toast.success('Usuario eliminado exitosamente');
+      setIsDeleteOpen(false);
+      setSelectedCustomer(null);
+      loadCustomers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error?.message || 'Error al eliminar usuario');
+    }
+  };
+
+  const openEditModal = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setEditForm({
+      email: customer.email,
+      full_name: customer.full_name,
+      password: '',
+    });
+    setIsEditOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const openDeleteModal = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsDeleteOpen(true);
+    setOpenMenuId(null);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -93,8 +186,8 @@ export function AdminCustomers() {
           <Button leftIcon={<Download className="h-4 w-4" />} variant="outline">
             Exportar
           </Button>
-          <Button leftIcon={<UserPlus className="h-4 w-4" />}>
-            Agregar Cliente
+          <Button leftIcon={<UserPlus className="h-4 w-4" />} onClick={() => setIsAddAdminOpen(true)}>
+            Agregar Admin
           </Button>
         </div>
       </div>
@@ -204,12 +297,39 @@ export function AdminCustomers() {
                         <IconButton onClick={() => openCustomerDetail(customer)}>
                           <Eye className="h-4 w-4" />
                         </IconButton>
-                        <IconButton>
+                        <IconButton onClick={() => handleEmailClick(customer)}>
                           <Mail className="h-4 w-4" />
                         </IconButton>
-                        <IconButton>
-                          <MoreVertical className="h-4 w-4" />
-                        </IconButton>
+                        <div className="relative">
+                          <IconButton onClick={() => setOpenMenuId(openMenuId === customer.id ? null : customer.id)}>
+                            <MoreVertical className="h-4 w-4" />
+                          </IconButton>
+                          <AnimatePresence>
+                            {openMenuId === customer.id && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                              >
+                                <button
+                                  onClick={() => openEditModal(customer)}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  Editar Usuario
+                                </button>
+                                <button
+                                  onClick={() => openDeleteModal(customer)}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Eliminar Usuario
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </td>
                   </motion.tr>
@@ -265,12 +385,21 @@ export function AdminCustomers() {
                   Ver
                 </Button>
                 <Button
+                  onClick={() => handleEmailClick(customer)}
                   variant="outline"
                   size="sm"
                   className="flex-1"
                   leftIcon={<Mail className="h-4 w-4" />}
                 >
                   Contactar
+                </Button>
+                <Button
+                  onClick={() => openEditModal(customer)}
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Edit className="h-4 w-4" />}
+                >
+                  Editar
                 </Button>
               </div>
             </motion.div>
@@ -348,7 +477,12 @@ export function AdminCustomers() {
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="outline" className="flex-1" leftIcon={<Mail className="h-4 w-4" />}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                leftIcon={<Mail className="h-4 w-4" />}
+                onClick={() => handleEmailClick(selectedCustomer)}
+              >
                 Enviar Email
               </Button>
               <Button className="flex-1" leftIcon={<ShoppingBag className="h-4 w-4" />}>
@@ -357,6 +491,179 @@ export function AdminCustomers() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Add Admin Modal */}
+      <Modal
+        isOpen={isAddAdminOpen}
+        onClose={() => {
+          setIsAddAdminOpen(false);
+          setAdminForm({ email: '', password: '', full_name: '' });
+        }}
+        title="Agregar Administrador"
+        size="md"
+      >
+        <form onSubmit={handleAddAdmin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre completo
+            </label>
+            <input
+              type="text"
+              value={adminForm.full_name}
+              onChange={(e) => setAdminForm({ ...adminForm, full_name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={adminForm.email}
+              onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              value={adminForm.password}
+              onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              required
+              minLength={8}
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setIsAddAdminOpen(false);
+                setAdminForm({ email: '', password: '', full_name: '' });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1">
+              Crear Administrador
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit User Modal */}
+      <Modal
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setEditForm({ email: '', full_name: '', password: '' });
+          setSelectedCustomer(null);
+        }}
+        title="Editar Usuario"
+        size="md"
+      >
+        <form onSubmit={handleEditUser} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre completo
+            </label>
+            <input
+              type="text"
+              value={editForm.full_name}
+              onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={editForm.email}
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nueva Contraseña (opcional)
+            </label>
+            <input
+              type="password"
+              value={editForm.password}
+              onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              placeholder="Dejar en blanco para no cambiar"
+              minLength={8}
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setIsEditOpen(false);
+                setEditForm({ email: '', full_name: '', password: '' });
+                setSelectedCustomer(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1">
+              Guardar Cambios
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false);
+          setSelectedCustomer(null);
+        }}
+        title="Confirmar Eliminación"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            ¿Estás seguro de que deseas eliminar al usuario{' '}
+            <strong className="text-black">{selectedCustomer?.full_name || selectedCustomer?.email}</strong>?
+            Esta acción no se puede deshacer.
+          </p>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setIsDeleteOpen(false);
+                setSelectedCustomer(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteUser}
+              className="flex-1 bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

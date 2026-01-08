@@ -461,6 +461,35 @@ export const userService = {
     }>('/commissions/dashboard-stats');
     return response.data!;
   },
+
+  // Admin management (Super Admin only)
+  async getAllAdmins() {
+    const response = await api.get<User[]>('/users/admins');
+    return response.data || [];
+  },
+
+  async createAdmin(data: { email: string; password: string; full_name: string }) {
+    const response = await api.post<User>('/users/admins', data);
+    return response.data!;
+  },
+
+  async updateAdmin(id: string, data: { email?: string; password?: string; full_name?: string }) {
+    const response = await api.put<User>(`/users/admins/${id}`, data);
+    return response.data!;
+  },
+
+  async deleteAdmin(id: string) {
+    await api.delete(`/users/admins/${id}`);
+  },
+
+  async updateUser(id: string, updates: Partial<User>) {
+    const response = await api.put<User>(`/users/${id}`, updates);
+    return response.data!;
+  },
+
+  async deleteUser(id: string) {
+    await api.delete(`/users/${id}`);
+  },
 };
 
 // ============================================
