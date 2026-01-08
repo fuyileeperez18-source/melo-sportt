@@ -253,7 +253,7 @@ export function CheckoutPage() {
 
   const subtotal = getSubtotal();
   const selectedShipping = shippingMethods.find((m) => m.id === shippingMethod);
-  const shippingCost = subtotal >= 100 ? 0 : (selectedShipping?.price || 10);
+  const shippingCost = subtotal >= 200000 ? 0 : (selectedShipping?.price || 0);
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + shippingCost + tax;
 
@@ -332,7 +332,7 @@ export function CheckoutPage() {
           product_id: item.product.id,
           variant_id: item.variant?.id,
           quantity: item.quantity,
-          price: item.price,
+          price: Number(item.price),
         })),
       } as any;
 
@@ -391,7 +391,7 @@ export function CheckoutPage() {
           product_id: item.product.id,
           variant_id: item.variant?.id,
           quantity: item.quantity,
-          price: item.price,
+          price: Number(item.price),
         })),
       } as any;
 
