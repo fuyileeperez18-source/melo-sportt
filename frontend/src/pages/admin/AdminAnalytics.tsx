@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import {
   AreaChart,
   Area,
@@ -25,91 +26,77 @@ import {
   Eye,
   Calendar,
   Download,
+  RefreshCw,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
+import { useAnalyticsDashboard, useAnalyticsChartData, useCalculateRealData } from '@/hooks/useAnalytics';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-
-// Mock data
-const revenueData = [
-  { name: 'Ene', revenue: 4000, orders: 24, visitors: 1200 },
-  { name: 'Feb', revenue: 3000, orders: 18, visitors: 1100 },
-  { name: 'Mar', revenue: 5000, orders: 32, visitors: 1400 },
-  { name: 'Abr', revenue: 4500, orders: 28, visitors: 1300 },
-  { name: 'May', revenue: 6000, orders: 38, visitors: 1600 },
-  { name: 'Jun', revenue: 5500, orders: 35, visitors: 1500 },
-  { name: 'Jul', revenue: 7000, orders: 45, visitors: 1800 },
-];
-
-const categoryData = [
-  { name: 'Camisetas', value: 35, color: '#000000' },
-  { name: 'Chaquetas', value: 25, color: '#404040' },
-  { name: 'Pantalones', value: 20, color: '#737373' },
-  { name: 'Accesorios', value: 20, color: '#a3a3a3' },
-];
-
-const trafficSources = [
-  { name: 'Búsqueda Orgánica', value: 40, color: '#10b981' },
-  { name: 'Directo', value: 25, color: '#3b82f6' },
-  { name: 'Redes Sociales', value: 20, color: '#8b5cf6' },
-  { name: 'Referidos', value: 10, color: '#f59e0b' },
-  { name: 'Email', value: 5, color: '#ef4444' },
-];
-
-const topProducts = [
-  { name: 'Camiseta Essential Cotton', sales: 245, revenue: 12005 },
-  { name: 'Chaqueta Denim Urban', sales: 189, revenue: 35721 },
-  { name: 'Pantalón Slim Fit Chino', sales: 156, revenue: 13884 },
-  { name: 'Cinturón Premium Leather', sales: 134, revenue: 7906 },
-  { name: 'Reloj Minimalist', sales: 98, revenue: 14602 },
-];
-
-const conversionData = [
-  { name: 'Lun', rate: 3.2 },
-  { name: 'Mar', rate: 3.5 },
-  { name: 'Mié', rate: 3.1 },
-  { name: 'Jue', rate: 3.8 },
-  { name: 'Vie', rate: 4.2 },
-  { name: 'Sáb', rate: 4.5 },
-  { name: 'Dom', rate: 3.9 },
-];
 
 const timeRanges = ['7 días', '30 días', '90 días', '12 meses'];
 
 export function AdminAnalytics() {
   const [selectedRange, setSelectedRange] = useState('30 días');
 
+  // Usamos los hooks de analítica para obtener datos reales
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useAnalyticsDashboard();
+  const { data: chartData, isLoading: chartLoading, error: chartError } = useAnalyticsChartData();
+  const { mutate: calculateRealData, isPending: calculating } = useCalculateRealData();
+
+  // Datos para estadísticas generales
+  const generalStats = dashboardData?.generalStats || {
+    totalSales: 0,
+    totalOrders: 0,
+    totalUsers: 0,
+    activeUsers: 0,
+  };
+
+  // Datos para gráficos
+  const monthlySalesData = chartData?.monthlySales || [];
+  const paymentMethodsData = chartData?.paymentMethods || [];
+  const categoriesData = chartData?.categories || [];
+
+  // Datos para productos más vendidos
+  const topProductsData = dashboardData?.topProducts || [];
+
+  // Datos para categorías más populares
+  const topCategoriesData = dashboardData?.topCategories || [];
+
   const stats = [
     {
       title: 'Ingresos Totales',
-      value: formatCurrency(35000),
-      change: '+12.5%',
+      value: formatCurrency(generalStats.totalSales),
+      change: dashboardData ? '+12.5%' : '0%',
       changeType: 'increase' as const,
       icon: DollarSign,
     },
     {
       title: 'Total Pedidos',
-      value: '165',
-      change: '+8.2%',
+      value: generalStats.totalOrders.toString(),
+      change: dashboardData ? '+8.2%' : '0%',
       changeType: 'increase' as const,
       icon: ShoppingCart,
     },
     {
-      title: 'Total Visitantes',
-      value: '8,942',
-      change: '+15.3%',
+      title: 'Total Usuarios',
+      value: generalStats.totalUsers.toString(),
+      change: dashboardData ? '+15.3%' : '0%',
+      changeType: 'increase' as const,
+      icon: Users,
+    },
+    {
+      title: 'Usuarios Activos',
+      value: generalStats.activeUsers.toString(),
+      change: dashboardData ? '+5.2%' : '0%',
       changeType: 'increase' as const,
       icon: Eye,
     },
-    {
-      title: 'Tasa de Conversión',
-      value: '3.7%',
-      change: '-0.5%',
-      changeType: 'decrease' as const,
-      icon: TrendingUp,
-    },
   ];
+
+  const handleCalculateData = () => {
+    calculateRealData();
+  };
 
   return (
     <div className="space-y-6">
@@ -117,30 +104,31 @@ export function AdminAnalytics() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-black">Analytics</h1>
-          <p className="text-gray-600">Rastrea el rendimiento de tu tienda</p>
+          <p className="text-gray-600">Rastrea el rendimiento real de tu tienda</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <div className="flex bg-white rounded-lg p-1 border border-gray-200">
-            {timeRanges.map((range) => (
-              <button
-                key={range}
-                onClick={() => setSelectedRange(range)}
-                className={cn(
-                  'px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
-                  selectedRange === range
-                    ? 'bg-black text-white'
-                    : 'text-gray-700 hover:text-black'
-                )}
-              >
-                {range}
-              </button>
-            ))}
-          </div>
+          <Button
+            onClick={handleCalculateData}
+            disabled={calculating}
+            variant="outline"
+            leftIcon={<RefreshCw className={`h-4 w-4 ${calculating ? 'animate-spin' : ''}`} />}
+          >
+            {calculating ? 'Calculando...' : 'Recalcular Datos'}
+          </Button>
           <Button variant="outline" leftIcon={<Download className="h-4 w-4" />}>
             Exportar
           </Button>
         </div>
       </div>
+
+      {/* Errores */}
+      {(dashboardError || chartError) && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-700 text-sm">
+            Error al cargar datos: {dashboardError || chartError}
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -175,42 +163,42 @@ export function AdminAnalytics() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-black mb-6">Ingresos y Pedidos</h3>
+          <h3 className="text-lg font-semibold text-black mb-6">Ingresos y Pedidos (Real)</h3>
           <div className="h-[300px] min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
-              <AreaChart data={revenueData}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#000000" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#000000" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-              <XAxis dataKey="name" stroke="#666" style={{ fontSize: '12px' }} />
-              <YAxis stroke="#666" style={{ fontSize: '12px' }} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
-                labelStyle={{ color: '#000', fontWeight: 600 }}
-                itemStyle={{ color: '#666' }}
-              />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="#000000"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorRevenue)"
-                name="Ingresos ($)"
-              />
-              <Line
-                type="monotone"
-                dataKey="orders"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6', r: 4 }}
-                name="Pedidos"
-              />
+              <AreaChart data={monthlySalesData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#000000" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#000000" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <XAxis dataKey="month" stroke="#666" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#666" style={{ fontSize: '12px' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
+                  labelStyle={{ color: '#000', fontWeight: 600 }}
+                  itemStyle={{ color: '#666' }}
+                />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#000000"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorRevenue)"
+                  name="Ingresos ($)"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="orders"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ fill: '#3b82f6', r: 4 }}
+                  name="Pedidos"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -223,34 +211,41 @@ export function AdminAnalytics() {
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <PieChart>
                 <Pie
-                  data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
-                itemStyle={{ color: '#000' }}
-              />
+                  data={topCategoriesData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="sales"
+                >
+                  {topCategoriesData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={index === 0 ? '#000000' : index === 1 ? '#404040' : index === 2 ? '#737373' : '#a3a3a3'}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
+                  itemStyle={{ color: '#000' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4">
-            {categoryData.map((item) => (
-              <div key={item.name} className="flex items-center gap-2">
+            {topCategoriesData.slice(0, 4).map((item, index) => (
+              <div key={item.category} className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
+                  style={{
+                    backgroundColor: index === 0 ? '#000000' : index === 1 ? '#404040' : index === 2 ? '#737373' : '#a3a3a3'
+                  }}
                 />
-                <span className="text-gray-700 text-sm truncate">{item.name}</span>
-                <span className="text-black text-sm ml-auto font-medium">{item.value}%</span>
+                <span className="text-gray-700 text-sm truncate">{item.category}</span>
+                <span className="text-black text-sm ml-auto font-medium">
+                  {((item.sales / (topCategoriesData.reduce((sum, c) => sum + c.sales, 0) || 1)) * 100).toFixed(1)}%
+                </span>
               </div>
             ))}
           </div>
@@ -259,20 +254,23 @@ export function AdminAnalytics() {
 
       {/* Charts Row 2 */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Traffic Sources */}
+        {/* Payment Methods */}
         <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-black mb-6">Fuentes de Tráfico</h3>
+          <h3 className="text-lg font-semibold text-black mb-6">Métodos de Pago</h3>
           <div className="space-y-4">
-            {trafficSources.map((source) => (
-              <div key={source.name}>
+            {paymentMethodsData.map((method, index) => (
+              <div key={method.method}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-800 text-sm sm:text-base">{source.name}</span>
-                  <span className="text-black font-medium">{source.value}%</span>
+                  <span className="text-gray-800 text-sm sm:text-base">{method.method}</span>
+                  <span className="text-black font-medium">{formatCurrency(method.amount)}</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${source.value}%`, backgroundColor: source.color }}
+                    style={{
+                      width: `${(method.amount / (paymentMethodsData.reduce((sum, m) => sum + m.amount, 0) || 1)) * 100}%`,
+                      backgroundColor: index === 0 ? '#000000' : index === 1 ? '#3b82f6' : index === 2 ? '#8b5cf6' : '#f59e0b'
+                    }}
                   />
                 </div>
               </div>
@@ -280,67 +278,57 @@ export function AdminAnalytics() {
           </div>
         </div>
 
-        {/* Conversion Rate */}
+        {/* Top Products */}
         <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-black mb-6">Tasa de Conversión</h3>
-          <div className="h-[250px] min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
-              <BarChart data={conversionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-                <XAxis dataKey="name" stroke="#666" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#666" style={{ fontSize: '12px' }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '8px' }}
-                  labelStyle={{ color: '#000', fontWeight: 600 }}
-                  itemStyle={{ color: '#666' }}
-                />
-                <Bar dataKey="rate" fill="#000000" radius={[4, 4, 0, 0]} name="Conversión %" />
-              </BarChart>
-            </ResponsiveContainer>
+          <h3 className="text-lg font-semibold text-black mb-6">Productos Más Vendidos</h3>
+          <div className="space-y-4">
+            {topProductsData.slice(0, 5).map((product, index) => (
+              <div key={product.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-600 w-6">{index + 1}</span>
+                  <div className="flex-1">
+                    <p className="text-black font-medium text-sm">{product.name}</p>
+                    <p className="text-gray-600 text-xs">{product.quantity} unidades vendidas</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-black font-medium">{formatCurrency(product.sales)}</p>
+                  <p className="text-gray-600 text-xs">{product.orders} pedidos</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Top Products */}
+      {/* Categories Performance Table */}
       <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-        <h3 className="text-lg font-semibold text-black mb-6">Productos Más Vendidos</h3>
+        <h3 className="text-lg font-semibold text-black mb-6">Rendimiento de Categorías</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-2 sm:px-4 text-sm font-semibold text-black">#</th>
-                <th className="text-left py-3 px-2 sm:px-4 text-sm font-semibold text-black">Producto</th>
+                <th className="text-left py-3 px-2 sm:px-4 text-sm font-semibold text-black">Categoría</th>
                 <th className="text-right py-3 px-2 sm:px-4 text-sm font-semibold text-black">Ventas</th>
-                <th className="text-right py-3 px-2 sm:px-4 text-sm font-semibold text-black">Ingresos</th>
-                <th className="text-right py-3 px-2 sm:px-4 text-sm font-semibold text-black hidden sm:table-cell">% del Total</th>
+                <th className="text-right py-3 px-2 sm:px-4 text-sm font-semibold text-black">Cantidad</th>
+                <th className="text-right py-3 px-2 sm:px-4 text-sm font-semibold text-black hidden sm:table-cell">Productos</th>
               </tr>
             </thead>
             <tbody>
-              {topProducts.map((product, index) => {
-                const totalRevenue = topProducts.reduce((sum, p) => sum + p.revenue, 0);
-                const percentage = ((product.revenue / totalRevenue) * 100).toFixed(1);
-                return (
-                  <tr key={product.name} className="border-b border-gray-100 last:border-0">
-                    <td className="py-4 px-2 sm:px-4 text-gray-600">{index + 1}</td>
-                    <td className="py-4 px-2 sm:px-4 text-black font-medium">{product.name}</td>
-                    <td className="py-4 px-2 sm:px-4 text-right text-gray-700">{product.sales}</td>
-                    <td className="py-4 px-2 sm:px-4 text-right text-black font-medium">
-                      {formatCurrency(product.revenue)}
-                    </td>
-                    <td className="py-4 px-2 sm:px-4 text-right hidden sm:table-cell">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-black rounded-full"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-gray-700 text-sm w-12">{percentage}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {topCategoriesData.map((category, index) => (
+                <tr key={category.category} className="border-b border-gray-100 last:border-0">
+                  <td className="py-4 px-2 sm:px-4 text-gray-600">{index + 1}</td>
+                  <td className="py-4 px-2 sm:px-4 text-black font-medium">{category.category}</td>
+                  <td className="py-4 px-2 sm:px-4 text-right text-black font-medium">
+                    {formatCurrency(category.sales)}
+                  </td>
+                  <td className="py-4 px-2 sm:px-4 text-right text-gray-700">{category.quantity}</td>
+                  <td className="py-4 px-2 sm:px-4 text-right hidden sm:table-cell text-gray-700">
+                    {category.products}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { analyticsService } from '../services/analytics.service.js';
 import { orderService } from '../services/order.service.js';
+import analyticsServiceReal from '../src/services/analyticsService.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
@@ -122,6 +123,36 @@ router.get('/recent-orders', authenticate, requireAdmin, async (req: Request, re
 router.get('/sales-by-gender', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await analyticsService.getSalesByGender();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Calcular datos de analítica reales (nuevo endpoint)
+router.post('/calculate-real-data', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    await analyticsServiceReal.calculateAllAnalytics();
+    res.json({ success: true, message: 'Datos de analítica calculados exitosamente' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Obtener datos del dashboard con datos reales
+router.get('/real-dashboard', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await analyticsServiceReal.getDashboardData();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Obtener datos para gráficos con datos reales
+router.get('/real-chart-data', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await analyticsServiceReal.getChartData();
     res.json({ success: true, data });
   } catch (error) {
     next(error);

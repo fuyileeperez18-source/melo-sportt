@@ -1,32 +1,98 @@
-import { useQuery } from '@tanstack/react-query';
-import { analyticsService } from '@/lib/services';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
-export function useDashboardMetrics() {
+export interface AnalyticsDashboardData {
+  monthlySales: Array<{
+    month: string;
+    sales: number;
+    orders: number;
+    activeProducts: number;
+    totalProducts: number;
+  }>;
+  topProducts: Array<{
+    name: string;
+    sales: number;
+    quantity: number;
+    orders: number;
+    image?: string;
+  }>;
+  topCategories: Array<{
+    name: string;
+    sales: number;
+    quantity: number;
+    products: number;
+  }>;
+  generalStats: {
+    totalSales: number;
+    totalOrders: number;
+    totalUsers: number;
+    activeUsers: number;
+  };
+}
+
+export interface AnalyticsChartData {
+  monthlySales: Array<{
+    month: string;
+    sales: number;
+    orders: number;
+  }>;
+  paymentMethods: Array<{
+    method: string;
+    orders: number;
+    amount: number;
+  }>;
+  categories: Array<{
+    category: string;
+    sales: number;
+    quantity: number;
+  }>;
+}
+
+export function useAnalyticsDashboard() {
   return useQuery({
-    queryKey: ['analytics', 'dashboard'],
-    queryFn: () => analyticsService.getDashboardMetrics(),
-    refetchInterval: 60000, // Refetch every minute
+    queryKey: ['analytics', 'real-dashboard'],
+    queryFn: async () => {
+      const response = await api.get<AnalyticsDashboardData>('/analytics/real-dashboard');
+      if (response.success) {
+        return response.data!;
+      } else {
+        throw new Error(response.message || 'Error al obtener datos del dashboard');
+      }
+    },
+    refetchInterval: 60000,
   });
 }
 
-export function useRevenueByPeriod(startDate: string, endDate: string) {
+export function useAnalyticsChartData() {
   return useQuery({
-    queryKey: ['analytics', 'revenue', startDate, endDate],
-    queryFn: () => analyticsService.getRevenueByPeriod(startDate, endDate),
-    enabled: !!startDate && !!endDate,
+    queryKey: ['analytics', 'real-chart-data'],
+    queryFn: async () => {
+      const response = await api.get<AnalyticsChartData>('/analytics/real-chart-data');
+      if (response.success) {
+        return response.data!;
+      } else {
+        throw new Error(response.message || 'Error al obtener datos de gráficos');
+      }
+    },
+    refetchInterval: 60000,
   });
 }
 
-export function useTopProducts(limit = 10) {
-  return useQuery({
-    queryKey: ['analytics', 'top-products', limit],
-    queryFn: () => analyticsService.getTopProducts(limit),
-  });
-}
+export function useCalculateRealData() {
+  const queryClient = useQueryClient();
 
-export function useOrdersByStatus() {
-  return useQuery({
-    queryKey: ['analytics', 'orders-by-status'],
-    queryFn: () => analyticsService.getOrdersByStatus(),
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/analytics/calculate-real-data');
+      if (!response.success) {
+        throw new Error(response.message || 'Error al calcular datos');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      // Invalidar y refetch los datos de analítica
+      queryClient.invalidateQueries({ queryKey: ['analytics', 'real-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics', 'real-chart-data'] });
+    },
   });
 }
