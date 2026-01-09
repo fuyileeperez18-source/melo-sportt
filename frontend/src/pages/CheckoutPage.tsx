@@ -332,7 +332,7 @@ export function CheckoutPage() {
           product_id: item.product.id,
           variant_id: item.variant?.id,
           quantity: item.quantity,
-          price: Number(item.price),
+          price: typeof item.price === 'number' ? item.price : parseFloat(item.price),
         })),
       } as any;
 
@@ -391,7 +391,7 @@ export function CheckoutPage() {
           product_id: item.product.id,
           variant_id: item.variant?.id,
           quantity: item.quantity,
-          price: Number(item.price),
+          price: typeof item.price === 'number' ? item.price : parseFloat(item.price),
         })),
       } as any;
 
