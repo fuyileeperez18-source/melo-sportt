@@ -84,6 +84,39 @@ Machine wash cold with similar colors. Tumble dry low. Do not bleach. Iron on lo
   updated_at: new Date().toISOString(),
 };
 
+// Mock "iodaoed" product data for testing
+const mockIodaoedProduct: Product = {
+  id: '2',
+  name: 'iodaoed',
+  slug: 'iodaoed',
+  description: `A premium sports jersey with unique design and graphics. Made for athletes who want to stand out with style and performance.`,
+  short_description: 'Sports jersey with graphics',
+  price: 20000.00,
+  sku: 'IOD-001',
+  quantity: 50,
+  track_quantity: true,
+  continue_selling_when_out_of_stock: false,
+  category_id: '5',
+  category: { id: '5', name: 'Jerseys', slug: 'jerseys', position: 5, is_active: true },
+  brand: 'WALMER',
+  tags: ['sports', 'jersey', 'graphics'],
+  images: [
+    { id: '5', product_id: '2', url: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=1200', alt_text: 'Jersey Front', position: 1, is_primary: true },
+    { id: '6', product_id: '2', url: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=1200', alt_text: 'Jersey Back', position: 2, is_primary: false },
+  ],
+  variants: [
+    { id: 'v9', product_id: '2', name: 'Small', sku: 'IOD-001-S', price: 20000.00, quantity: 15, options: [{ name: 'Size', value: 'S' }], is_active: true },
+    { id: 'v10', product_id: '2', name: 'Medium', sku: 'IOD-001-M', price: 20000.00, quantity: 20, options: [{ name: 'Size', value: 'M' }], is_active: true },
+    { id: 'v11', product_id: '2', name: 'Large', sku: 'IOD-001-L', price: 20000.00, quantity: 15, options: [{ name: 'Size', value: 'L' }], is_active: true },
+  ],
+  is_active: true,
+  is_featured: false,
+  seo_title: 'iodaoed Jersey | WALMER Store',
+  seo_description: 'Premium sports jersey with unique graphics design.',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 const relatedProducts: Product[] = [
   {
     id: '2',
@@ -195,7 +228,7 @@ export function ProductPage() {
   const userId = currentUser?.id;
 
   // In real app, fetch product by slug from Supabase
-  const product = mockProduct;
+  const product = slug === 'iodaoed' ? mockIodaoedProduct : mockProduct;
 
   const { data: wishlistIds } = useWishlistIds(userId);
   const { toggle } = useToggleWishlist(userId);
