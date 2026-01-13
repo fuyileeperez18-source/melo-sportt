@@ -339,9 +339,12 @@ export function AdminProducts() {
         is_featured: formData.isFeatured,
         is_set: formData.isSet,
         accessories: formData.accessories
-          .filter(acc => acc.type && acc.price)
+          .filter(acc => {
+            const price = parseFloat(acc.price);
+            return acc.type && acc.type.trim() !== '' && !isNaN(price) && price > 0;
+          })
           .map(acc => ({
-            type: acc.type,
+            type: acc.type.trim(),
             price: parseFloat(acc.price),
           })),
       };
