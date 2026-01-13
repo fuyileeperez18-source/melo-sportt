@@ -296,7 +296,7 @@ export const categoryService = {
 
         // Si la categoría no tiene image_url, obtener la primera imagen del primer producto
         let image_url = category.image_url;
-        if (!image_url && (count || 0) > 0) {
+        if ((!image_url || image_url.trim() === '') && (count || 0) > 0) {
           const { data: products } = await supabase
             .from('products')
             .select(`

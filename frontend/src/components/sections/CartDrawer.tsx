@@ -114,11 +114,11 @@ export function CartDrawer() {
                           </p>
                         )}
 
-                        {/* Mostrar información del accesorio si es un conjunto con accesorio */}
-                        {item.product.is_set && item.product.has_accessory && item.include_accessory && (
+                        {/* Mostrar información de los accesorios si es un conjunto */}
+                        {item.product.is_set && item.selected_accessories && item.selected_accessories.length > 0 && (
                           <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
                             <span>✓</span>
-                            <span>Incluye {item.product.accessory_type || 'accesorio'}</span>
+                            <span>Incluye {item.selected_accessories.join(', ')}</span>
                           </p>
                         )}
 

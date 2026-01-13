@@ -429,47 +429,53 @@ export function ProductPage() {
                 )}
 
                 {/* Accessory Selection - Solo para conjuntos con accesorios */}
-                {product.is_set && product.has_accessory && (
+                {product.is_set && product.accessories && product.accessories.length > 0 && (
                   <div className="mb-8 p-6 bg-primary-900 rounded-xl border border-primary-800">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-sm font-medium text-white block">Incluir Accesorio</span>
-                        <span className="text-xs text-gray-400 capitalize">
-                          {product.accessory_type || 'Accesorio'}
-                        </span>
-                      </div>
-                      {product.accessory_price && (
-                        <span className="text-lg font-bold text-white">
-                          +{formatCurrency(product.accessory_price)}
-                        </span>
-                      )}
+                    <div className="mb-4">
+                      <span className="text-sm font-medium text-white block mb-2">Accesorios Opcionales</span>
+                      <p className="text-xs text-gray-400">Selecciona los accesorios que deseas agregar al conjunto</p>
                     </div>
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <div className={cn(
-                        'relative w-12 h-6 rounded-full transition-colors',
-                        includeAccessory ? 'bg-emerald-500' : 'bg-white/20'
-                      )}>
-                        <input
-                          type="checkbox"
-                          checked={includeAccessory}
-                          onChange={(e) => setIncludeAccessory(e.target.checked)}
-                          className="sr-only"
-                        />
-                        <div className={cn(
-                          'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
-                          includeAccessory ? 'left-7' : 'left-1'
-                        )} />
-                      </div>
-                      <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                        {includeAccessory 
-                          ? `Incluir ${product.accessory_type || 'accesorio'} (+${formatCurrency(product.accessory_price || 0)})`
-                          : `Solo conjunto (camisa + pantalón)`
-                        }
-                      </span>
-                    </label>
-                    {includeAccessory && product.accessory_type && (
-                      <p className="text-xs text-gray-400 mt-2 ml-15">
-                        El conjunto incluirá: camisa, pantalón y {product.accessory_type}
+                    <div className="space-y-3">
+                      {product.accessories.map((accessory, index) => {
+                        const isSelected = selectedAccessories.includes(accessory.type);
+                        return (
+                          <label key={index} className="flex items-center gap-3 cursor-pointer group p-3 rounded-lg hover:bg-primary-800/50 transition-colors">
+                            <div className={cn(
+                              'relative w-12 h-6 rounded-full transition-colors',
+                              isSelected ? 'bg-emerald-500' : 'bg-white/20'
+                            )}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedAccessories([...selectedAccessories, accessory.type]);
+                                  } else {
+                                    setSelectedAccessories(selectedAccessories.filter(t => t !== accessory.type));
+                                  }
+                                }}
+                                className="sr-only"
+                              />
+                              <div className={cn(
+                                'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                                isSelected ? 'left-7' : 'left-1'
+                              )} />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm text-gray-300 group-hover:text-white transition-colors capitalize">
+                                {accessory.type}
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold text-white">
+                              +{formatCurrency(accessory.price)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {selectedAccessories.length > 0 && (
+                      <p className="text-xs text-emerald-400 mt-4 pt-3 border-t border-primary-800">
+                        ✓ El conjunto incluirá: camisa, pantalón y {selectedAccessories.join(', ')}
                       </p>
                     )}
                   </div>
