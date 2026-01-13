@@ -229,49 +229,58 @@ export const productService = {
   },
 
   async getBySlug(slug: string): Promise<Product> {
-    const result = await query(
-      `SELECT p.*,
-        json_build_object(
-          'id', c.id,
-          'name', c.name,
-          'slug', c.slug
-        ) as category,
-        COALESCE(
-          (SELECT json_agg(pi ORDER BY pi.position)
-           FROM product_images pi
-           WHERE pi.product_id = p.id), '[]'
-        ) as images,
-        COALESCE(
-          (SELECT json_agg(pv)
-           FROM product_variants pv
-           WHERE pv.product_id = p.id AND pv.is_active = true), '[]'
-        ) as variants,
-        COALESCE(
-          (SELECT json_agg(
-            json_build_object(
-              'id', pr.id,
-              'rating', pr.rating,
-              'title', pr.title,
-              'content', pr.content,
-              'created_at', pr.created_at,
-              'user', json_build_object('id', u.id, 'full_name', u.full_name, 'avatar_url', u.avatar_url)
+    try {
+      const result = await query(
+        `SELECT p.*,
+          json_build_object(
+            'id', c.id,
+            'name', c.name,
+            'slug', c.slug
+          ) as category,
+          COALESCE(
+            (SELECT json_agg(pi ORDER BY pi.position)
+             FROM product_images pi
+             WHERE pi.product_id = p.id), '[]'
+          ) as images,
+          COALESCE(
+            (SELECT json_agg(pv)
+             FROM product_variants pv
+             WHERE pv.product_id = p.id AND pv.is_active = true), '[]'
+          ) as variants,
+          COALESCE(
+            (SELECT json_agg(
+              json_build_object(
+                'id', pr.id,
+                'rating', pr.rating,
+                'title', pr.title,
+                'content', pr.content,
+                'created_at', pr.created_at,
+                'user', json_build_object('id', u.id, 'full_name', u.full_name, 'avatar_url', u.avatar_url)
+              )
             )
-          )
-           FROM product_reviews pr
-           LEFT JOIN users u ON pr.user_id = u.id
-           WHERE pr.product_id = p.id), '[]'
-        ) as reviews
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.slug = $1`,
-      [slug]
-    );
+             FROM reviews pr
+             LEFT JOIN users u ON pr.user_id = u.id
+             WHERE pr.product_id = p.id), '[]'
+          ) as reviews
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.slug = $1`,
+        [slug]
+      );
 
-    if (result.rows.length === 0) {
-      throw new AppError('Product not found', 404);
+      if (result.rows.length === 0) {
+        throw new AppError('Product not found', 404);
+      }
+
+      return result.rows[0] as Product;
+    } catch (error: any) {
+      console.error('❌ [PRODUCT SERVICE] Error in getBySlug:', error.message);
+      console.error('❌ [PRODUCT SERVICE] Slug:', slug);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(`Error fetching product: ${error.message}`, 500);
     }
-
-    return result.rows[0] as Product;
   },
 
   async getById(id: string): Promise<Product> {
