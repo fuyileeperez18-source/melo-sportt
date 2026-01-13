@@ -88,8 +88,13 @@ export function ProductPage() {
 
   // Extract unique sizes and colors from variants
   const variants = product.variants || [];
-  const sizes = [...new Set(variants.map((v) => v.options?.find((o) => o.name === 'Size')?.value).filter(Boolean))];
+  const variantSizes = [...new Set(variants.map((v) => v.options?.find((o) => o.name === 'Size')?.value).filter(Boolean))];
   const colors = [...new Set(variants.map((v) => v.options?.find((o) => o.name === 'Color')?.value).filter(Boolean))];
+  
+  // Combine sizes from product.sizes and variant sizes (product sizes take priority)
+  const sizes = product.sizes && product.sizes.length > 0 
+    ? product.sizes 
+    : variantSizes;
 
   // Find selected variant
   const selectedVariant = variants.find(
@@ -244,11 +249,25 @@ export function ProductPage() {
             <AnimatedSection animation="fadeUp" delay={0.2}>
               <div>
                 {/* Brand & category */}
-                <div className="flex items-center gap-4 mb-2">
+                <div className="flex items-center gap-4 mb-2 flex-wrap">
                   {product.brand && (
-                    <span className="text-sm text-gray-400">{product.brand}</span>
+                    <>
+                      <span className="text-sm text-gray-400">{product.brand}</span>
+                      <span className="text-sm text-gray-500">|</span>
+                    </>
                   )}
-                  <span className="text-sm text-gray-500">|</span>
+                  {product.gender && (
+                    <>
+                      <span className="text-sm text-gray-400 capitalize">{product.gender}</span>
+                      <span className="text-sm text-gray-500">|</span>
+                    </>
+                  )}
+                  {product.product_type && (
+                    <>
+                      <span className="text-sm text-gray-400 capitalize">{product.product_type}</span>
+                      <span className="text-sm text-gray-500">|</span>
+                    </>
+                  )}
                   <Link
                     to={`/shop?category=${product.category?.slug}`}
                     className="text-sm text-gray-400 hover:text-white transition-colors"
@@ -468,10 +487,27 @@ export function ProductPage() {
                   </div>
                 </div>
 
-                {/* SKU */}
-                <p className="text-sm text-gray-500">
-                  SKU: {selectedVariant?.sku || product.sku}
-                </p>
+                {/* Product Information */}
+                <div className="space-y-2 mb-8">
+                  {/* SKU */}
+                  {product.sku && (
+                    <p className="text-sm text-gray-500">
+                      SKU: <span className="text-gray-400">{selectedVariant?.sku || product.sku}</span>
+                    </p>
+                  )}
+                  
+                  {/* Additional product info */}
+                  {(product.material || product.weight) && (
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      {product.material && (
+                        <span>Material: <span className="text-gray-400">{product.material}</span></span>
+                      )}
+                      {product.weight && (
+                        <span>Peso: <span className="text-gray-400">{product.weight}g</span></span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </AnimatedSection>
           </div>
