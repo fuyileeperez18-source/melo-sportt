@@ -125,7 +125,13 @@ export function AdminAnalytics() {
       {(dashboardError || chartError) && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-700 text-sm">
-            Error al cargar datos: {dashboardError || chartError}
+            Error al cargar datos: {
+              dashboardError instanceof Error 
+                ? dashboardError.message 
+                : chartError instanceof Error 
+                ? chartError.message 
+                : String(dashboardError || chartError || 'Error desconocido')
+            }
           </p>
         </div>
       )}
@@ -235,14 +241,14 @@ export function AdminAnalytics() {
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4">
             {topCategoriesData.slice(0, 4).map((item, index) => (
-              <div key={item.category} className="flex items-center gap-2">
+              <div key={item.name} className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{
                     backgroundColor: index === 0 ? '#000000' : index === 1 ? '#404040' : index === 2 ? '#737373' : '#a3a3a3'
                   }}
                 />
-                <span className="text-gray-700 text-sm truncate">{item.category}</span>
+                <span className="text-gray-700 text-sm truncate">{item.name}</span>
                 <span className="text-black text-sm ml-auto font-medium">
                   {((item.sales / (topCategoriesData.reduce((sum, c) => sum + c.sales, 0) || 1)) * 100).toFixed(1)}%
                 </span>
@@ -317,9 +323,9 @@ export function AdminAnalytics() {
             </thead>
             <tbody>
               {topCategoriesData.map((category, index) => (
-                <tr key={category.category} className="border-b border-gray-100 last:border-0">
+                <tr key={category.name} className="border-b border-gray-100 last:border-0">
                   <td className="py-4 px-2 sm:px-4 text-gray-600">{index + 1}</td>
-                  <td className="py-4 px-2 sm:px-4 text-black font-medium">{category.category}</td>
+                  <td className="py-4 px-2 sm:px-4 text-black font-medium">{category.name}</td>
                   <td className="py-4 px-2 sm:px-4 text-right text-black font-medium">
                     {formatCurrency(category.sales)}
                   </td>
