@@ -31,7 +31,7 @@ import {
 
 import { Button } from '@/components/ui/Button';
 import { useAnalyticsDashboard, useAnalyticsChartData, useCalculateRealData } from '@/hooks/useAnalytics';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCategoryName } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 const timeRanges = ['7 días', '30 días', '90 días', '12 meses'];
@@ -325,7 +325,7 @@ export function AdminAnalytics() {
               {topCategoriesData.map((category, index) => (
                 <tr key={category.name} className="border-b border-gray-100 last:border-0">
                   <td className="py-4 px-2 sm:px-4 text-gray-600">{index + 1}</td>
-                  <td className="py-4 px-2 sm:px-4 text-black font-medium">{category.name}</td>
+                  <td className="py-4 px-2 sm:px-4 text-black font-medium">{formatCategoryName(category.name)}</td>
                   <td className="py-4 px-2 sm:px-4 text-right text-black font-medium">
                     {formatCurrency(category.sales)}
                   </td>

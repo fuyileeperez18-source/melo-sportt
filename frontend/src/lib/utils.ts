@@ -333,3 +333,13 @@ export function sortBy<T>(
     return 0;
   });
 }
+
+// Format category name
+export function formatCategoryName(name: string | undefined | null): string {
+  if (!name) return '';
+  // Convert "CONJUNTO" to "conjuntos"
+  if (name.toUpperCase() === 'CONJUNTO') {
+    return 'conjuntos';
+  }
+  return name;
+}

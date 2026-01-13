@@ -32,7 +32,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToggleWishlist, useWishlistIds } from '@/hooks/useWishlist';
 import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
-import { cn, formatCurrency, calculateDiscount } from '@/lib/utils';
+import { cn, formatCurrency, calculateDiscount, formatCategoryName } from '@/lib/utils';
 import type { Product, ProductVariant } from '@/types';
 
 export function ProductPage() {
@@ -154,7 +154,7 @@ export function ProductPage() {
           <Link to="/shop" className="hover:text-white transition-colors">Shop</Link>
           <ChevronRight className="h-4 w-4" />
           <Link to={`/shop?category=${product.category?.slug}`} className="hover:text-white transition-colors">
-            {product.category?.name}
+            {formatCategoryName(product.category?.name)}
           </Link>
           <ChevronRight className="h-4 w-4" />
           <span className="text-white">{product.name}</span>
@@ -273,7 +273,7 @@ export function ProductPage() {
                     to={`/shop?category=${product.category?.slug}`}
                     className="text-sm text-gray-400 hover:text-white transition-colors"
                   >
-                    {product.category?.name}
+                    {formatCategoryName(product.category?.name)}
                   </Link>
                 </div>
 

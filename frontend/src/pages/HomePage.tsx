@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { categoryService } from '@/lib/supabase';
 import { useFeaturedProducts } from '@/hooks/useProducts';
+import { formatCategoryName } from '@/lib/utils';
 import type { Category } from '@/types';
 
 // Mock data - replace with real data from Supabase
@@ -225,7 +226,7 @@ export function HomePage() {
                     whileHover={{ scale: 1.02 }}
                     className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-primary-900"
                   >
-                    {category.image_url ? (
+                    {category.image_url && category.image_url.trim() !== '' ? (
                       <img
                         src={category.image_url}
                         alt={category.name}
@@ -238,16 +239,17 @@ export function HomePage() {
                           if (fallback) fallback.style.display = 'flex';
                         }}
                       />
-                    ) : null}
-                    <div className={`category-fallback ${category.image_url ? 'hidden' : 'flex'} absolute inset-0 bg-gradient-to-br from-primary-800 to-primary-900 items-center justify-center`}>
-                      <div className="text-center">
-                        <ShoppingBag className="h-16 w-16 text-white/30 mx-auto mb-4" />
-                        <p className="text-white/50 text-sm">{category.name}</p>
+                    ) : (
+                      <div className="category-fallback flex absolute inset-0 bg-gradient-to-br from-primary-800 to-primary-900 items-center justify-center">
+                        <div className="text-center">
+                          <ShoppingBag className="h-16 w-16 text-white/30 mx-auto mb-4" />
+                          <p className="text-white/50 text-sm">{formatCategoryName(category.name)}</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6">
-                      <h3 className="text-2xl font-bold text-white mb-1">{category.name}</h3>
+                      <h3 className="text-2xl font-bold text-white mb-1">{formatCategoryName(category.name)}</h3>
                       <p className="text-gray-300 text-sm">
                         {loadingCategories ? (
                           <span className="inline-block w-8 h-4 bg-white/20 animate-pulse rounded" />

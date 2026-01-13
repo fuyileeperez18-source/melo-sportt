@@ -15,7 +15,7 @@ import { ProductGrid } from '@/components/ui/ProductCard';
 import { Button, IconButton } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/Input';
 import { BottomSheet } from '@/components/ui/Modal';
-import { cn } from '@/lib/utils';
+import { cn, formatCategoryName } from '@/lib/utils';
 import { api } from '@/lib/api';
 import type { Product, ProductGender, ProductType, Category } from '@/types';
 
@@ -365,7 +365,7 @@ export function ShopPage() {
                             : 'text-gray-400 hover:text-white hover:bg-primary-800'
                         )}
                       >
-                        {category.name}
+                        {formatCategoryName(category.name)}
                       </button>
                     ))}
                   </div>
@@ -485,7 +485,7 @@ export function ShopPage() {
                   )}
                   {selectedCategory !== 'all' && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary-800 text-white rounded-full text-sm">
-                      {categories.find((c) => c.slug === selectedCategory)?.name}
+                      {formatCategoryName(categories.find((c) => c.slug === selectedCategory)?.name)}
                       <button onClick={() => setSelectedCategory('all')}>
                         <X className="h-3 w-3" />
                       </button>
@@ -608,7 +608,7 @@ export function ShopPage() {
                       : 'bg-primary-800 text-white'
                   )}
                 >
-                  {category.name}
+                  {formatCategoryName(category.name)}
                 </button>
               ))}
             </div>

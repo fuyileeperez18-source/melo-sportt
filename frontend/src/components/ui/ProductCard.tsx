@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Star } from 'lucide-react';
-import { cn, formatCurrency, calculateDiscount } from '@/lib/utils';
+import { cn, formatCurrency, calculateDiscount, formatCategoryName } from '@/lib/utils';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useToggleWishlist, useWishlistIds } from '@/hooks/useWishlist';
@@ -248,7 +248,7 @@ export function ProductCard({
         <div className="p-4">
           {/* Category */}
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-            {product.category?.name || 'Colección'}
+            {formatCategoryName(product.category?.name) || 'Colección'}
           </p>
 
           {/* Name */}
