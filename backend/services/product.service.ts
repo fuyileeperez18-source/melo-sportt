@@ -392,8 +392,8 @@ export const productService = {
         cost_per_item, sku, barcode, quantity, track_quantity, continue_selling_when_out_of_stock,
         category_id, brand, tags, is_active, is_featured, seo_title, seo_description,
         gender, product_type, sizes, colors, material, weight,
-        is_set, has_accessory, accessory_type, accessory_price)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
+        is_set, accessories)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
        RETURNING *`,
       [
         product.name,
@@ -422,9 +422,7 @@ export const productService = {
         product.material,
         product.weight,
         product.is_set ?? false,
-        product.has_accessory ?? false,
-        product.accessory_type,
-        product.accessory_price,
+        product.accessories || [],
       ]
     );
 
@@ -442,7 +440,7 @@ export const productService = {
       'continue_selling_when_out_of_stock', 'category_id', 'brand', 'tags',
       'is_active', 'is_featured', 'seo_title', 'seo_description',
       'gender', 'product_type', 'sizes', 'colors', 'material', 'weight',
-      'is_set', 'has_accessory', 'accessory_type', 'accessory_price'
+      'is_set', 'accessories'
     ];
 
     for (const [key, value] of Object.entries(updates)) {

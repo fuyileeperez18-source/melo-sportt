@@ -126,6 +126,11 @@ export interface Address {
 export type ProductGender = 'hombre' | 'mujer' | 'unisex' | 'nino' | 'nina';
 export type ProductType = 'camiseta' | 'camisa' | 'pantalon' | 'chaqueta' | 'sudadera' | 'short' | 'accesorio' | 'zapato' | 'vestido' | 'falda' | 'otro';
 
+export interface Accessory {
+  type: string;
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -159,9 +164,7 @@ export interface Product {
   weight?: number | null; // Peso en gramos
   // Campos para conjuntos con accesorios
   is_set?: boolean; // Indica si es un conjunto
-  has_accessory?: boolean; // Indica si tiene accesorio opcional
-  accessory_type?: string | null; // Tipo de accesorio: gorra, reloj, etc.
-  accessory_price?: number | null; // Precio adicional del accesorio
+  accessories?: Accessory[]; // Array de accesorios opcionales
   created_at: string;
   updated_at: string;
 }

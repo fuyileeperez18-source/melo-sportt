@@ -25,7 +25,7 @@ import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { productService, categoryService, analyticsService } from '@/lib/services';
 import { ProductCardAdmin, ProductStatsDetail } from '@/components/admin/ProductCardAdmin';
-import type { Product, Category, ProductWithStats } from '@/types';
+import type { Product, Category, ProductWithStats, ProductAccessory } from '@/types';
 
 const genderOptions = [
   { value: '', label: 'Seleccionar Género' },

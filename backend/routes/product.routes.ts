@@ -113,6 +113,11 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 // ==================== ADMIN ROUTES ====================
 
+const accessorySchema = z.object({
+  type: z.string().min(1),
+  price: z.number().positive(),
+});
+
 const productSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
@@ -140,6 +145,9 @@ const productSchema = z.object({
   colors: z.array(z.string()).default([]),
   material: z.string().optional().nullable(),
   weight: z.number().optional().nullable(),
+  // Campos para conjuntos con accesorios
+  is_set: z.boolean().optional().default(false),
+  accessories: z.array(accessorySchema).optional().default([]),
 });
 
 // Create product (Admin)
