@@ -119,6 +119,11 @@ export interface UserNotification {
 export type ProductGender = 'hombre' | 'mujer' | 'unisex' | 'nino' | 'nina';
 export type ProductType = 'camiseta' | 'camisa' | 'pantalon' | 'chaqueta' | 'sudadera' | 'short' | 'accesorio' | 'zapato' | 'vestido' | 'falda' | 'otro';
 
+export interface ProductAccessory {
+  type: string;
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -152,9 +157,7 @@ export interface Product {
   weight?: number;
   // Campos para conjuntos con accesorios
   is_set?: boolean; // Indica si es un conjunto
-  has_accessory?: boolean; // Indica si tiene accesorio opcional
-  accessory_type?: string | null; // Tipo de accesorio: gorra, reloj, etc.
-  accessory_price?: number | null; // Precio adicional del accesorio
+  accessories?: ProductAccessory[]; // Array de accesorios opcionales
   created_at: string;
   updated_at: string;
 }
@@ -210,7 +213,7 @@ export interface CartItem {
   variant?: ProductVariant;
   quantity: number;
   price: number;
-  include_accessory?: boolean; // Para conjuntos: indica si se incluye el accesorio
+  selected_accessories?: string[]; // Para conjuntos: tipos de accesorios seleccionados
 }
 
 export interface Cart {

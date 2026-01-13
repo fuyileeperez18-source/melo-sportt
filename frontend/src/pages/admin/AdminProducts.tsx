@@ -113,6 +113,11 @@ const accessoryTypeOptions = [
   { value: 'otro', label: 'Otro' },
 ];
 
+interface Accessory {
+  type: string;
+  price: string;
+}
+
 interface FormData {
   name: string;
   sku: string;
@@ -134,9 +139,7 @@ interface FormData {
   isFeatured: boolean;
   isActive: boolean;
   isSet: boolean;
-  hasAccessory: boolean;
-  accessoryType: string;
-  accessoryPrice: string;
+  accessories: Accessory[];
 }
 
 const initialFormData: FormData = {
@@ -160,9 +163,7 @@ const initialFormData: FormData = {
   isFeatured: false,
   isActive: true,
   isSet: false,
-  hasAccessory: false,
-  accessoryType: '',
-  accessoryPrice: '',
+  accessories: [],
 };
 
 export function AdminProducts() {
@@ -282,9 +283,10 @@ export function AdminProducts() {
       isFeatured: product.is_featured,
       isActive: product.is_active,
       isSet: product.is_set || false,
-      hasAccessory: product.has_accessory || false,
-      accessoryType: product.accessory_type || '',
-      accessoryPrice: product.accessory_price?.toString() || '',
+      accessories: (product.accessories || []).map((acc: any) => ({
+        type: acc.type || '',
+        price: acc.price?.toString() || '',
+      })),
     });
     setProductImages(
       (product.images || []).map((img: any, index: number) => ({
@@ -336,7 +338,12 @@ export function AdminProducts() {
         is_active: formData.isActive,
         is_featured: formData.isFeatured,
         is_set: formData.isSet,
-        has_accessory: formData.hasAccessory,
+        accessories: formData.accessories
+          .filter(acc => acc.type && acc.price)
+          .map(acc => ({
+            type: acc.type,
+            price: parseFloat(acc.price),
+          })),
       };
 
       if (formData.comparePrice) {
@@ -347,12 +354,6 @@ export function AdminProducts() {
       }
       if (formData.weight) {
         productData.weight = parseFloat(formData.weight);
-      }
-      if (formData.hasAccessory) {
-        productData.accessory_type = formData.accessoryType || undefined;
-        if (formData.accessoryPrice) {
-          productData.accessory_price = parseFloat(formData.accessoryPrice);
-        }
       }
 
       let createdProduct: any;
@@ -1212,72 +1213,92 @@ export function AdminProducts() {
                         </span>
                       </label>
 
-                      {/* Opción de accesorio */}
+                      {/* Accesorios opcionales */}
                       {formData.isSet && (
-                        <>
-                          <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className={cn(
-                              'relative w-12 h-6 rounded-full transition-colors',
-                              formData.hasAccessory ? 'bg-emerald-500' : 'bg-white/20'
-                            )}>
-                              <input
-                                type="checkbox"
-                                checked={formData.hasAccessory}
-                                onChange={(e) => setFormData({ 
-                                  ...formData, 
-                                  hasAccessory: e.target.checked,
-                                  accessoryType: e.target.checked ? formData.accessoryType : '',
-                                  accessoryPrice: e.target.checked ? formData.accessoryPrice : ''
-                                })}
-                                className="sr-only"
-                              />
-                              <div className={cn(
-                                'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
-                                formData.hasAccessory ? 'left-7' : 'left-1'
-                              )} />
-                            </div>
-                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                              Incluir accesorio opcional
-                            </span>
-                          </label>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-300">
+                              Accesorios Opcionales
+                            </label>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setFormData({
+                                ...formData,
+                                accessories: [...formData.accessories, { type: '', price: '' }]
+                              })}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Agregar Accesorio
+                            </Button>
+                          </div>
 
-                          {/* Configuración del accesorio */}
-                          {formData.hasAccessory && (
-                            <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-white/10">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tipo de Accesorio *</label>
-                                <div className="relative">
-                                  <select
-                                    value={formData.accessoryType}
-                                    onChange={(e) => setFormData({ ...formData, accessoryType: e.target.value })}
-                                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
-                                  >
-                                    {accessoryTypeOptions.map((opt) => (
-                                      <option key={opt.value} value={opt.value} className="bg-gray-900">
-                                        {opt.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
+                          {formData.accessories.length > 0 && (
+                            <div className="space-y-3">
+                              {formData.accessories.map((accessory, index) => (
+                                <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Tipo de Accesorio</label>
+                                    <div className="relative">
+                                      <select
+                                        value={accessory.type}
+                                        onChange={(e) => {
+                                          const newAccessories = [...formData.accessories];
+                                          newAccessories[index].type = e.target.value;
+                                          setFormData({ ...formData, accessories: newAccessories });
+                                        }}
+                                        className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
+                                      >
+                                        {accessoryTypeOptions.map((opt) => (
+                                          <option key={opt.value} value={opt.value} className="bg-gray-900">
+                                            {opt.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 rotate-90 pointer-events-none" />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Precio</label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                      <Input
+                                        type="number"
+                                        value={accessory.price}
+                                        onChange={(e) => {
+                                          const newAccessories = [...formData.accessories];
+                                          newAccessories[index].price = e.target.value;
+                                          setFormData({ ...formData, accessories: newAccessories });
+                                        }}
+                                        placeholder="0.00"
+                                        className="h-10 pl-7 bg-white/5 border-white/10 text-white placeholder-gray-500 text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-end">
+                                    <IconButton
+                                      variant="ghost"
+                                      onClick={() => {
+                                        const newAccessories = formData.accessories.filter((_, i) => i !== index);
+                                        setFormData({ ...formData, accessories: newAccessories });
+                                      }}
+                                      className="h-10 w-10 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </IconButton>
+                                  </div>
                                 </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Precio del Accesorio</label>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                                  <Input
-                                    type="number"
-                                    value={formData.accessoryPrice}
-                                    onChange={(e) => setFormData({ ...formData, accessoryPrice: e.target.value })}
-                                    placeholder="0.00"
-                                    className="pl-7 bg-white/5 border-white/10 text-white placeholder-gray-500"
-                                  />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">Precio adicional si el cliente incluye el accesorio</p>
-                              </div>
+                              ))}
                             </div>
                           )}
-                        </>
+
+                          {formData.accessories.length === 0 && (
+                            <p className="text-sm text-gray-500 text-center py-4">
+                              No hay accesorios configurados. Haz clic en "Agregar Accesorio" para añadir uno.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

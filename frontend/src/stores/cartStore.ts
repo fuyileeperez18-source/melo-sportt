@@ -7,7 +7,7 @@ interface CartState {
   isOpen: boolean;
 
   // Actions
-  addItem: (product: Product, quantity?: number, variant?: ProductVariant, includeAccessory?: boolean) => void;
+  addItem: (product: Product, quantity?: number, variant?: ProductVariant, selectedAccessories?: string[]) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -27,11 +27,12 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
 
-      addItem: (product, quantity = 1, variant, includeAccessory = false) => {
+      addItem: (product, quantity = 1, variant, selectedAccessories = []) => {
         set((state) => {
-          // Para conjuntos con accesorios, considerar el accesorio al buscar items existentes
-          const itemKey = product.is_set && product.has_accessory 
-            ? `${product.id}-${variant?.id || 'default'}-${includeAccessory ? 'with-accessory' : 'without-accessory'}`
+          // Para conjuntos con accesorios, considerar los accesorios al buscar items existentes
+          const accessoriesKey = selectedAccessories.sort().join(',');
+          const itemKey = product.is_set && selectedAccessories.length > 0
+            ? `${product.id}-${variant?.id || 'default'}-${accessoriesKey}`
             : `${product.id}-${variant?.id || 'default'}`;
 
           const existingItemIndex = state.items.findIndex(
@@ -39,9 +40,10 @@ export const useCartStore = create<CartState>()(
               const itemIdMatch = item.product.id === product.id &&
                 (variant ? item.variant?.id === variant.id : !item.variant);
 
-              // Para conjuntos, también verificar si el accesorio coincide
-              if (product.is_set && product.has_accessory) {
-                return itemIdMatch && item.include_accessory === includeAccessory;
+              // Para conjuntos, también verificar si los accesorios coinciden
+              if (product.is_set && product.accessories && product.accessories.length > 0) {
+                const itemAccessoriesKey = (item.selected_accessories || []).sort().join(',');
+                return itemIdMatch && itemAccessoriesKey === accessoriesKey;
               }
 
               return itemIdMatch;
@@ -54,12 +56,12 @@ export const useCartStore = create<CartState>()(
             return { items: newItems, isOpen: true };
           }
 
-          // Calcular precio base + accesorio si aplica
+          // Calcular precio base + accesorios si aplica
           const basePrice = variant?.price || product.price;
-          const accessoryPrice = (product.is_set && product.has_accessory && includeAccessory && product.accessory_price) 
-            ? product.accessory_price 
-            : 0;
-          const finalPrice = basePrice + accessoryPrice;
+          const accessoriesPrice = (product.accessories || [])
+            .filter(acc => selectedAccessories.includes(acc.type))
+            .reduce((sum, acc) => sum + acc.price, 0);
+          const finalPrice = basePrice + accessoriesPrice;
 
           const newItem: CartItem = {
             id: `${itemKey}-${Date.now()}`,
@@ -67,7 +69,7 @@ export const useCartStore = create<CartState>()(
             variant,
             quantity,
             price: finalPrice,
-            include_accessory: product.is_set && product.has_accessory ? includeAccessory : undefined,
+            selected_accessories: product.is_set ? selectedAccessories : undefined,
           };
 
           return { items: [...state.items, newItem], isOpen: true };

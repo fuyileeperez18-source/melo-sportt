@@ -42,7 +42,7 @@ export function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
-  const [includeAccessory, setIncludeAccessory] = useState(false);
+  const [selectedAccessories, setSelectedAccessories] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [isZoomed, setIsZoomed] = useState(false);
 
@@ -120,7 +120,7 @@ export function ProductPage() {
       return;
     }
 
-    addItem(product, quantity, selectedVariant || undefined, includeAccessory);
+    addItem(product, quantity, selectedVariant || undefined, selectedAccessories);
     toast.success('Added to cart!');
   };
 
@@ -313,19 +313,30 @@ export function ProductPage() {
                   <div>
                     <span className="text-3xl font-bold text-white">
                       {formatCurrency(
-                        (selectedVariant?.price || product.price) + 
-                        (includeAccessory && product.accessory_price ? product.accessory_price : 0)
+                        (selectedVariant?.price || product.price) +
+                        (product.accessories || [])
+                          .filter(acc => selectedAccessories.includes(acc.type))
+                          .reduce((sum, acc) => sum + acc.price, 0)
                       )}
                     </span>
-                    {includeAccessory && product.accessory_price && (
+                    {selectedAccessories.length > 0 && (
                       <div className="text-sm text-gray-400 mt-1">
-                        {formatCurrency(selectedVariant?.price || product.price)} + {formatCurrency(product.accessory_price)} accesorio
+                        {formatCurrency(selectedVariant?.price || product.price)} + {formatCurrency(
+                          (product.accessories || [])
+                            .filter(acc => selectedAccessories.includes(acc.type))
+                            .reduce((sum, acc) => sum + acc.price, 0)
+                        )} accesorios
                       </div>
                     )}
                   </div>
                   {product.compare_at_price && (
                     <span className="text-xl text-gray-500 line-through">
-                      {formatCurrency(product.compare_at_price + (includeAccessory && product.accessory_price ? product.accessory_price : 0))}
+                      {formatCurrency(
+                        product.compare_at_price +
+                        (product.accessories || [])
+                          .filter(acc => selectedAccessories.includes(acc.type))
+                          .reduce((sum, acc) => sum + acc.price, 0)
+                      )}
                     </span>
                   )}
                   {discount > 0 && (
