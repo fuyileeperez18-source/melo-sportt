@@ -422,7 +422,7 @@ export const productService = {
         product.material,
         product.weight,
         product.is_set ?? false,
-        product.accessories || [],
+        JSON.stringify(product.accessories || []),
       ]
     );
 
@@ -446,7 +446,8 @@ export const productService = {
     for (const [key, value] of Object.entries(updates)) {
       if (allowedFields.includes(key) && value !== undefined) {
         fields.push(`${key} = $${paramIndex}`);
-        values.push(value);
+        // Serializar campos JSON antes de enviar a PostgreSQL
+        values.push(key === 'accessories' ? JSON.stringify(value) : value);
         paramIndex++;
       }
     }
