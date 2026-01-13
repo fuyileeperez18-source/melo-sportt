@@ -326,10 +326,66 @@ export function AdminProducts() {
       if (isEdit && selectedProduct) {
         await productService.update(selectedProduct.id, productData);
 
-        // Actualizar imágenes: eliminar las que ya no están y agregar las nuevas
-        // Esto es una simplificación, idealmente se comparan IDs
-        // Por ahora, si es edición, ya el componente ImageUpload maneja la subida a Cloudinary
-        // Solo necesitamos asegurar que el producto tiene las imágenes correctas asociadas
+        // Sincronizar imágenes: comparar las originales con las actuales
+        const originalImages = (selectedProduct.images || []).map((img: any) => ({
+          id: img.id,
+          url: img.url,
+        }));
+        
+        // Identificar imágenes existentes (tienen ID que no es temporal ni public_id)
+        const existingImageIds = productImages
+          .filter(img => {
+            // Las imágenes de BD tienen IDs UUID, no public_id de Cloudinary
+            return img.id && 
+                   !img.id.startsWith('temp-') && 
+                   originalImages.some(orig => orig.id === img.id);
+          })
+          .map(img => img.id);
+        
+        // Eliminar imágenes que ya no están en la lista
+        const imagesToDelete = originalImages.filter(
+          origImg => !existingImageIds.includes(origImg.id)
+        );
+        
+        for (const imgToDelete of imagesToDelete) {
+          try {
+            await productService.deleteImage(imgToDelete.id);
+          } catch (error) {
+            console.error('Error eliminando imagen:', error);
+          }
+        }
+        
+        // Agregar nuevas imágenes (las que no tienen ID de BD o tienen ID temporal/public_id)
+        const newImages = productImages.filter(
+          img => {
+            // Es nueva si no tiene ID de BD
+            return !img.id || 
+                   img.id.startsWith('temp-') || 
+                   !originalImages.some(orig => orig.id === img.id);
+          }
+        );
+        
+        for (let i = 0; i < productImages.length; i++) {
+          const image = productImages[i];
+          // Solo agregar si es nueva
+          const isNew = !image.id || 
+                       image.id.startsWith('temp-') || 
+                       !originalImages.some(orig => orig.id === image.id);
+          
+          if (isNew && image.url) {
+            try {
+              await productService.addImage(selectedProduct.id, {
+                url: image.url,
+                alt_text: formData.name,
+                position: i,
+                is_primary: image.is_primary || i === 0,
+              });
+            } catch (imgError) {
+              console.error('Error agregando imagen:', imgError);
+            }
+          }
+        }
+        
         toast.success('Producto actualizado exitosamente');
         setIsEditModalOpen(false);
       } else {

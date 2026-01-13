@@ -186,8 +186,16 @@ export function ImageUpload({
 
       onChange(newImages);
 
-      // Intentar eliminar de Cloudinary si tiene public_id
-      if (imageToRemove.public_id) {
+      // Solo eliminar de Cloudinary si es una imagen nueva que aún no está asociada a un producto
+      // Las imágenes con ID de BD se eliminarán cuando se guarde el producto
+      // Verificamos si tiene public_id pero no tiene un ID de BD (UUID)
+      const isUUID = (id: string) => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(id);
+      };
+      
+      if (imageToRemove.public_id && imageToRemove.id && !isUUID(imageToRemove.id)) {
+        // Es una imagen nueva (tiene public_id pero el ID no es un UUID de BD)
         try {
           await api.delete(`/upload/image/${encodeURIComponent(imageToRemove.public_id)}`);
         } catch (error) {
@@ -246,6 +254,12 @@ export function ImageUpload({
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
+        onClick={() => {
+          // Permitir click en el dropzone para abrir el selector de archivos
+          if (!isUploading && fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}
         className={cn(
           'relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200',
           dragActive
@@ -255,20 +269,17 @@ export function ImageUpload({
         )}
       >
         {/*
-          En móvil (sobre todo iOS Safari) abrir el selector de archivos puede fallar
-          si el input está display:none y se intenta disparar con .click().
-          Por eso dejamos el <input> visible para el navegador (opacity-0) y lo
-          ponemos encima del dropzone para que el tap funcione.
+          Input de archivos oculto pero funcional
+          Se activa tanto por click en el dropzone como por el input directamente
         */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           multiple
-          capture="environment"
           onChange={(e) => handleFiles(e.target.files)}
           disabled={isUploading}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="hidden"
         />
 
         {/* Content */}
@@ -279,7 +290,7 @@ export function ImageUpload({
             <p className="text-gray-300">Subiendo imágenes...</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-3 pointer-events-none">
             <div className="p-4 bg-primary-800 rounded-full">
               <Upload className="h-8 w-8 text-gray-400" />
             </div>
