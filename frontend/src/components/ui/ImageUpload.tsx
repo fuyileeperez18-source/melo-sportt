@@ -45,11 +45,11 @@ export function ImageUpload({
   const handleFiles = useCallback(
     async (files: FileList | null) => {
       if (!files || files.length === 0) return;
-      resetFileInput();
 
       const remainingSlots = maxImages - images.length;
       if (remainingSlots <= 0) {
         toast.error(`Máximo ${maxImages} imágenes permitidas`);
+        resetFileInput();
         return;
       }
 
@@ -66,7 +66,10 @@ export function ImageUpload({
         return true;
       });
 
-      if (validFiles.length === 0) return;
+      if (validFiles.length === 0) {
+        resetFileInput();
+        return;
+      }
 
       setIsUploading(true);
 
@@ -144,6 +147,8 @@ export function ImageUpload({
         toast.error('Error al subir las imágenes');
       } finally {
         setIsUploading(false);
+        // Resetear el input después de procesar los archivos para permitir seleccionar el mismo archivo nuevamente
+        resetFileInput();
       }
     },
     [images, maxImages, onChange, productId, resetFileInput]
@@ -254,9 +259,9 @@ export function ImageUpload({
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => {
-          // Permitir click en el dropzone para abrir el selector de archivos
-          if (!isUploading && fileInputRef.current) {
+        onClick={(e) => {
+          // Solo abrir el selector si el click no viene del input
+          if (!isUploading && fileInputRef.current && e.target !== fileInputRef.current) {
             fileInputRef.current.click();
           }
         }}
@@ -277,7 +282,17 @@ export function ImageUpload({
           type="file"
           accept="image/*"
           multiple
-          onChange={(e) => handleFiles(e.target.files)}
+          onChange={(e) => {
+            // Asegurar que el evento se procese correctamente
+            const files = e.target.files;
+            if (files && files.length > 0) {
+              handleFiles(files);
+            }
+          }}
+          onClick={(e) => {
+            // Prevenir que el click en el input se propague al dropzone
+            e.stopPropagation();
+          }}
           disabled={isUploading}
           className="hidden"
         />
