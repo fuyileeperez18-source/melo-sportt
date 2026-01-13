@@ -38,12 +38,12 @@ export const useCartStore = create<CartState>()(
             (item) => {
               const itemIdMatch = item.product.id === product.id &&
                 (variant ? item.variant?.id === variant.id : !item.variant);
-              
+
               // Para conjuntos, también verificar si el accesorio coincide
               if (product.is_set && product.has_accessory) {
-                return itemIdMatch && item.includeAccessory === includeAccessory;
+                return itemIdMatch && item.include_accessory === includeAccessory;
               }
-              
+
               return itemIdMatch;
             }
           );
@@ -67,7 +67,7 @@ export const useCartStore = create<CartState>()(
             variant,
             quantity,
             price: finalPrice,
-            includeAccessory: product.is_set && product.has_accessory ? includeAccessory : undefined,
+            include_accessory: product.is_set && product.has_accessory ? includeAccessory : undefined,
           };
 
           return { items: [...state.items, newItem], isOpen: true };
