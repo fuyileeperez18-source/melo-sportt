@@ -45,6 +45,19 @@ export function ProductCard({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Verificar si el producto tiene tallas disponibles
+    const hasSizes = (product.sizes && product.sizes.length > 0) || 
+                     (product.variants && product.variants.some(v => 
+                       v.options?.some(o => o.name === 'Size' || o.name === 'size')
+                     ));
+    
+    // Si tiene tallas, redirigir a la página del producto para seleccionar talla
+    if (hasSizes) {
+      navigate(`/product/${product.slug}`);
+      return;
+    }
+    
     addItem(product, 1);
   };
 

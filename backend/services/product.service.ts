@@ -12,6 +12,7 @@ interface ProductFilters {
   sizes?: string[];
   colors?: string[];
   brand?: string;
+  material?: string;
   sort_by?: 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'name';
   limit?: number;
   offset?: number;
@@ -86,6 +87,7 @@ export const productService = {
 
     // Filtro por género
     if (filters?.gender) {
+      console.log('🔍 [PRODUCT SERVICE] Filtering by gender:', filters.gender);
       sql += ` AND p.gender = $${paramIndex}`;
       params.push(filters.gender);
       paramIndex++;
@@ -93,6 +95,7 @@ export const productService = {
 
     // Filtro por tipo de producto
     if (filters?.product_type) {
+      console.log('🔍 [PRODUCT SERVICE] Filtering by product_type:', filters.product_type);
       sql += ` AND p.product_type = $${paramIndex}`;
       params.push(filters.product_type);
       paramIndex++;
@@ -116,6 +119,14 @@ export const productService = {
     if (filters?.brand) {
       sql += ` AND p.brand ILIKE $${paramIndex}`;
       params.push(`%${filters.brand}%`);
+      paramIndex++;
+    }
+
+    // Filtro por material
+    if (filters?.material) {
+      console.log('🔍 [PRODUCT SERVICE] Filtering by material:', filters.material);
+      sql += ` AND p.material ILIKE $${paramIndex}`;
+      params.push(`%${filters.material}%`);
       paramIndex++;
     }
 
@@ -150,6 +161,8 @@ export const productService = {
     }
 
       console.log('🔍 [PRODUCT SERVICE] Executing SQL with', params.length, 'params');
+      console.log('🔍 [PRODUCT SERVICE] SQL query:', sql);
+      console.log('🔍 [PRODUCT SERVICE] SQL params:', params);
       const result = await query(sql, params);
       console.log('✅ [PRODUCT SERVICE] Query successful, found', result.rows.length, 'products');
       return result.rows as Product[];

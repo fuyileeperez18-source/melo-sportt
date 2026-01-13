@@ -12,10 +12,17 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log('📦 [PRODUCTS] GET / - Query params:', req.query);
     const filters = {
-      category: req.query.category as string,
-      search: req.query.search as string,
-      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
-      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
+      category: req.query.category && (req.query.category as string).trim() !== '' ? req.query.category as string : undefined,
+      search: req.query.search && (req.query.search as string).trim() !== '' ? req.query.search as string : undefined,
+      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : req.query.min_price ? parseFloat(req.query.min_price as string) : undefined,
+      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : req.query.max_price ? parseFloat(req.query.max_price as string) : undefined,
+      gender: req.query.gender && (req.query.gender as string).trim() !== '' && req.query.gender !== 'all' ? req.query.gender as string : undefined,
+      product_type: req.query.product_type && (req.query.product_type as string).trim() !== '' && req.query.product_type !== 'all' ? req.query.product_type as string : undefined,
+      sizes: req.query.sizes && (req.query.sizes as string).trim() !== '' ? (req.query.sizes as string).split(',').filter(Boolean) : undefined,
+      colors: req.query.colors && (req.query.colors as string).trim() !== '' ? (req.query.colors as string).split(',').filter(Boolean) : undefined,
+      brand: req.query.brand && (req.query.brand as string).trim() !== '' ? req.query.brand as string : undefined,
+      material: req.query.material && (req.query.material as string).trim() !== '' ? req.query.material as string : undefined,
+      sort_by: req.query.sort_by && (req.query.sort_by as string).trim() !== '' ? req.query.sort_by as 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'name' : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
       offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
     };

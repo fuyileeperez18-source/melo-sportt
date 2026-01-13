@@ -135,8 +135,8 @@ export function ShopPage() {
 
       if (selectedPrice !== 'all') {
         const [min, max] = selectedPrice.split('-');
-        if (min) params.min_price = min;
-        if (max && !selectedPrice.includes('+')) params.max_price = max;
+        if (min) params.minPrice = min;
+        if (max && !selectedPrice.includes('+')) params.maxPrice = max;
       }
 
       const response = await api.get<Product[]>('/products', params);
