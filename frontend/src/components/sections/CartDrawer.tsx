@@ -114,6 +114,14 @@ export function CartDrawer() {
                           </p>
                         )}
 
+                        {/* Mostrar información del accesorio si es un conjunto con accesorio */}
+                        {item.product.is_set && item.product.has_accessory && item.includeAccessory && (
+                          <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                            <span>✓</span>
+                            <span>Incluye {item.product.accessory_type || 'accesorio'}</span>
+                          </p>
+                        )}
+
                         <p className="text-white font-semibold mt-2">
                           {formatCurrency(item.price)}
                         </p>

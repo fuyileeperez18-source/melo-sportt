@@ -391,8 +391,9 @@ export const productService = {
       `INSERT INTO products (name, slug, description, short_description, price, compare_at_price,
         cost_per_item, sku, barcode, quantity, track_quantity, continue_selling_when_out_of_stock,
         category_id, brand, tags, is_active, is_featured, seo_title, seo_description,
-        gender, product_type, sizes, colors, material, weight)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+        gender, product_type, sizes, colors, material, weight,
+        is_set, has_accessory, accessory_type, accessory_price)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
        RETURNING *`,
       [
         product.name,
@@ -420,6 +421,10 @@ export const productService = {
         product.colors || [],
         product.material,
         product.weight,
+        product.is_set ?? false,
+        product.has_accessory ?? false,
+        product.accessory_type,
+        product.accessory_price,
       ]
     );
 
@@ -436,7 +441,8 @@ export const productService = {
       'cost_per_item', 'sku', 'barcode', 'quantity', 'track_quantity',
       'continue_selling_when_out_of_stock', 'category_id', 'brand', 'tags',
       'is_active', 'is_featured', 'seo_title', 'seo_description',
-      'gender', 'product_type', 'sizes', 'colors', 'material', 'weight'
+      'gender', 'product_type', 'sizes', 'colors', 'material', 'weight',
+      'is_set', 'has_accessory', 'accessory_type', 'accessory_price'
     ];
 
     for (const [key, value] of Object.entries(updates)) {

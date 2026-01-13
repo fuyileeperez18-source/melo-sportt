@@ -7,7 +7,7 @@ interface CartState {
   isOpen: boolean;
 
   // Actions
-  addItem: (product: Product, quantity?: number, variant?: ProductVariant) => void;
+  addItem: (product: Product, quantity?: number, variant?: ProductVariant, includeAccessory?: boolean) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -27,12 +27,25 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
 
-      addItem: (product, quantity = 1, variant) => {
+      addItem: (product, quantity = 1, variant, includeAccessory = false) => {
         set((state) => {
+          // Para conjuntos con accesorios, considerar el accesorio al buscar items existentes
+          const itemKey = product.is_set && product.has_accessory 
+            ? `${product.id}-${variant?.id || 'default'}-${includeAccessory ? 'with-accessory' : 'without-accessory'}`
+            : `${product.id}-${variant?.id || 'default'}`;
+
           const existingItemIndex = state.items.findIndex(
-            (item) =>
-              item.product.id === product.id &&
-              (variant ? item.variant?.id === variant.id : !item.variant)
+            (item) => {
+              const itemIdMatch = item.product.id === product.id &&
+                (variant ? item.variant?.id === variant.id : !item.variant);
+              
+              // Para conjuntos, también verificar si el accesorio coincide
+              if (product.is_set && product.has_accessory) {
+                return itemIdMatch && item.includeAccessory === includeAccessory;
+              }
+              
+              return itemIdMatch;
+            }
           );
 
           if (existingItemIndex > -1) {
@@ -41,12 +54,20 @@ export const useCartStore = create<CartState>()(
             return { items: newItems, isOpen: true };
           }
 
+          // Calcular precio base + accesorio si aplica
+          const basePrice = variant?.price || product.price;
+          const accessoryPrice = (product.is_set && product.has_accessory && includeAccessory && product.accessory_price) 
+            ? product.accessory_price 
+            : 0;
+          const finalPrice = basePrice + accessoryPrice;
+
           const newItem: CartItem = {
-            id: `${product.id}-${variant?.id || 'default'}-${Date.now()}`,
+            id: `${itemKey}-${Date.now()}`,
             product,
             variant,
             quantity,
-            price: variant?.price || product.price,
+            price: finalPrice,
+            includeAccessory: product.is_set && product.has_accessory ? includeAccessory : undefined,
           };
 
           return { items: [...state.items, newItem], isOpen: true };

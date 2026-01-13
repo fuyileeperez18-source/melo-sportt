@@ -157,6 +157,11 @@ export interface Product {
   colors?: string[]; // ['Negro', 'Blanco', 'Azul']
   material?: string | null; // 'Algodón', 'Poliéster', etc.
   weight?: number | null; // Peso en gramos
+  // Campos para conjuntos con accesorios
+  is_set?: boolean; // Indica si es un conjunto
+  has_accessory?: boolean; // Indica si tiene accesorio opcional
+  accessory_type?: string | null; // Tipo de accesorio: gorra, reloj, etc.
+  accessory_price?: number | null; // Precio adicional del accesorio
   created_at: string;
   updated_at: string;
 }

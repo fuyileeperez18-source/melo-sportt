@@ -99,6 +99,20 @@ const materialOptions = [
   { value: 'Sintetico', label: 'Sintético' },
 ];
 
+const accessoryTypeOptions = [
+  { value: '', label: 'Seleccionar Accesorio' },
+  { value: 'gorra', label: 'Gorra' },
+  { value: 'reloj', label: 'Reloj' },
+  { value: 'cinturon', label: 'Cinturón' },
+  { value: 'gafas', label: 'Gafas' },
+  { value: 'bolso', label: 'Bolso' },
+  { value: 'mochila', label: 'Mochila' },
+  { value: 'gorro', label: 'Gorro' },
+  { value: 'bufanda', label: 'Bufanda' },
+  { value: 'guantes', label: 'Guantes' },
+  { value: 'otro', label: 'Otro' },
+];
+
 interface FormData {
   name: string;
   sku: string;
@@ -119,6 +133,10 @@ interface FormData {
   tags: string;
   isFeatured: boolean;
   isActive: boolean;
+  isSet: boolean;
+  hasAccessory: boolean;
+  accessoryType: string;
+  accessoryPrice: string;
 }
 
 const initialFormData: FormData = {
@@ -141,6 +159,10 @@ const initialFormData: FormData = {
   tags: '',
   isFeatured: false,
   isActive: true,
+  isSet: false,
+  hasAccessory: false,
+  accessoryType: '',
+  accessoryPrice: '',
 };
 
 export function AdminProducts() {
@@ -259,6 +281,10 @@ export function AdminProducts() {
       tags: product.tags?.join(', ') || '',
       isFeatured: product.is_featured,
       isActive: product.is_active,
+      isSet: product.is_set || false,
+      hasAccessory: product.has_accessory || false,
+      accessoryType: product.accessory_type || '',
+      accessoryPrice: product.accessory_price?.toString() || '',
     });
     setProductImages(
       (product.images || []).map((img: any, index: number) => ({
@@ -309,6 +335,8 @@ export function AdminProducts() {
         material: formData.material || undefined,
         is_active: formData.isActive,
         is_featured: formData.isFeatured,
+        is_set: formData.isSet,
+        has_accessory: formData.hasAccessory,
       };
 
       if (formData.comparePrice) {
@@ -319,6 +347,12 @@ export function AdminProducts() {
       }
       if (formData.weight) {
         productData.weight = parseFloat(formData.weight);
+      }
+      if (formData.hasAccessory) {
+        productData.accessory_type = formData.accessoryType || undefined;
+        if (formData.accessoryPrice) {
+          productData.accessory_price = parseFloat(formData.accessoryPrice);
+        }
       }
 
       let createdProduct: any;
@@ -982,7 +1016,18 @@ export function AdminProducts() {
                     <div className="relative">
                       <select
                         value={formData.category_id}
-                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                        onChange={(e) => {
+                          const selectedCategoryId = e.target.value;
+                          const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+                          const isConjuntoCategory = selectedCategory?.name?.toUpperCase() === 'CONJUNTO' || selectedCategory?.slug === 'conjunto';
+                          
+                          setFormData({ 
+                            ...formData, 
+                            category_id: selectedCategoryId,
+                            // Marcar automáticamente como conjunto si la categoría es CONJUNTO
+                            isSet: isConjuntoCategory || formData.isSet
+                          });
+                        }}
                         className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
                       >
                         <option value="" className="bg-gray-900">Seleccionar categoría...</option>
@@ -1128,6 +1173,116 @@ export function AdminProducts() {
                   <p className="text-xs text-gray-500 mt-2">Separa las etiquetas con comas para ayudar a categorizar el producto por estilo</p>
                 </div>
               </div>
+
+              {/* Set Configuration - Solo mostrar si la categoría es CONJUNTO */}
+              {(() => {
+                const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+                const isConjuntoCategory = selectedCategory?.name?.toUpperCase() === 'CONJUNTO' || selectedCategory?.slug === 'conjunto';
+                
+                if (!isConjuntoCategory) return null;
+
+                return (
+                  <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                    <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                      <div className="p-1.5 bg-white/10 rounded-lg">
+                        <Check className="h-4 w-4" />
+                      </div>
+                      Configuración de Conjunto
+                    </h3>
+                    <div className="space-y-4">
+                      {/* Marcar como conjunto */}
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className={cn(
+                          'relative w-12 h-6 rounded-full transition-colors',
+                          formData.isSet ? 'bg-emerald-500' : 'bg-white/20'
+                        )}>
+                          <input
+                            type="checkbox"
+                            checked={formData.isSet}
+                            onChange={(e) => setFormData({ ...formData, isSet: e.target.checked })}
+                            className="sr-only"
+                          />
+                          <div className={cn(
+                            'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                            formData.isSet ? 'left-7' : 'left-1'
+                          )} />
+                        </div>
+                        <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                          Este producto es un conjunto (camisa + pantalón)
+                        </span>
+                      </label>
+
+                      {/* Opción de accesorio */}
+                      {formData.isSet && (
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer group">
+                            <div className={cn(
+                              'relative w-12 h-6 rounded-full transition-colors',
+                              formData.hasAccessory ? 'bg-emerald-500' : 'bg-white/20'
+                            )}>
+                              <input
+                                type="checkbox"
+                                checked={formData.hasAccessory}
+                                onChange={(e) => setFormData({ 
+                                  ...formData, 
+                                  hasAccessory: e.target.checked,
+                                  accessoryType: e.target.checked ? formData.accessoryType : '',
+                                  accessoryPrice: e.target.checked ? formData.accessoryPrice : ''
+                                })}
+                                className="sr-only"
+                              />
+                              <div className={cn(
+                                'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                                formData.hasAccessory ? 'left-7' : 'left-1'
+                              )} />
+                            </div>
+                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                              Incluir accesorio opcional
+                            </span>
+                          </label>
+
+                          {/* Configuración del accesorio */}
+                          {formData.hasAccessory && (
+                            <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-white/10">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tipo de Accesorio *</label>
+                                <div className="relative">
+                                  <select
+                                    value={formData.accessoryType}
+                                    onChange={(e) => setFormData({ ...formData, accessoryType: e.target.value })}
+                                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
+                                  >
+                                    {accessoryTypeOptions.map((opt) => (
+                                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Precio del Accesorio</label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                                  <Input
+                                    type="number"
+                                    value={formData.accessoryPrice}
+                                    onChange={(e) => setFormData({ ...formData, accessoryPrice: e.target.value })}
+                                    placeholder="0.00"
+                                    className="pl-7 bg-white/5 border-white/10 text-white placeholder-gray-500"
+                                  />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Precio adicional si el cliente incluye el accesorio</p>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Status Toggles */}
               <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">

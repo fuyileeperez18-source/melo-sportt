@@ -150,6 +150,11 @@ export interface Product {
   colors?: string[];
   material?: string;
   weight?: number;
+  // Campos para conjuntos con accesorios
+  is_set?: boolean; // Indica si es un conjunto
+  has_accessory?: boolean; // Indica si tiene accesorio opcional
+  accessory_type?: string | null; // Tipo de accesorio: gorra, reloj, etc.
+  accessory_price?: number | null; // Precio adicional del accesorio
   created_at: string;
   updated_at: string;
 }
@@ -205,6 +210,7 @@ export interface CartItem {
   variant?: ProductVariant;
   quantity: number;
   price: number;
+  include_accessory?: boolean; // Para conjuntos: indica si se incluye el accesorio
 }
 
 export interface Cart {

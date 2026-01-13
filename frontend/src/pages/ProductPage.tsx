@@ -42,6 +42,7 @@ export function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
+  const [includeAccessory, setIncludeAccessory] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [isZoomed, setIsZoomed] = useState(false);
 
@@ -119,7 +120,7 @@ export function ProductPage() {
       return;
     }
 
-    addItem(product, quantity, selectedVariant || undefined);
+    addItem(product, quantity, selectedVariant || undefined, includeAccessory);
     toast.success('Added to cart!');
   };
 
@@ -309,12 +310,22 @@ export function ProductPage() {
 
                 {/* Price */}
                 <div className="flex items-center gap-4 mb-6">
-                  <span className="text-3xl font-bold text-white">
-                    {formatCurrency(selectedVariant?.price || product.price)}
-                  </span>
+                  <div>
+                    <span className="text-3xl font-bold text-white">
+                      {formatCurrency(
+                        (selectedVariant?.price || product.price) + 
+                        (includeAccessory && product.accessory_price ? product.accessory_price : 0)
+                      )}
+                    </span>
+                    {includeAccessory && product.accessory_price && (
+                      <div className="text-sm text-gray-400 mt-1">
+                        {formatCurrency(selectedVariant?.price || product.price)} + {formatCurrency(product.accessory_price)} accesorio
+                      </div>
+                    )}
+                  </div>
                   {product.compare_at_price && (
                     <span className="text-xl text-gray-500 line-through">
-                      {formatCurrency(product.compare_at_price)}
+                      {formatCurrency(product.compare_at_price + (includeAccessory && product.accessory_price ? product.accessory_price : 0))}
                     </span>
                   )}
                   {discount > 0 && (
@@ -403,6 +414,53 @@ export function ProductPage() {
                         );
                       })}
                     </div>
+                  </div>
+                )}
+
+                {/* Accessory Selection - Solo para conjuntos con accesorios */}
+                {product.is_set && product.has_accessory && (
+                  <div className="mb-8 p-6 bg-primary-900 rounded-xl border border-primary-800">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <span className="text-sm font-medium text-white block">Incluir Accesorio</span>
+                        <span className="text-xs text-gray-400 capitalize">
+                          {product.accessory_type || 'Accesorio'}
+                        </span>
+                      </div>
+                      {product.accessory_price && (
+                        <span className="text-lg font-bold text-white">
+                          +{formatCurrency(product.accessory_price)}
+                        </span>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div className={cn(
+                        'relative w-12 h-6 rounded-full transition-colors',
+                        includeAccessory ? 'bg-emerald-500' : 'bg-white/20'
+                      )}>
+                        <input
+                          type="checkbox"
+                          checked={includeAccessory}
+                          onChange={(e) => setIncludeAccessory(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={cn(
+                          'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                          includeAccessory ? 'left-7' : 'left-1'
+                        )} />
+                      </div>
+                      <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                        {includeAccessory 
+                          ? `Incluir ${product.accessory_type || 'accesorio'} (+${formatCurrency(product.accessory_price || 0)})`
+                          : `Solo conjunto (camisa + pantalón)`
+                        }
+                      </span>
+                    </label>
+                    {includeAccessory && product.accessory_type && (
+                      <p className="text-xs text-gray-400 mt-2 ml-15">
+                        El conjunto incluirá: camisa, pantalón y {product.accessory_type}
+                      </p>
+                    )}
                   </div>
                 )}
 
