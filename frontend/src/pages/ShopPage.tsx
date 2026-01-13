@@ -134,9 +134,16 @@ export function ShopPage() {
       if (selectedColors.length > 0) params.colors = selectedColors.join(',');
 
       if (selectedPrice !== 'all') {
-        const [min, max] = selectedPrice.split('-');
-        if (min) params.minPrice = min;
-        if (max && !selectedPrice.includes('+')) params.maxPrice = max;
+        if (selectedPrice.includes('+')) {
+          // Handle "200000+" case
+          const min = selectedPrice.replace('+', '');
+          if (min) params.minPrice = min;
+        } else {
+          // Handle ranges like "0-50000", "50000-100000"
+          const [min, max] = selectedPrice.split('-');
+          if (min) params.minPrice = min;
+          if (max) params.maxPrice = max;
+        }
       }
 
       const response = await api.get<Product[]>('/products', params);
