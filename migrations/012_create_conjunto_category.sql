@@ -1,11 +1,11 @@
--- Migration: Crear categoría CONJUNTO
+-- Migration: Crear categoría conjuntos
 -- Ejecutar en PostgreSQL
 
--- Insertar la categoría CONJUNTO si no existe
+-- Insertar la categoría conjuntos si no existe
 INSERT INTO categories (name, slug, description, position, is_active)
 VALUES (
-  'CONJUNTO',
-  'conjunto',
+  'conjuntos',
+  'conjuntos',
   'Conjuntos de ropa que incluyen camisa y pantalón, con opción de accesorios adicionales',
   0,
   true

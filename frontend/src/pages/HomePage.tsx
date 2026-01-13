@@ -225,11 +225,26 @@ export function HomePage() {
                     whileHover={{ scale: 1.02 }}
                     className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-primary-900"
                   >
-                    <img
-                      src={category.image_url}
-                      alt={category.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                    {category.image_url ? (
+                      <img
+                        src={category.image_url}
+                        alt={category.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        onError={(e) => {
+                          // Fallback si la imagen falla al cargar
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.parentElement?.querySelector('.category-fallback') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`category-fallback ${category.image_url ? 'hidden' : 'flex'} absolute inset-0 bg-gradient-to-br from-primary-800 to-primary-900 items-center justify-center`}>
+                      <div className="text-center">
+                        <ShoppingBag className="h-16 w-16 text-white/30 mx-auto mb-4" />
+                        <p className="text-white/50 text-sm">{category.name}</p>
+                      </div>
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6">
                       <h3 className="text-2xl font-bold text-white mb-1">{category.name}</h3>

@@ -275,23 +275,59 @@ export const categoryService = {
   },
 
   async getAllWithProductCount() {
-    const { data, error } = await supabase
+    // Obtener todas las categorías activas
+    const { data: categories, error: categoriesError } = await supabase
       .from('categories')
-      .select(`
-        *,
-        products!inner (id)
-      `)
+      .select('*')
       .eq('is_active', true)
-      .eq('products.is_active', true)
       .order('position');
 
-    if (error) throw error;
+    if (categoriesError) throw categoriesError;
 
-    // Add product count to each category
-    const categoriesWithCount = data.map((category) => ({
-      ...category,
-      products_count: category.products?.length || 0,
-    }));
+    // Para cada categoría, obtener el conteo de productos y la primera imagen
+    const categoriesWithCount = await Promise.all(
+      categories.map(async (category) => {
+        // Obtener conteo de productos activos
+        const { count } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('category_id', category.id)
+          .eq('is_active', true);
+
+        // Si la categoría no tiene image_url, obtener la primera imagen del primer producto
+        let image_url = category.image_url;
+        if (!image_url && (count || 0) > 0) {
+          const { data: products } = await supabase
+            .from('products')
+            .select(`
+              id,
+              images:product_images(url, is_primary, position)
+            `)
+            .eq('category_id', category.id)
+            .eq('is_active', true)
+            .limit(1);
+
+          if (products && products.length > 0) {
+            const firstProduct = products[0] as any;
+            if (firstProduct.images && firstProduct.images.length > 0) {
+              // Ordenar imágenes: primero las primarias, luego por posición
+              const sortedImages = [...firstProduct.images].sort((a: any, b: any) => {
+                if (a.is_primary && !b.is_primary) return -1;
+                if (!a.is_primary && b.is_primary) return 1;
+                return (a.position || 0) - (b.position || 0);
+              });
+              image_url = sortedImages[0].url;
+            }
+          }
+        }
+
+        return {
+          ...category,
+          products_count: count || 0,
+          image_url,
+        };
+      })
+    );
 
     return categoriesWithCount as (Category & { products_count: number })[];
   },

@@ -1019,12 +1019,12 @@ export function AdminProducts() {
                         onChange={(e) => {
                           const selectedCategoryId = e.target.value;
                           const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
-                          const isConjuntoCategory = selectedCategory?.name?.toUpperCase() === 'CONJUNTO' || selectedCategory?.slug === 'conjunto';
+                          const isConjuntoCategory = selectedCategory?.name?.toLowerCase() === 'conjuntos' || selectedCategory?.slug === 'conjuntos';
                           
                           setFormData({ 
                             ...formData, 
                             category_id: selectedCategoryId,
-                            // Marcar automáticamente como conjunto si la categoría es CONJUNTO
+                            // Marcar automáticamente como conjunto si la categoría es conjuntos
                             isSet: isConjuntoCategory || formData.isSet
                           });
                         }}
@@ -1174,7 +1174,7 @@ export function AdminProducts() {
                 </div>
               </div>
 
-              {/* Set Configuration - Solo mostrar si la categoría es CONJUNTO */}
+              {/* Set Configuration - Solo mostrar si la categoría es conjuntos */}
               {(() => {
                 const selectedCategory = categories.find(cat => cat.id === formData.category_id);
                 const isConjuntoCategory = selectedCategory?.name?.toUpperCase() === 'CONJUNTO' || selectedCategory?.slug === 'conjunto';
