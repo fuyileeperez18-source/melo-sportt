@@ -43,10 +43,12 @@ const heroSlides = [
 
 // Categories will be loaded from database
 const defaultCategories: (Category & { products_count: number })[] = [
-  { id: '1', name: 'Camisetas', slug: 't-shirts', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', products_count: 0, position: 1, is_active: true },
-  { id: '2', name: 'Chaquetas', slug: 'jackets', image_url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600', products_count: 0, position: 2, is_active: true },
-  { id: '3', name: 'Pantalones', slug: 'pants', image_url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600', products_count: 0, position: 3, is_active: true },
-  { id: '4', name: 'Accesorios', slug: 'accessories', image_url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600', products_count: 0, position: 4, is_active: true },
+  { id: '1', name: 'Conjuntos', slug: 'conjuntos', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768417400/image_ku83qt.jpg', products_count: 0, position: 1, is_active: true },
+  { id: '2', name: 'Camisas', slug: 'camisas', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418099/image_1_q3noez.jpg', products_count: 0, position: 2, is_active: true },
+  { id: '3', name: 'Shorts', slug: 'shorts', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418503/image_2_wju1da.jpg', products_count: 0, position: 3, is_active: true },
+  { id: '4', name: 'Sudaderas', slug: 'sudaderas', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418570/image_3_oetnkl.jpg', products_count: 0, position: 4, is_active: true },
+  { id: '5', name: 'Zapatos', slug: 'zapatos', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418641/image_4_kscxfq.jpg', products_count: 0, position: 5, is_active: true },
+  { id: '6', name: 'Accesorios', slug: 'accesorios', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418854/image_5_n4fcf4.jpg', products_count: 0, position: 6, is_active: true },
 ];
 
 const benefits = [
@@ -218,13 +220,13 @@ export function HomePage() {
             </div>
           </AnimatedSection>
 
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {categories.map((category) => (
               <StaggerItem key={category.id}>
                 <Link to={`/shop?category=${category.slug}`} className="group">
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-primary-900"
+                    className="relative aspect-[3/5] overflow-hidden rounded-xl bg-primary-900"
                   >
                     {category.image_url && category.image_url.trim() !== '' ? (
                       <img
