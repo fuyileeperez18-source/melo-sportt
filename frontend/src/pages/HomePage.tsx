@@ -45,7 +45,7 @@ const defaultCategories: (Category & { products_count: number })[] = [
   { id: '1', name: 'Conjuntos', slug: 'conjuntos', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768417400/image_ku83qt.jpg', products_count: 0, position: 1, is_active: true },
   { id: '2', name: 'Camisas', slug: 'camisas', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418099/image_1_q3noez.jpg', products_count: 0, position: 2, is_active: true },
   { id: '3', name: 'Shorts', slug: 'shorts', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418503/image_2_wju1da.jpg', products_count: 0, position: 3, is_active: true },
-  { id: '4', name: 'Sudaderas', slug: 'sudaderas', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418570/image_3_oetnkl.jpg', products_count: 0, position: 4, is_active: true },
+  { id: '4', name: 'Pantalones', slug: 'pantalones', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768421117/image_6_c6rosv.jpg', products_count: 0, position: 4, is_active: true },
   { id: '5', name: 'Zapatos', slug: 'zapatos', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418641/image_4_kscxfq.jpg', products_count: 0, position: 5, is_active: true },
   { id: '6', name: 'Accesorios', slug: 'accesorios', image_url: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768418854/image_5_n4fcf4.jpg', products_count: 0, position: 6, is_active: true },
 ];
@@ -248,6 +248,22 @@ export function HomePage() {
               </StaggerItem>
             ))}
           </StaggerContainer>
+
+          {/* More categories message */}
+          <AnimatedSection animation="fadeUp">
+            <div className="mt-12 text-center">
+              <p className="text-gray-400 text-lg mb-6">¡Tenemos más categorías disponibles para ti!!</p>
+              <motion.button
+                onClick={() => navigate('/shop')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Ver más categorías
+                <ArrowRight className="h-5 w-5" />
+              </motion.button>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
