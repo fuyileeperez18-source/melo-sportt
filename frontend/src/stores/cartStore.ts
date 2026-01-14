@@ -57,11 +57,31 @@ export const useCartStore = create<CartState>()(
           }
 
           // Calcular precio base + accesorios si aplica
-          const basePrice = variant?.price || product.price;
+          const basePrice = Number(variant?.price || product.price);
+
+          // Debug: Log accessories calculation
+          console.log('🛒 Adding to cart:', {
+            productName: product.name,
+            basePrice,
+            selectedAccessories,
+            availableAccessories: product.accessories,
+          });
+
           const accessoriesPrice = (product.accessories || [])
-            .filter(acc => selectedAccessories.includes(acc.type))
-            .reduce((sum, acc) => sum + acc.price, 0);
+            .filter(acc => {
+              const isSelected = selectedAccessories.includes(acc.type);
+              console.log(`  Accessory "${acc.type}": ${isSelected ? 'SELECTED' : 'not selected'} - Price: ${acc.price}`);
+              return isSelected;
+            })
+            .reduce((sum, acc) => sum + Number(acc.price), 0);
+
           const finalPrice = basePrice + accessoriesPrice;
+
+          console.log('💰 Price calculation:', {
+            basePrice,
+            accessoriesPrice,
+            finalPrice,
+          });
 
           const newItem: CartItem = {
             id: `${itemKey}-${Date.now()}`,

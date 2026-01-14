@@ -917,7 +917,7 @@ export function AdminProducts() {
                 <ImageUpload
                   images={productImages}
                   onChange={setProductImages}
-                  maxImages={5}
+                  maxImages={3}
                   className="bg-transparent"
                 />
               </div>
