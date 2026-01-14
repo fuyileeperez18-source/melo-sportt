@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Play, Star, Truck, Shield, RefreshCw, Headphones, ShoppingBag, MapPin, Clock, Phone, Navigation } from 'lucide-react';
@@ -11,7 +11,6 @@ import 'swiper/css/pagination';
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/animations/AnimatedSection';
 import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
-import { categoryService } from '@/lib/supabase';
 import { useFeaturedProducts } from '@/hooks/useProducts';
 import { formatCategoryName } from '@/lib/utils';
 import type { Category } from '@/types';
@@ -66,26 +65,10 @@ const testimonials = [
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<(Category & { products_count: number })[]>(defaultCategories);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  // Usar directamente las categorías default con las imágenes de Cloudinary
+  const categories = defaultCategories;
+  const loadingCategories = false;
   const { data: featuredProducts, isLoading: loadingFeatured } = useFeaturedProducts();
-
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const data = await categoryService.getAllWithProductCount();
-        if (data && data.length > 0) {
-          setCategories(data);
-        }
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    }
-
-    loadCategories();
-  }, []);
 
   return (
     <div className="overflow-hidden">
@@ -220,13 +203,13 @@ export function HomePage() {
             </div>
           </AnimatedSection>
 
-          <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {categories.map((category) => (
               <StaggerItem key={category.id}>
                 <Link to={`/shop?category=${category.slug}`} className="group">
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="relative aspect-[3/5] overflow-hidden rounded-xl bg-primary-900"
+                    className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-primary-900"
                   >
                     {category.image_url && category.image_url.trim() !== '' ? (
                       <img
