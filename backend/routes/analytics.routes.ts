@@ -159,26 +159,5 @@ router.get('/real-chart-data', authenticate, requireAdmin, async (_req: Request,
   }
 });
 
-// ==================== MERCADO PAGO COMMISSIONS ====================
-
-// Get Mercado Pago commissions summary (for marketplace owner)
-router.get('/mercadopago-commissions', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { startDate, endDate, sellerMpId } = z.object({
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-      sellerMpId: z.string().optional().transform(v => v ? parseInt(v) : undefined),
-    }).parse(req.query);
-
-    const data = await orderService.getMercadoPagoCommissionsSummary({
-      startDate,
-      endDate,
-      seller_mp_id: sellerMpId,
-    });
-    res.json({ success: true, data });
-  } catch (error) {
-    next(error);
-  }
-});
 
 export default router;

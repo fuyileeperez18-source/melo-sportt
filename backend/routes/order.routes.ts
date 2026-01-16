@@ -415,11 +415,3 @@ router.post('/:id/confirm-cash-payment', authenticate, requireAdmin, async (req:
 });
 
 export default router;
-      console.log('[ORDER CREATE] Cash on delivery order created:', order.id);
-      });
-      console.log('[ORDER CREATE] Order created:', order.id);
-      });
-  } catch (error) {
-    console.error('[ORDER CREATE] Error:', error);
-    next(error);
-  }

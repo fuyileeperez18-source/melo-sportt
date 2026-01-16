@@ -4,13 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js';
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,15 +30,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { formatCurrency, generateOrderNumber } from '@/lib/utils';
 import { orderService } from '@/lib/services';
 import { cn } from '@/lib/utils';
-import { SimulatedPaymentForm } from '@/components/checkout/SimulatedPaymentForm';
 import { WompiPayment } from '@/components/checkout/WompiPayment';
 
-// Check if Stripe is configured
-const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const IS_SIMULATED_MODE = !STRIPE_KEY || STRIPE_KEY === 'pk_test_51Demo123456789';
-
-// Initialize Stripe only if we have a real key
-const stripePromise = !IS_SIMULATED_MODE ? loadStripe(STRIPE_KEY) : null;
 
 // Form schemas
 const shippingSchema = z.object({
@@ -89,153 +75,6 @@ const countries = [
   { value: 'ES', label: 'España' },
 ];
 
-// Payment form component
-function PaymentForm({
-  onSuccess,
-  onBack,
-  total,
-  isProcessing,
-  setIsProcessing,
-}: {
-  onSuccess: (paymentId: string) => void;
-  onBack: () => void;
-  total: number;
-  isProcessing: boolean;
-  setIsProcessing: (v: boolean) => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsProcessing(true);
-    setError(null);
-
-    const cardElement = elements.getElement(CardElement);
-
-    if (!cardElement) {
-      setIsProcessing(false);
-      return;
-    }
-
-    try {
-      // Create payment intent on backend
-      const paymentIntent = await orderService.createPaymentIntent(total);
-
-      // Confirm the payment with Stripe
-      const { error: stripeError, paymentIntent: confirmedPayment } = await stripe.confirmCardPayment(
-        paymentIntent.client_secret,
-        {
-          payment_method: {
-            card: cardElement,
-          },
-        }
-      );
-
-      if (stripeError) {
-        setError(stripeError.message || 'El pago falló');
-        setIsProcessing(false);
-        return;
-      }
-
-      if (confirmedPayment?.status === 'succeeded') {
-        // Payment successful - save order with real payment intent
-        await orderService.confirmPayment(confirmedPayment.id, paymentIntent.id);
-        onSuccess(confirmedPayment.id);
-      } else {
-        setError('El pago no fue completado. Por favor intenta de nuevo.');
-        setIsProcessing(false);
-      }
-    } catch (err: any) {
-      console.error('Payment error:', err);
-      setError(err.message || 'El pago falló. Por favor intenta de nuevo.');
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-300 mb-3">
-          Datos de la Tarjeta
-        </label>
-        <div className="p-4 bg-primary-800 border border-primary-700 rounded-lg">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#ffffff',
-                  '::placeholder': {
-                    color: '#6b7280',
-                  },
-                },
-                invalid: {
-                  color: '#ef4444',
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-lg mb-6"
-        >
-          <AlertCircle className="h-5 w-5 text-red-500" />
-          <p className="text-red-400 text-sm">{error}</p>
-        </motion.div>
-      )}
-
-      <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg mb-6">
-        <Shield className="h-5 w-5 text-green-500" />
-        <p className="text-green-400 text-sm">
-          Tu pago está protegido con encriptación SSL de 256 bits
-        </p>
-      </div>
-
-      {/* Test cards info */}
-      <div className="p-4 bg-primary-800/50 rounded-lg mb-6">
-        <p className="text-xs text-gray-400 mb-2">Tarjetas de prueba:</p>
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>Visa: 4242 4242 4242 4242</p>
-          <p>Mastercard: 5555 5555 5555 4444</p>
-          <p>CVC: 123 | Exp: cualquier fecha futura</p>
-        </div>
-      </div>
-
-      <div className="flex gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          disabled={isProcessing}
-          leftIcon={<ChevronLeft className="h-4 w-4" />}
-        >
-          Volver
-        </Button>
-        <Button
-          type="submit"
-          className="flex-1"
-          isLoading={isProcessing}
-          disabled={!stripe || isProcessing}
-          leftIcon={<Lock className="h-4 w-4" />}
-        >
-          Pagar {formatCurrency(total)}
-        </Button>
-      </div>
-    </form>
-  );
-}
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -244,8 +83,7 @@ export function CheckoutPage() {
   const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
   const [orderNumber, setOrderNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'wompi' | 'stripe' | 'cash_on_delivery'>('wompi');
-  const [paymentProvider, setPaymentProvider] = useState<'wompi' | 'stripe'>('wompi');
+  const [paymentMethod, setPaymentMethod] = useState<'wompi' | 'cash_on_delivery'>('wompi');
 
   const { items, getSubtotal, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
@@ -374,8 +212,7 @@ export function CheckoutPage() {
         payment_status: 'paid' as const,
         payment_method: 'prepaid',
         payment_id: paymentId,
-        stripe_payment_intent_id: paymentId,
-        shipping_address: {
+                shipping_address: {
           email: shippingData?.email,
           firstName: shippingData?.firstName,
           lastName: shippingData?.lastName,
@@ -716,7 +553,6 @@ export function CheckoutPage() {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           setPaymentMethod('wompi');
-                          setPaymentProvider('wompi');
                         }}
                         className={cn(
                           'p-4 rounded-lg border-2 transition-all text-left relative overflow-hidden',
@@ -844,25 +680,17 @@ export function CheckoutPage() {
                     />
                   ) : (
                     <>
-                      {IS_SIMULATED_MODE ? (
-                        <SimulatedPaymentForm
-                          onSuccess={handlePaymentSuccess}
-                          onBack={() => setCurrentStep(0)}
-                          total={total}
-                          isProcessing={isProcessing}
-                          setIsProcessing={setIsProcessing}
-                        />
-                      ) : (
-                        <Elements stripe={stripePromise}>
-                          <PaymentForm
-                            onSuccess={handlePaymentSuccess}
-                            onBack={() => setCurrentStep(0)}
-                            total={total}
-                            isProcessing={isProcessing}
-                            setIsProcessing={setIsProcessing}
-                          />
-                        </Elements>
-                      )}
+                      <div className="p-8 bg-primary-800/50 rounded-lg text-center">
+                        <p className="text-gray-300 mb-4">Solo Wompi disponible como método de pago en línea</p>
+                        <Button
+                          onClick={() => {
+                            setPaymentMethod('wompi');
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Seleccionar Wompi
+                        </Button>
+                      </div>
                     </>
                   )}
 

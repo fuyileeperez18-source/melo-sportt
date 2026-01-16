@@ -18,7 +18,7 @@ export function SellerCallback() {
 
     if (error) {
       setStatus('error');
-      setMessage(`Error de Mercado Pago: ${error}`);
+      setMessage(`Error al conectar cuenta: ${error}`);
       return;
     }
 
@@ -50,7 +50,7 @@ export function SellerCallback() {
       if (response.ok) {
         setStatus('success');
         setMessage('¡Cuenta vinculada exitosamente!');
-        toast.success('Mercado Pago conectado correctamente');
+        toast.success('Cuenta conectada correctamente');
       } else {
         setStatus('error');
         setMessage(result.message || 'Error al vincular cuenta');
@@ -74,7 +74,7 @@ export function SellerCallback() {
               <div className="w-20 h-20 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
               <RefreshCw className="h-8 w-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
             </div>
-            <h1 className="text-2xl font-bold text-black">Conectando con Mercado Pago</h1>
+            <h1 className="text-2xl font-bold text-black">Conectando con cuenta de pago</h1>
             <p className="text-gray-600">{message}</p>
           </div>
         )}
@@ -87,7 +87,7 @@ export function SellerCallback() {
             <h1 className="text-2xl font-bold text-black">¡Todo listo!</h1>
             <p className="text-gray-600">{message}</p>
             <p className="text-sm text-gray-500">
-              Ahora tu tienda puede recibir pagos divididos automáticamente.
+              Ahora tu tienda puede recibir pagos correctamente.
             </p>
             <Button
               className="w-full"

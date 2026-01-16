@@ -41,7 +41,6 @@
     "express-rate-limit": "^7.4.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "mercadopago": "^2.11.0",
     "multer": "^2.0.2",
     "pdfkit": "^0.17.2",
     "pg": "^8.13.0",
@@ -54,7 +53,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/mercadopago": "^1.5.11",
     "tsx": "^4.19.2"
   },
   "engines": {
