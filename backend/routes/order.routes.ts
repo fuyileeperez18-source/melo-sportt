@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { env } from '../config/env.js';
 import { orderService } from '../services/order.service.js';
 import { stripeService } from '../services/stripe.service.js';
-import { mercadopagoService } from '../services/mercadopago.service.js';
 import { wompiService } from '../services/wompi.service.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import type { AuthRequest, OrderStatus } from '../types/index.js';
@@ -142,182 +141,6 @@ router.post('/confirm-payment', authenticate, async (req: AuthRequest, res: Resp
     }).parse(req.body);
 
     const payment = await stripeService.confirmPayment(paymentIntentId);
-
-    res.json({ success: true, data: payment });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ==================== MERCADO PAGO ROUTES ====================
-
-// Create Mercado Pago preference
-router.post('/mercadopago/create-preference', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { items, orderId, payer } = z.object({
-      items: z.array(z.object({
-        title: z.string(),
-        description: z.string().optional(),
-        quantity: z.number().int().positive(),
-        unit_price: z.number().positive(),
-      })),
-      orderId: z.string().optional(),
-      payer: z.object({
-        name: z.string().optional(),
-        surname: z.string().optional(),
-        email: z.string().email().optional(),
-        phone: z.object({
-          area_code: z.string().optional(),
-          number: z.string().optional(),
-        }).optional(),
-      }).optional(),
-    }).parse(req.body);
-
-    // Get valid seller access token (refreshes if needed)
-    const sellerAccessToken = await sellerService.getValidAccessToken();
-    const sellerAccount = await sellerService.getPrimarySellerAccount();
-
-    const preferenceData: any = {
-      items: items.map((item, index) => ({
-        id: `item_${index}`,
-        title: item.title,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        currency_id: 'COP',
-      })),
-      payer,
-      back_urls: {
-        success: `${env.FRONTEND_URL}/checkout/mercadopago/callback?status=approved`,
-        failure: `${env.FRONTEND_URL}/checkout/mercadopago/callback?status=failed`,
-        pending: `${env.FRONTEND_URL}/checkout/mercadopago/callback?status=pending`,
-      },
-      auto_return: 'approved',
-      external_reference: orderId,
-      metadata: {
-        user_id: req.user!.id,
-        order_id: orderId || '',
-        seller_id: sellerAccount?.mp_user_id || '',
-      },
-    };
-
-    // If we have a seller account, MercadoPago service will automatically calculate 10% fee
-    const preference = await mercadopagoService.createPreference(
-      preferenceData,
-      sellerAccessToken
-    );
-
-    // Update order with split details if orderId is provided
-    if (orderId && preference.id && preference.application_fee !== undefined) {
-      await orderService.updateSplitDetails(orderId, {
-        application_fee: preference.application_fee,
-        seller_amount: preference.seller_amount ?? 0,
-        mp_preference_id: preference.id,
-        mp_seller_id: sellerAccount?.mp_user_id || null
-      });
-    }
-
-    res.json({ success: true, data: preference });
-  } catch (error) {
-    console.error('Preference Error:', error);
-    next(error);
-  }
-});
-
-// Get Mercado Pago payment status
-router.get('/mercadopago/payment/:paymentId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const payment = await mercadopagoService.getPayment(req.params.paymentId);
-    res.json({ success: true, data: payment });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Mercado Pago Webhook (IPN - Instant Payment Notification)
-router.post('/mercadopago/webhook', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { type, data, action } = req.body;
-
-    // Support both older and newer MP webhook formats
-    const resourceType = type || action?.split('.')?.[0];
-    const resourceId = data?.id || req.body.resource?.split('/')?.pop();
-
-    console.log('📬 [MERCADOPAGO WEBHOOK] Received:', { resourceType, resourceId, action });
-
-    if (resourceType === 'payment') {
-      const payment = await mercadopagoService.getPayment(resourceId);
-
-      if (payment && payment.metadata?.order_id) {
-        const orderId = payment.metadata.order_id;
-
-        // Update order payment status
-        const statusMap: Record<string, string> = {
-          'approved': 'paid',
-          'pending': 'pending',
-          'in_process': 'pending',
-          'rejected': 'failed',
-          'cancelled': 'cancelled',
-          'refunded': 'refunded',
-          'charged_back': 'refunded'
-        };
-
-        const paymentStatus = payment.status || 'pending';
-        const newPaymentStatus = statusMap[paymentStatus] || 'pending';
-
-        await orderService.updatePaymentStatus(orderId, newPaymentStatus, resourceId);
-
-        if (payment.status === 'approved') {
-          console.log(`✅ [MERCADOPAGO WEBHOOK] Order ${orderId} marked as PAID`);
-
-          // Register marketplace commission if split payment was used
-          if (payment.metadata?.seller_id || (payment as any).application_fee) {
-            const totalAmount = payment.transaction_amount || 0;
-            const applicationFee = ((payment as any).application_fee as number | undefined) || 0;
-
-            await orderService.registerMercadoPagoCommission({
-              order_id: orderId,
-              payment_id: resourceId,
-              total_amount: totalAmount,
-              commission_amount: applicationFee,
-              seller_amount: totalAmount - applicationFee,
-              seller_mp_id: payment.metadata?.seller_id || null
-            });
-
-            console.log(`💰 [MERCADOPAGO COMMISSION] Registered ${applicationFee} COP commission for Order ${orderId}`);
-          }
-
-          await orderService.updateStatus(orderId, 'confirmed');
-        }
-      }
-    }
-
-    // Always respond 200 to acknowledge receipt
-    res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('❌ [MERCADOPAGO WEBHOOK] Error:', error);
-    // Still respond 200 to avoid infinite retries
-    res.status(200).json({ success: false });
-  }
-});
-
-// Simulate successful Mercado Pago payment (only in dev/testing)
-router.post('/mercadopago/simulate-payment', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    if (!mercadopagoService.isSimulatedMode()) {
-      res.status(400).json({
-        success: false,
-        error: 'This endpoint is only available in simulated mode'
-      });
-      return;
-    }
-
-    const { preferenceId, amount } = z.object({
-      preferenceId: z.string(),
-      amount: z.number().positive(),
-    }).parse(req.body);
-
-    const payment = await mercadopagoService.simulatePaymentSuccess(preferenceId, amount);
 
     res.json({ success: true, data: payment });
   } catch (error) {
@@ -592,3 +415,11 @@ router.post('/:id/confirm-cash-payment', authenticate, requireAdmin, async (req:
 });
 
 export default router;
+      console.log('[ORDER CREATE] Cash on delivery order created:', order.id);
+      });
+      console.log('[ORDER CREATE] Order created:', order.id);
+      });
+  } catch (error) {
+    console.error('[ORDER CREATE] Error:', error);
+    next(error);
+  }

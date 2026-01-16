@@ -60,7 +60,7 @@ export const orderService = {
           orderData.payment_id || null,
           orderData.stripe_payment_intent_id || null,
           JSON.stringify(orderData.shipping_address),
-          JSON.stringify(orderData.billing_address || orderData.shipping_address),
+          orderData.billing_address ? JSON.stringify(orderData.billing_address) : null,
           orderData.notes || null,
           orderData.coupon_code || null,
         ]
@@ -306,30 +306,6 @@ export const orderService = {
     return result.rows[0] as Order;
   },
 
-  async updateSplitDetails(id: string, details: {
-    application_fee: number;
-    seller_amount: number;
-    mp_preference_id: string;
-    mp_seller_id?: number;
-  }): Promise<Order> {
-    const result = await query(
-      `UPDATE orders SET
-        application_fee = $1,
-        seller_amount = $2,
-        mp_preference_id = $3,
-        mp_seller_id = $4,
-        updated_at = NOW()
-       WHERE id = $5 RETURNING *`,
-      [details.application_fee, details.seller_amount, details.mp_preference_id, details.mp_seller_id, id]
-    );
-
-    if (result.rows.length === 0) {
-      throw new AppError('Order not found', 404);
-    }
-
-    return result.rows[0] as Order;
-  },
-
   /**
    * Create an order for cash on delivery (contra entrega)
    */
@@ -378,7 +354,7 @@ export const orderService = {
           'pending', // Payment status is pending until delivery
           'cash_on_delivery', // Payment method is cash on delivery
           JSON.stringify(orderData.shipping_address),
-          JSON.stringify(orderData.billing_address || orderData.shipping_address),
+          orderData.billing_address ? JSON.stringify(orderData.billing_address) : null,
           orderData.notes || 'Pago contra entrega - Pago en efectivo al recibir el pedido',
           orderData.coupon_code || null,
         ]
@@ -496,82 +472,4 @@ export const orderService = {
     return result.rows[0];
   },
 
-  async registerMercadoPagoCommission(data: {
-    order_id: string;
-    payment_id: string;
-    total_amount: number;
-    commission_amount: number;
-    seller_amount: number;
-    seller_mp_id: number | null;
-  }) {
-    const result = await query(
-      `INSERT INTO mercadopago_commissions (
-        order_id, payment_id, total_amount, commission_amount, seller_amount, seller_mp_id
-      ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [data.order_id, data.payment_id, data.total_amount, data.commission_amount, data.seller_amount, data.seller_mp_id]
-    );
-    return result.rows[0];
-  },
-
-  /**
-   * Get total commissions earned from Mercado Pago
-   */
-  async getMercadoPagoCommissionsSummary(filters?: {
-    startDate?: string;
-    endDate?: string;
-    seller_mp_id?: number;
-  }): Promise<{
-    total_commissions: number;
-    total_orders: number;
-    orders: any[];
-  }> {
-    let sql = `
-      SELECT
-        COUNT(*) as total_orders,
-        COALESCE(SUM(commission_amount), 0) as total_commissions,
-        json_agg(
-          json_build_object(
-            'id', id,
-            'order_id', order_id,
-            'payment_id', payment_id,
-            'total_amount', total_amount,
-            'commission_amount', commission_amount,
-            'seller_amount', seller_amount,
-            'seller_mp_id', seller_mp_id,
-            'created_at', created_at
-          )
-          ORDER BY created_at DESC
-        ) as orders
-      FROM mercadopago_commissions
-      WHERE 1=1
-    `;
-    const params: unknown[] = [];
-    let paramIndex = 1;
-
-    if (filters?.startDate) {
-      sql += ` AND created_at >= $${paramIndex}`;
-      params.push(filters.startDate);
-      paramIndex++;
-    }
-
-    if (filters?.endDate) {
-      sql += ` AND created_at <= $${paramIndex}`;
-      params.push(filters.endDate);
-      paramIndex++;
-    }
-
-    if (filters?.seller_mp_id) {
-      sql += ` AND seller_mp_id = $${paramIndex}`;
-      params.push(filters.seller_mp_id);
-      paramIndex++;
-    }
-
-    const result = await query(sql, params);
-    const row = result.rows[0];
-    return {
-      total_commissions: parseFloat(row.total_commissions),
-      total_orders: parseInt(row.total_orders),
-      orders: row.orders || []
-    };
-  },
 };

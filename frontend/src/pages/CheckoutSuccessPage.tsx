@@ -29,7 +29,7 @@ export function CheckoutSuccessPage() {
 
         if (token) {
           const response = await fetch(
-            `${API_URL}/orders/mercadopago/payment/${paymentId}`,
+            `${API_URL}/orders/wompi/transaction/${paymentId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
