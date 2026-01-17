@@ -213,12 +213,15 @@ export const wompiService = {
       throw new AppError('Wompi is not configured', 500);
     }
 
+    // Declare payload outside try block so it's accessible in catch block
+    let payload: any;
+
     try {
       // First, get acceptance token
       const acceptanceToken = await this.getAcceptanceToken();
 
       // Preparar payload para Wompi
-      const payload: any = {
+      payload = {
         acceptance_token: acceptanceToken.acceptance_token,
         amount_in_cents: data.amount_in_cents,
         currency: data.currency,
@@ -374,10 +377,10 @@ export const wompiService = {
         data: error.response?.data,
         message: error.message,
         url: error.config?.url,
-        payload: {
+        payload: payload ? {
           ...payload,
           acceptance_token: payload.acceptance_token ? '***' : undefined,
-        },
+        } : undefined,
       });
 
       // Extraer mensaje de error más detallado
