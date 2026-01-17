@@ -180,7 +180,15 @@ export function WompiPayment({
   // Polling para verificar estado de transacción
   const pollTransaction = async (id: string) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    // Always read fresh token from localStorage to avoid stale tokens
     const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('No token found for polling transaction');
+      setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      setIsProcessing(false);
+      return;
+    }
 
     let attempts = 0;
     const maxAttempts = 20; // Aumentado para mejor tolerancia
@@ -195,6 +203,17 @@ export function WompiPayment({
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            // Token expired during polling - clear and notify
+            localStorage.removeItem('melo_sportt_token');
+            localStorage.removeItem('token');
+            window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+            clearInterval(interval);
+            setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            setPaymentStep('methods');
+            setIsProcessing(false);
+            return;
+          }
           console.warn('Polling: Error checking transaction status');
           return;
         }
@@ -240,7 +259,12 @@ export function WompiPayment({
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      // Always read fresh token from localStorage to avoid stale tokens
       const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación. Por favor, inicia sesión nuevamente.');
+      }
 
       // Preparar shipping_address con validación y formato correcto para Wompi
       let formattedShippingAddress = undefined;
@@ -308,26 +332,43 @@ export function WompiPayment({
         }
       }
 
+      // Build request body - only include payment_method if we have a card token
+      const requestBody: any = {
+        items,
+        customerEmail,
+        orderId: reference,
+        shippingAddress: formattedShippingAddress,
+      };
+
+      // Only include payment_method if we have a card token (for direct card payments)
+      // For PSE/Nequi redirect flows, we don't send payment_method - Wompi checkout will handle it
+      if (cardTokenId) {
+        requestBody.payment_method = {
+          type: 'CARD',
+          installments: 1,
+          token: cardTokenId
+        };
+      }
+
       const response = await fetch(`${API_URL}/orders/wompi/create-transaction`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          items,
-          customerEmail,
-          orderId: reference,
-          payment_method: cardTokenId ? {
-            type: 'CARD',
-            installments: 1,
-            token: cardTokenId
-          } : undefined,
-          shippingAddress: formattedShippingAddress,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        // Handle 401 Unauthorized - token expired/invalid
+        if (response.status === 401) {
+          // Clear token and notify app
+          localStorage.removeItem('melo_sportt_token');
+          localStorage.removeItem('token');
+          window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+          throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        }
+        
         const errorData = await response.json().catch(() => ({}));
         
         // Extraer mensaje de error más detallado de Wompi
@@ -381,7 +422,12 @@ export function WompiPayment({
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      // Always read fresh token from localStorage to avoid stale tokens
       const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación. Por favor, inicia sesión nuevamente.');
+      }
 
       // Validaciones básicas
       if (cardData.number.length < 13 || cardData.number.length > 19) {
@@ -406,6 +452,14 @@ export function WompiPayment({
       });
 
       if (!response.ok) {
+        // Handle 401 Unauthorized - token expired/invalid
+        if (response.status === 401) {
+          localStorage.removeItem('melo_sportt_token');
+          localStorage.removeItem('token');
+          window.dispatchEvent(new CustomEvent('melo:unauthorized'));
+          throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        }
+        
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Datos de tarjeta inválidos');
       }

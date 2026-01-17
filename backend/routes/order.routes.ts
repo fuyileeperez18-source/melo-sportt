@@ -153,7 +153,7 @@ router.post('/confirm-payment', authenticate, async (req: AuthRequest, res: Resp
 // Create Wompi transaction
 router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { items, orderId, customerEmail, shippingAddress } = z.object({
+    const { items, orderId, customerEmail, shippingAddress, payment_method } = z.object({
       items: z.array(z.object({
         title: z.string(),
         quantity: z.number().int().positive(),
@@ -169,6 +169,11 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
         city: z.string().optional(),
         name: z.string().optional(),
         phone_number: z.string().optional(),
+      }).optional(),
+      payment_method: z.object({
+        type: z.string(),
+        installments: z.number().optional(),
+        token: z.string().optional(),
       }).optional(),
     }).parse(req.body);
 
@@ -250,7 +255,9 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     }
 
     // Create transaction
-    const transaction = await wompiService.createTransaction({
+    // Only include payment_method if provided (for direct card payments)
+    // For PSE/Nequi redirect flows, omit payment_method - Wompi checkout will handle it
+    const transactionData: any = {
       amount_in_cents: totalAmountInCents,
       currency: 'COP',
       customer_email: customerEmail,
@@ -261,7 +268,14 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
         full_name: shippingAddress?.name,
         phone_number: shippingAddress?.phone_number?.replace(/\D/g, ''),
       },
-    });
+    };
+
+    // Only include payment_method if provided (for card payments with token)
+    if (payment_method) {
+      transactionData.payment_method = payment_method;
+    }
+
+    const transaction = await wompiService.createTransaction(transactionData);
 
     // Generate integrity signature for widget
     const integritySignature = wompiService.generateIntegritySignature(
