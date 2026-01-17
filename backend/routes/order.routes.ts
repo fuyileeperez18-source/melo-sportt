@@ -305,11 +305,36 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
         type: payment_type,
         installments: 1,
       };
+
       // Add a generic payment_description if provided by frontend
       if ((req.body as any).payment_description) {
         transactionData.payment_method.payment_description = (req.body as any).payment_description;
       }
-      console.log('[Order Routes] Including payment_method with type for redirect flow:', payment_type);
+
+      // For PSE, include additional required fields
+      if (payment_type === 'PSE') {
+        const { financial_institution_code, user_type, user_legal_id_type, user_legal_id } = req.body as any;
+        Object.assign(transactionData.payment_method, {
+          financial_institution_code,
+          user_type,
+          user_legal_id_type,
+          user_legal_id
+        });
+      }
+
+      // For Nequi, include phone number (required)
+      if (payment_type === 'NEQUI') {
+        // Use phone number from shipping address or customer data
+        // Wompi expects 10 digits for Colombia
+        const nequiPhone = normalizePhoneForWompi(shippingAddress?.phone_number);
+        if (nequiPhone) {
+          transactionData.payment_method.phone_number = nequiPhone;
+        } else {
+          console.warn('[Order Routes] Warning: Nequi payment selected but no phone number available');
+        }
+      }
+
+      console.log('[Order Routes] Including payment_method with type for redirect flow:', payment_type, transactionData.payment_method);
     } else {
       // When no payment method or type is specified, Wompi requires either:
       // 1. payment_method (even minimal)

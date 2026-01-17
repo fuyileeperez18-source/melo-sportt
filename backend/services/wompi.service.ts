@@ -46,6 +46,16 @@ export interface CreateTransactionData {
   payment_method?: {
     type: string;
     installments?: number;
+    token?: string;
+    // PSE fields
+    financial_institution_code?: string;
+    user_type?: number | string;
+    user_legal_id_type?: string;
+    user_legal_id?: string;
+    payment_description?: string;
+    // Nequi fields
+    phone_number?: string;
+    [key: string]: any; // Allow other fields
   };
   reference: string;
   redirect_url?: string;
