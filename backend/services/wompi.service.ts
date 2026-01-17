@@ -408,7 +408,20 @@ export const wompiService = {
           }
           
           if (messages.payment_method) {
-            errorParts.push(`Método de pago: ${Array.isArray(messages.payment_method) ? messages.payment_method.join(', ') : messages.payment_method}`);
+            const pm = messages.payment_method;
+            let pmText = '';
+            if (Array.isArray(pm)) {
+              pmText = pm.join(', ');
+            } else if (pm && typeof pm === 'object') {
+              try {
+                pmText = JSON.stringify(pm);
+              } catch (e) {
+                pmText = String(pm);
+              }
+            } else {
+              pmText = String(pm);
+            }
+            errorParts.push(`Método de pago: ${pmText}`);
           }
           
           if (messages.payment_source_id) {
