@@ -56,7 +56,7 @@ export const orderService = {
           orderData.total,
           orderData.status || 'pending',
           orderData.payment_status || 'pending',
-          orderData.payment_method || 'card',
+          orderData.payment_method || 'wompi', // Default changed from 'card' to 'wompi' since it's the primary payment method
           orderData.payment_id || null,
           orderData.stripe_payment_intent_id || null,
           JSON.stringify(orderData.shipping_address),

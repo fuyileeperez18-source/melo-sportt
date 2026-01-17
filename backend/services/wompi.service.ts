@@ -230,9 +230,17 @@ export const wompiService = {
       if (data.payment_method) {
         payload.payment_method = data.payment_method;
       }
+      if (data.payment_source_id) {
+        payload.payment_source_id = data.payment_source_id;
+      }
       if (data.redirect_url) {
         payload.redirect_url = data.redirect_url;
       }
+      
+      console.log('[Wompi Service] Creating transaction with payload:', JSON.stringify({
+        ...payload,
+        acceptance_token: payload.acceptance_token ? '***' : undefined,
+      }, null, 2));
       if (data.customer_data && (data.customer_data.full_name || data.customer_data.phone_number)) {
         payload.customer_data = data.customer_data;
       }
@@ -305,6 +313,30 @@ export const wompiService = {
       }
 
       // Create transaction
+      console.log('[Wompi Service] Sending request to Wompi API:', {
+        url: `${WOMPI_API_URL}/transactions`,
+        hasPaymentMethod: !!payload.payment_method,
+        hasPaymentSourceId: !!payload.payment_source_id,
+        hasShippingAddress: !!payload.shipping_address,
+        hasRedirectUrl: !!payload.redirect_url,
+        payloadKeys: Object.keys(payload),
+      });
+      
+      // IMPORTANTE: Según la documentación de Wompi, cuando se usa el checkout widget,
+      // NO se debe enviar payment_method porque el usuario lo seleccionará en el widget.
+      // Sin embargo, Wompi puede estar requiriendo que se especifique un método de pago.
+      // Si no hay payment_method ni payment_source_id, Wompi puede rechazar la transacción.
+      // 
+      // Para métodos que usan checkout widget (PSE, Nequi, etc.), el flujo correcto es:
+      // 1. Crear la transacción sin payment_method
+      // 2. Redirigir al usuario al checkout_url donde seleccionará el método
+      // 3. Wompi procesará el pago y enviará un webhook cuando se complete
+      //
+      // Si Wompi rechaza esto, puede ser porque:
+      // - Falta algún campo requerido
+      // - El acceptance_token no es válido
+      // - Hay un problema con la configuración de la cuenta de Wompi
+      
       const response = await axios.post(
         `${WOMPI_API_URL}/transactions`,
         payload,
@@ -315,6 +347,12 @@ export const wompiService = {
           },
         }
       );
+      
+      console.log('[Wompi Service] Transaction created successfully:', {
+        transactionId: response.data.data?.id,
+        status: response.data.data?.status,
+        reference: response.data.data?.reference,
+      });
 
       const transaction = response.data.data;
 
@@ -330,11 +368,16 @@ export const wompiService = {
         currency: transaction.currency,
       };
     } catch (error: any) {
-      console.error('Wompi API Error:', {
+      console.error('❌ [Wompi Service] API Error:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
         message: error.message,
+        url: error.config?.url,
+        payload: {
+          ...payload,
+          acceptance_token: payload.acceptance_token ? '***' : undefined,
+        },
       });
 
       // Extraer mensaje de error más detallado
@@ -358,6 +401,14 @@ export const wompiService = {
           
           if (messages.customer_email) {
             errorParts.push(`Email: ${Array.isArray(messages.customer_email) ? messages.customer_email.join(', ') : messages.customer_email}`);
+          }
+          
+          if (messages.payment_method) {
+            errorParts.push(`Método de pago: ${Array.isArray(messages.payment_method) ? messages.payment_method.join(', ') : messages.payment_method}`);
+          }
+          
+          if (messages.payment_source_id) {
+            errorParts.push(`Fuente de pago: ${Array.isArray(messages.payment_source_id) ? messages.payment_source_id.join(', ') : messages.payment_source_id}`);
           }
           
           if (errorData.error.reason) {

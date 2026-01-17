@@ -17,11 +17,27 @@ export class AppError extends Error {
 
 export const errorHandler = (
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void => {
+  // Log completo del error con contexto
+  console.error('❌ [ERROR HANDLER]', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    body: req.body,
+    query: req.query,
+    params: req.params,
+    headers: {
+      authorization: req.headers.authorization ? 'Bearer ***' : undefined,
+      'content-type': req.headers['content-type'],
+    },
+  });
+
   if (err instanceof ZodError) {
+    console.error('❌ [VALIDATION ERROR]', err.errors);
     res.status(400).json({
       success: false,
       error: 'Validation error',
@@ -31,14 +47,13 @@ export const errorHandler = (
   }
 
   if (err instanceof AppError) {
+    console.error(`❌ [APP ERROR] ${err.statusCode}: ${err.message}`);
     res.status(err.statusCode).json({
       success: false,
       error: err.message,
     });
     return;
   }
-
-  console.error('Error:', err);
 
   res.status(500).json({
     success: false,

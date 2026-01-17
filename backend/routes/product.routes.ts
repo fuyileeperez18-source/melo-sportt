@@ -39,9 +39,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // Get featured products
 router.get('/featured', async (_req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('📦 [PRODUCTS] GET /featured - Request received');
     const products = await productService.getFeatured();
+    console.log('📦 [PRODUCTS] GET /featured - Found products:', products.length);
     res.json({ success: true, data: products });
   } catch (error) {
+    console.error('❌ [PRODUCTS] GET /featured - Error:', error);
     next(error);
   }
 });

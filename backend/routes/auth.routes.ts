@@ -51,8 +51,14 @@ router.post('/signin', async (req: Request, res: Response, next: NextFunction) =
 });
 
 // Get current user
-router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
-  res.json({ success: true, data: { user: req.user } });
+router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    console.log('👤 [AUTH] GET /me - Request received for user:', req.user?.id);
+    res.json({ success: true, data: { user: req.user } });
+  } catch (error) {
+    console.error('❌ [AUTH] GET /me - Error:', error);
+    next(error);
+  }
 });
 
 // Reset password request

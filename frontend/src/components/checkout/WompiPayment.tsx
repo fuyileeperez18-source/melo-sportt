@@ -348,6 +348,9 @@ export function WompiPayment({
           installments: 1,
           token: cardTokenId
         };
+        console.log('[WompiPayment] Including payment_method with card token:', cardTokenId);
+      } else {
+        console.log('[WompiPayment] No card token - transaction will be created without payment_method for checkout widget');
       }
 
       const response = await fetch(`${API_URL}/orders/wompi/create-transaction`, {
@@ -620,7 +623,10 @@ export function WompiPayment({
 
             {/* PSE / Nequi / Bancolombia */}
             <button
-              onClick={() => handleCreateTransaction()}
+              onClick={() => {
+                console.log('[WompiPayment] User selected PSE/Nequi/Bancolombia - creating transaction without payment_method');
+                handleCreateTransaction();
+              }}
               className="w-full p-4 bg-primary-800 rounded-lg border border-primary-700 hover:border-blue-500 transition-all text-left flex items-center gap-4"
             >
               <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -634,7 +640,10 @@ export function WompiPayment({
 
             {/* Nequi específico */}
             <button
-              onClick={() => handleCreateTransaction()}
+              onClick={() => {
+                console.log('[WompiPayment] User selected Nequi - creating transaction without payment_method');
+                handleCreateTransaction();
+              }}
               className="w-full p-4 bg-primary-800 rounded-lg border border-primary-700 hover:border-purple-500 transition-all text-left flex items-center gap-4"
             >
               <div className="p-2 bg-purple-500/10 rounded-lg">

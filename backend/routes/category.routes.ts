@@ -8,9 +8,12 @@ const router = Router();
 // Get all categories
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('📁 [CATEGORIES] GET / - Request received');
     const categories = await categoryService.getAll();
+    console.log('📁 [CATEGORIES] GET / - Found categories:', categories.length);
     res.json({ success: true, data: categories });
   } catch (error) {
+    console.error('❌ [CATEGORIES] GET / - Error:', error);
     next(error);
   }
 });

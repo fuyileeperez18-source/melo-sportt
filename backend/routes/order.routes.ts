@@ -39,7 +39,7 @@ const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1),
   shipping_address: addressSchema,
   billing_address: addressSchema.optional(),
-  payment_method: z.string().default('card'),
+  payment_method: z.enum(['card', 'wompi', 'cash_on_delivery', 'stripe', 'prepaid']).default('card'),
   payment_id: z.string().optional(),
   stripe_payment_intent_id: z.string().optional(),
   subtotal: z.number().positive(),
@@ -153,7 +153,7 @@ router.post('/confirm-payment', authenticate, async (req: AuthRequest, res: Resp
 // Create Wompi transaction
 router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { items, orderId, customerEmail, shippingAddress, payment_method } = z.object({
+    const { items, orderId, customerEmail, shippingAddress, payment_method, payment_type } = z.object({
       items: z.array(z.object({
         title: z.string(),
         quantity: z.number().int().positive(),
@@ -175,6 +175,7 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
         installments: z.number().optional(),
         token: z.string().optional(),
       }).optional(),
+      payment_type: z.enum(['CARD', 'PSE', 'NEQUI', 'BANCOLOMBIA_TRANSFER']).optional(),
     }).parse(req.body);
 
     // Calculate total amount in cents
@@ -256,7 +257,7 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
 
     // Create transaction
     // Only include payment_method if provided (for direct card payments)
-    // For PSE/Nequi redirect flows, omit payment_method - Wompi checkout will handle it
+    // For PSE/Nequi redirect flows, we need to use payment_source_id or let Wompi handle it via checkout widget
     const transactionData: any = {
       amount_in_cents: totalAmountInCents,
       currency: 'COP',
@@ -273,7 +274,33 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // Only include payment_method if provided (for card payments with token)
     if (payment_method) {
       transactionData.payment_method = payment_method;
+      console.log('[Order Routes] Including payment_method in transaction:', payment_method);
+    } else if (payment_type) {
+      // Cuando se especifica un tipo de pago pero no un método completo (PSE, Nequi, etc.),
+      // Wompi requiere que se especifique el tipo en payment_method para el checkout widget
+      // Sin embargo, según la documentación, cuando se usa el checkout widget,
+      // NO se debe enviar payment_method porque el usuario lo seleccionará en el widget
+      // 
+      // El problema es que Wompi está rechazando transacciones sin payment_method con error 422
+      // Solución temporal: Para métodos que usan checkout widget, NO enviamos payment_method
+      // y dejamos que Wompi maneje la selección en el checkout widget
+      // Si Wompi sigue rechazando, necesitaremos usar payment_source_id o generar un payment link
+      console.log('[Order Routes] Payment type specified:', payment_type, '- will use Wompi checkout widget for method selection');
+      // NO incluimos payment_method aquí - el checkout widget de Wompi manejará la selección
+    } else {
+      console.log('[Order Routes] No payment_method or payment_type provided - will use Wompi checkout widget');
+      console.log('[Order Routes] Transaction will be created without payment_method for checkout widget selection');
     }
+
+    console.log('[Order Routes] Creating Wompi transaction with data:', {
+      amount_in_cents: transactionData.amount_in_cents,
+      currency: transactionData.currency,
+      customer_email: transactionData.customer_email,
+      reference: transactionData.reference,
+      hasPaymentMethod: !!transactionData.payment_method,
+      hasShippingAddress: !!transactionData.shipping_address,
+      hasCustomerData: !!transactionData.customer_data,
+    });
 
     const transaction = await wompiService.createTransaction(transactionData);
 

@@ -211,7 +211,7 @@ export function CheckoutPage() {
         total,
         status: 'confirmed' as const,
         payment_status: 'paid' as const,
-        payment_method: 'prepaid',
+        payment_method: 'wompi', // Cambiado de 'prepaid' a 'wompi' para consistencia
         payment_id: paymentId,
                 shipping_address: {
           email: shippingData?.email,
