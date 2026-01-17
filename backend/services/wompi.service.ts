@@ -326,19 +326,20 @@ export const wompiService = {
       });
       
       // IMPORTANTE: Según la documentación de Wompi, cuando se usa el checkout widget,
-      // NO se debe enviar payment_method porque el usuario lo seleccionará en el widget.
-      // Sin embargo, Wompi puede estar requiriendo que se especifique un método de pago.
-      // Si no hay payment_method ni payment_source_id, Wompi puede rechazar la transacción.
+      // puedes enviar payment_method con solo el tipo (sin token) para indicar el método deseado,
+      // o puedes omitirlo completamente y dejar que el widget maneje la selección.
       // 
-      // Para métodos que usan checkout widget (PSE, Nequi, etc.), el flujo correcto es:
-      // 1. Crear la transacción sin payment_method
-      // 2. Redirigir al usuario al checkout_url donde seleccionará el método
-      // 3. Wompi procesará el pago y enviará un webhook cuando se complete
+      // Sin embargo, Wompi está rechazando transacciones sin payment_method ni payment_source_id
+      // con error 422 "No se especificó método de pago o fuente de pago".
       //
-      // Si Wompi rechaza esto, puede ser porque:
-      // - Falta algún campo requerido
-      // - El acceptance_token no es válido
-      // - Hay un problema con la configuración de la cuenta de Wompi
+      // Solución: Si no hay payment_method completo (con token), pero hay un tipo de pago,
+      // incluimos payment_method con solo el tipo. Si no hay nada, intentamos crear la transacción
+      // y si Wompi la rechaza, el error será claro y podremos implementar payment_source_id.
+      //
+      // Para métodos que usan checkout widget (PSE, Nequi, etc.), el flujo correcto es:
+      // 1. Crear la transacción con payment_method.type (sin token) o payment_source_id
+      // 2. Redirigir al usuario al checkout_url donde completará el pago
+      // 3. Wompi procesará el pago y enviará un webhook cuando se complete
       
       const response = await axios.post(
         `${WOMPI_API_URL}/transactions`,

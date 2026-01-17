@@ -276,20 +276,26 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
       transactionData.payment_method = payment_method;
       console.log('[Order Routes] Including payment_method in transaction:', payment_method);
     } else if (payment_type) {
-      // Cuando se especifica un tipo de pago pero no un método completo (PSE, Nequi, etc.),
-      // Wompi requiere que se especifique el tipo en payment_method para el checkout widget
-      // Sin embargo, según la documentación, cuando se usa el checkout widget,
-      // NO se debe enviar payment_method porque el usuario lo seleccionará en el widget
-      // 
-      // El problema es que Wompi está rechazando transacciones sin payment_method con error 422
-      // Solución temporal: Para métodos que usan checkout widget, NO enviamos payment_method
-      // y dejamos que Wompi maneje la selección en el checkout widget
-      // Si Wompi sigue rechazando, necesitaremos usar payment_source_id o generar un payment link
-      console.log('[Order Routes] Payment type specified:', payment_type, '- will use Wompi checkout widget for method selection');
-      // NO incluimos payment_method aquí - el checkout widget de Wompi manejará la selección
+      // For redirect flows (PSE, Nequi, etc.), Wompi requires payment_method with type
+      // even if we don't have a token yet. The checkout widget will handle the rest.
+      transactionData.payment_method = {
+        type: payment_type,
+        installments: 1,
+      };
+      console.log('[Order Routes] Including payment_method with type for redirect flow:', payment_type);
     } else {
-      console.log('[Order Routes] No payment_method or payment_type provided - will use Wompi checkout widget');
-      console.log('[Order Routes] Transaction will be created without payment_method for checkout widget selection');
+      // When no payment method or type is specified, Wompi requires either:
+      // 1. payment_method (even minimal)
+      // 2. payment_source_id
+      // 
+      // Since we're using the checkout widget, we'll include a minimal payment_method
+      // that allows the widget to handle payment method selection.
+      // However, Wompi might still reject this. In that case, we need to use payment_source_id.
+      //
+      // For now, let's try without payment_method and see if Wompi's checkout widget accepts it.
+      // If it continues to reject, we'll need to implement payment_source_id lookup or use payment links.
+      console.log('[Order Routes] No payment_method or payment_type - transaction will use checkout widget');
+      console.warn('[Order Routes] WARNING: Wompi may reject this transaction. Consider using payment_source_id or payment links.');
     }
 
     console.log('[Order Routes] Creating Wompi transaction with data:', {

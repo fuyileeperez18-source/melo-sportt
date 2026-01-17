@@ -252,7 +252,7 @@ export function WompiPayment({
   };
 
   // Crear transacción con Wompi
-  const handleCreateTransaction = async (cardTokenId?: string) => {
+  const handleCreateTransaction = async (cardTokenId?: string, paymentType?: 'CARD' | 'PSE' | 'NEQUI' | 'BANCOLOMBIA_TRANSFER') => {
     setIsProcessing(true);
     setError(null);
     setPaymentStep('processing');
@@ -332,7 +332,7 @@ export function WompiPayment({
         }
       }
 
-      // Build request body - only include payment_method if we have a card token
+      // Build request body - include payment_method or payment_type based on what we have
       const requestBody: any = {
         items,
         customerEmail,
@@ -340,8 +340,8 @@ export function WompiPayment({
         shippingAddress: formattedShippingAddress,
       };
 
-      // Only include payment_method if we have a card token (for direct card payments)
-      // For PSE/Nequi redirect flows, we don't send payment_method - Wompi checkout will handle it
+      // Include payment_method if we have a card token (for direct card payments)
+      // For PSE/Nequi redirect flows, include payment_type so Wompi knows which method to use
       if (cardTokenId) {
         requestBody.payment_method = {
           type: 'CARD',
@@ -349,8 +349,12 @@ export function WompiPayment({
           token: cardTokenId
         };
         console.log('[WompiPayment] Including payment_method with card token:', cardTokenId);
+      } else if (paymentType) {
+        // For redirect flows, send payment_type so backend can include it in payment_method
+        requestBody.payment_type = paymentType;
+        console.log('[WompiPayment] Including payment_type for redirect flow:', paymentType);
       } else {
-        console.log('[WompiPayment] No card token - transaction will be created without payment_method for checkout widget');
+        console.log('[WompiPayment] No card token or payment type - transaction will be created for checkout widget');
       }
 
       const response = await fetch(`${API_URL}/orders/wompi/create-transaction`, {
@@ -624,8 +628,8 @@ export function WompiPayment({
             {/* PSE / Nequi / Bancolombia */}
             <button
               onClick={() => {
-                console.log('[WompiPayment] User selected PSE/Nequi/Bancolombia - creating transaction without payment_method');
-                handleCreateTransaction();
+                console.log('[WompiPayment] User selected PSE - creating transaction with payment_type');
+                handleCreateTransaction(undefined, 'PSE');
               }}
               className="w-full p-4 bg-primary-800 rounded-lg border border-primary-700 hover:border-blue-500 transition-all text-left flex items-center gap-4"
             >
@@ -633,7 +637,7 @@ export function WompiPayment({
                 <Building2 className="h-6 w-6 text-blue-500" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-white">PSE / Nequi / Bancolombia</h4>
+                <h4 className="font-medium text-white">PSE / Bancolombia</h4>
                 <p className="text-xs text-gray-400">Transferencia bancaria directa</p>
               </div>
             </button>
@@ -641,8 +645,8 @@ export function WompiPayment({
             {/* Nequi específico */}
             <button
               onClick={() => {
-                console.log('[WompiPayment] User selected Nequi - creating transaction without payment_method');
-                handleCreateTransaction();
+                console.log('[WompiPayment] User selected Nequi - creating transaction with payment_type');
+                handleCreateTransaction(undefined, 'NEQUI');
               }}
               className="w-full p-4 bg-primary-800 rounded-lg border border-primary-700 hover:border-purple-500 transition-all text-left flex items-center gap-4"
             >
