@@ -181,29 +181,69 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // Validar y formatear shipping_address para Wompi
     let formattedShippingAddress = undefined;
     if (shippingAddress) {
-      // Wompi requiere que si se envía shipping_address, tenga ciertos campos
-      // Si falta información crítica, mejor no enviarlo (Wompi puede funcionar sin él)
-      if (shippingAddress.address_line_1 && shippingAddress.city && shippingAddress.country) {
-        // Limpiar teléfono (solo números)
-        const cleanPhone = shippingAddress.phone_number?.replace(/\D/g, '') || undefined;
-        
-        // Asegurar código de país de 2 letras
-        let countryCode = shippingAddress.country;
-        if (countryCode && countryCode.length > 2) {
-          countryCode = countryCode.substring(0, 2).toUpperCase();
-        } else if (countryCode) {
-          countryCode = countryCode.toUpperCase();
-        }
+      try {
+        // Wompi requiere que si se envía shipping_address, tenga ciertos campos
+        // Si falta información crítica, mejor no enviarlo (Wompi puede funcionar sin él)
+        if (shippingAddress.address_line_1 && shippingAddress.city && shippingAddress.country) {
+          // Validar que address_line_1 tenga al menos 4 caracteres (requisito de Wompi)
+          const trimmedAddress = shippingAddress.address_line_1.trim();
+          if (trimmedAddress.length < 4) {
+            console.warn('[Order Routes] address_line_1 too short:', trimmedAddress.length, 'characters. Skipping shipping_address.');
+            // No enviar shipping_address si no cumple requisitos
+          } else {
+            // Validar que city tenga al menos 4 caracteres
+            const trimmedCity = shippingAddress.city.trim();
+            if (trimmedCity.length < 4) {
+              console.warn('[Order Routes] city too short:', trimmedCity.length, 'characters. Skipping shipping_address.');
+              // No enviar shipping_address si no cumple requisitos
+            } else {
+              // Limpiar teléfono (solo números)
+              const cleanPhone = shippingAddress.phone_number?.replace(/\D/g, '') || undefined;
+              
+              // Asegurar código de país de 2 letras
+              let countryCode = shippingAddress.country;
+              if (countryCode && countryCode.length > 2) {
+                countryCode = countryCode.substring(0, 2).toUpperCase();
+              } else if (countryCode) {
+                countryCode = countryCode.toUpperCase();
+              }
 
-        formattedShippingAddress = {
-          address_line_1: shippingAddress.address_line_1.trim(),
-          address_line_2: shippingAddress.address_line_2?.trim() || '',
-          country: countryCode || 'CO', // Default a Colombia si no se especifica
-          region: shippingAddress.region?.trim() || shippingAddress.city.trim(),
-          city: shippingAddress.city.trim(),
-          name: shippingAddress.name?.trim() || 'Cliente',
-          phone_number: cleanPhone,
-        };
+              // Validar region (si se proporciona, debe tener al menos 4 caracteres)
+              let region = shippingAddress.region?.trim() || trimmedCity;
+              if (region.length < 4) {
+                // Si region es muy corta, usar city como fallback
+                region = trimmedCity;
+              }
+
+              // Construir name - debe tener al menos 4 caracteres
+              const name = shippingAddress.name?.trim() || 'Cliente Melo Sportt';
+              const finalName = name.length >= 4 ? name : 'Cliente Melo Sportt';
+
+              formattedShippingAddress = {
+                address_line_1: trimmedAddress,
+                // Solo incluir address_line_2 si tiene al menos 4 caracteres (Wompi requiere mínimo 4 si se envía)
+                ...(shippingAddress.address_line_2?.trim() && shippingAddress.address_line_2.trim().length >= 4
+                  ? { address_line_2: shippingAddress.address_line_2.trim() }
+                  : {}),
+                country: countryCode || 'CO', // Default a Colombia si no se especifica
+                region: region,
+                city: trimmedCity,
+                name: finalName,
+                // Solo incluir phone_number si tiene al menos 7 dígitos
+                ...(cleanPhone && cleanPhone.length >= 7 ? { phone_number: cleanPhone } : {}),
+              };
+
+              // Log para debugging
+              console.log('[Order Routes] Formatted shipping address for Wompi:', JSON.stringify(formattedShippingAddress, null, 2));
+            }
+          }
+        } else {
+          console.warn('[Order Routes] Missing required shipping fields. Skipping shipping_address.');
+        }
+      } catch (error: any) {
+        console.error('[Order Routes] Error formatting shipping address:', error);
+        // Si hay error, no enviar shipping_address (Wompi puede funcionar sin él)
+        formattedShippingAddress = undefined;
       }
       // Si falta información crítica, no enviamos shipping_address
       // Wompi puede procesar la transacción sin él

@@ -237,11 +237,71 @@ export const wompiService = {
         payload.customer_data = data.customer_data;
       }
       // Solo enviar shipping_address si tiene los campos mínimos requeridos
+      // y cumple con las validaciones de Wompi (mínimo 4 caracteres para address_line_1 y city)
       if (data.shipping_address && 
           data.shipping_address.address_line_1 && 
           data.shipping_address.city && 
           data.shipping_address.country) {
-        payload.shipping_address = data.shipping_address;
+        try {
+          // Validar longitud mínima requerida por Wompi
+          const addressLine1 = data.shipping_address.address_line_1.trim();
+          const city = data.shipping_address.city.trim();
+          
+          if (addressLine1.length < 4) {
+            console.warn('[Wompi Service] address_line_1 too short, skipping shipping_address');
+            // No enviar shipping_address si no cumple requisitos
+          } else if (city.length < 4) {
+            console.warn('[Wompi Service] city too short, skipping shipping_address');
+            // No enviar shipping_address si no cumple requisitos
+          } else {
+            // Asegurar que region tenga al menos 4 caracteres si se proporciona
+            let region = data.shipping_address.region?.trim();
+            if (region && region.length < 4) {
+              // Si region es muy corta, usar city como fallback
+              region = city;
+            } else if (!region) {
+              region = city;
+            }
+
+            // Construir name - debe tener al menos 4 caracteres
+            const name = data.shipping_address.name?.trim() || 'Cliente Melo Sportt';
+            const finalName = name.length >= 4 ? name : 'Cliente Melo Sportt';
+
+            // Asegurar código de país de 2 letras
+            let countryCode = data.shipping_address.country?.trim().toUpperCase() || 'CO';
+            if (countryCode.length > 2) {
+              countryCode = countryCode.substring(0, 2);
+            }
+
+            // Construir objeto shipping_address solo con campos válidos
+            const shippingAddressPayload: any = {
+              address_line_1: addressLine1,
+              city: city,
+              region: region,
+              country: countryCode,
+              name: finalName,
+            };
+
+            // Solo incluir address_line_2 si tiene al menos 4 caracteres
+            if (data.shipping_address.address_line_2?.trim() && data.shipping_address.address_line_2.trim().length >= 4) {
+              shippingAddressPayload.address_line_2 = data.shipping_address.address_line_2.trim();
+            }
+
+            // Solo incluir phone_number si tiene al menos 7 dígitos
+            const cleanPhone = data.shipping_address.phone_number?.replace(/\D/g, '');
+            if (cleanPhone && cleanPhone.length >= 7) {
+              shippingAddressPayload.phone_number = cleanPhone;
+            }
+
+            console.log('[Wompi Service] Final shipping_address payload:', JSON.stringify(shippingAddressPayload, null, 2));
+
+            payload.shipping_address = shippingAddressPayload;
+          }
+        } catch (error: any) {
+          console.error('[Wompi Service] Error formatting shipping_address:', error);
+          // Si hay error formateando, no enviar shipping_address (Wompi puede funcionar sin él)
+          console.warn('[Wompi Service] Skipping shipping_address due to formatting error');
+        }
       }
 
       // Create transaction

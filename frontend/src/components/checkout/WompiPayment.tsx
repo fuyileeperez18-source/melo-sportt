@@ -245,30 +245,67 @@ export function WompiPayment({
       // Preparar shipping_address con validación y formato correcto para Wompi
       let formattedShippingAddress = undefined;
       if (shippingAddress) {
-        // Limpiar y formatear teléfono (solo números)
-        const cleanPhone = shippingAddress.phone.replace(/\D/g, '');
-        
-        // Asegurar que el país esté en formato correcto (Wompi espera códigos ISO de 2 letras)
-        let countryCode = shippingAddress.country;
-        if (countryCode && countryCode.length > 2) {
-          // Si viene un código largo, intentar extraer las primeras 2 letras
-          countryCode = countryCode.substring(0, 2).toUpperCase();
-        }
-        
-        // Validar que los campos requeridos estén presentes
-        if (!shippingAddress.address || !shippingAddress.city || !countryCode) {
-          throw new Error('La dirección de envío debe incluir dirección, ciudad y país');
-        }
+        try {
+          // Limpiar y formatear teléfono (solo números)
+          const cleanPhone = shippingAddress.phone.replace(/\D/g, '');
+          
+          // Asegurar que el país esté en formato correcto (Wompi espera códigos ISO de 2 letras)
+          let countryCode = shippingAddress.country;
+          if (countryCode && countryCode.length > 2) {
+            // Si viene un código largo, intentar extraer las primeras 2 letras
+            countryCode = countryCode.substring(0, 2).toUpperCase();
+          } else if (countryCode) {
+            countryCode = countryCode.toUpperCase();
+          }
+          
+          // Validar que los campos requeridos estén presentes
+          if (!shippingAddress.address || !shippingAddress.city || !countryCode) {
+            console.warn('[WompiPayment] Missing required shipping fields, skipping shipping_address');
+            // No enviar shipping_address si faltan campos requeridos
+          } else {
+            // Validar longitud mínima requerida por Wompi (4 caracteres)
+            const trimmedAddress = shippingAddress.address.trim();
+            const trimmedCity = shippingAddress.city.trim();
+            
+            if (trimmedAddress.length < 4) {
+              console.warn('[WompiPayment] Address too short:', trimmedAddress.length, 'characters');
+              // No enviar shipping_address si no cumple requisitos
+            } else if (trimmedCity.length < 4) {
+              console.warn('[WompiPayment] City too short:', trimmedCity.length, 'characters');
+              // No enviar shipping_address si no cumple requisitos
+            } else {
+              // Validar region (state) - si es muy corta, usar city como fallback
+              let region = shippingAddress.state?.trim() || trimmedCity;
+              if (region.length < 4) {
+                region = trimmedCity;
+              }
 
-        formattedShippingAddress = {
-          address_line_1: shippingAddress.address.trim(),
-          address_line_2: shippingAddress.apartment?.trim() || '',
-          country: countryCode.toUpperCase(),
-          region: shippingAddress.state?.trim() || shippingAddress.city.trim(),
-          city: shippingAddress.city.trim(),
-          name: `${shippingAddress.firstName?.trim() || ''} ${shippingAddress.lastName?.trim() || ''}`.trim() || 'Cliente',
-          phone_number: cleanPhone || undefined,
-        };
+              // Construir name - debe tener al menos 4 caracteres
+              const fullName = `${shippingAddress.firstName?.trim() || ''} ${shippingAddress.lastName?.trim() || ''}`.trim();
+              const name = fullName.length >= 4 ? fullName : 'Cliente Melo Sportt';
+
+              formattedShippingAddress = {
+                address_line_1: trimmedAddress,
+                // Solo incluir address_line_2 si tiene al menos 4 caracteres (Wompi requiere mínimo 4 si se envía)
+                ...(shippingAddress.apartment?.trim() && shippingAddress.apartment.trim().length >= 4
+                  ? { address_line_2: shippingAddress.apartment.trim() }
+                  : {}),
+                country: countryCode,
+                region: region,
+                city: trimmedCity,
+                name: name,
+                ...(cleanPhone && cleanPhone.length >= 7 ? { phone_number: cleanPhone } : {}),
+              };
+
+              // Log para debugging
+              console.log('[WompiPayment] Formatted shipping address:', JSON.stringify(formattedShippingAddress, null, 2));
+            }
+          }
+        } catch (error: any) {
+          console.error('[WompiPayment] Error formatting shipping address:', error);
+          // Si hay error, no enviar shipping_address (Wompi puede funcionar sin él)
+          formattedShippingAddress = undefined;
+        }
       }
 
       const response = await fetch(`${API_URL}/orders/wompi/create-transaction`, {
