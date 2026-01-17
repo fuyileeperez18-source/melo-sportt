@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CreditCard,
@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatCurrency } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 import toast from 'react-hot-toast';
 
 // ===========================================
@@ -151,15 +152,24 @@ export function WompiPayment({
   isProcessing,
   setIsProcessing,
 }: WompiPaymentProps) {
+  const { isAuthenticated } = useAuthStore();
+
   // Estado del componente
   const [error, setError] = useState<string | null>(null);
-  const [paymentStep, setPaymentStep] = useState<'methods' | 'card_form' | 'processing' | 'success'>('methods');
+  const [paymentStep, setPaymentStep] = useState<'methods' | 'card_form' | 'pse_form' | 'processing' | 'success'>('methods');
   const [cardData, setCardData] = useState({
     number: '',
     cvc: '',
     exp_month: '',
     exp_year: '',
     card_holder: ''
+  });
+  const [pseData, setPseData] = useState({
+    financial_institution_code: '',
+    user_type: '',
+    user_legal_id_type: '',
+    user_legal_id: '',
+    payment_description: ''
   });
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
   const [showTestCards, setShowTestCards] = useState(false);
@@ -252,10 +262,19 @@ export function WompiPayment({
   };
 
   // Crear transacción con Wompi
-  const handleCreateTransaction = async (cardTokenId?: string, paymentType?: 'CARD' | 'PSE' | 'NEQUI' | 'BANCOLOMBIA_TRANSFER') => {
+  const handleCreateTransaction = async (cardTokenId?: string, paymentType?: 'CARD' | 'PSE' | 'NEQUI' | 'BANCOLOMBIA_TRANSFER', pseData?: any) => {
     setIsProcessing(true);
     setError(null);
     setPaymentStep('processing');
+
+    // Evitar iniciar flujo de pago si el usuario no está autenticado
+    if (!isAuthenticated) {
+      setIsProcessing(false);
+      setPaymentStep('methods');
+      setError('Debes iniciar sesión para completar el pago.');
+      toast.error('Por favor inicia sesión para continuar con el pago');
+      return;
+    }
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -353,6 +372,18 @@ export function WompiPayment({
         // For redirect flows, send payment_type so backend can include it in payment_method
         requestBody.payment_type = paymentType;
         console.log('[WompiPayment] Including payment_type for redirect flow:', paymentType);
+
+        // Include payment_description for all redirect flows
+        requestBody.payment_description = `Pago de pedido ${reference} - Melo Sportt`;
+
+        // For PSE, include additional required fields
+        if (paymentType === 'PSE' && pseData) {
+          requestBody.financial_institution_code = pseData.financial_institution_code;
+          requestBody.user_type = pseData.user_type;
+          requestBody.user_legal_id_type = pseData.user_legal_id_type;
+          requestBody.user_legal_id = pseData.user_legal_id;
+          requestBody.payment_description = pseData.payment_description || requestBody.payment_description;
+        }
       } else {
         console.log('[WompiPayment] No card token or payment type - transaction will be created for checkout widget');
       }
@@ -476,6 +507,38 @@ export function WompiPayment({
     } catch (err: any) {
       console.error('Tokenization error:', err);
       setError(err.message || 'Error al validar la tarjeta. Verifica los datos e intenta de nuevo.');
+      setIsProcessing(false);
+    }
+  };
+
+  // Manejar envío del formulario PSE
+  const handlePseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      // Validaciones básicas para PSE
+      if (!pseData.financial_institution_code) {
+        throw new Error('Por favor selecciona tu banco');
+      }
+      if (!pseData.user_type) {
+        throw new Error('Por favor selecciona el tipo de persona');
+      }
+      if (!pseData.user_legal_id_type) {
+        throw new Error('Por favor selecciona el tipo de documento');
+      }
+      if (!pseData.user_legal_id) {
+        throw new Error('Por favor ingresa tu número de documento');
+      }
+      if (!pseData.payment_description) {
+        throw new Error('Por favor ingresa una descripción del pago');
+      }
+
+      await handleCreateTransaction(undefined, 'PSE', pseData);
+    } catch (err: any) {
+      console.error('PSE form error:', err);
+      setError(err.message || 'Error al procesar los datos de PSE. Verifica la información e intenta de nuevo.');
       setIsProcessing(false);
     }
   };
@@ -625,11 +688,11 @@ export function WompiPayment({
               </div>
             </button>
 
-            {/* PSE / Nequi / Bancolombia */}
+            {/* PSE específico */}
             <button
               onClick={() => {
-                console.log('[WompiPayment] User selected PSE - creating transaction with payment_type');
-                handleCreateTransaction(undefined, 'PSE');
+                console.log('[WompiPayment] User selected PSE - showing PSE form');
+                setPaymentStep('pse_form');
               }}
               className="w-full p-4 bg-primary-800 rounded-lg border border-primary-700 hover:border-blue-500 transition-all text-left flex items-center gap-4"
             >
@@ -667,60 +730,131 @@ export function WompiPayment({
           </motion.div>
         )}
 
-        {paymentStep === 'card_form' && (
+        {paymentStep === 'pse_form' && (
           <motion.div
-            key="card_form"
+            key="pse_form"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
           >
-            <form onSubmit={handleTokenizeAndPay} className="space-y-4">
-              <h3 className="text-lg font-medium text-white mb-4">Datos de tu tarjeta</h3>
+            <form onSubmit={handlePseSubmit} className="space-y-4">
+              <h3 className="text-lg font-medium text-white mb-4">Información para PSE</h3>
 
-              <Input
-                label="Nombre en la tarjeta"
-                placeholder="JUAN PEREZ"
-                required
-                value={cardData.card_holder}
-                onChange={e => setCardData({...cardData, card_holder: e.target.value.toUpperCase()})}
-              />
-
-              <Input
-                label="Número de tarjeta"
-                placeholder="4242 4242 4242 4242"
-                required
-                maxLength={16}
-                value={cardData.number}
-                onChange={e => setCardData({...cardData, number: e.target.value.replace(/\D/g, '')})}
-              />
-
-              <div className="grid grid-cols-3 gap-4">
-                <Input
-                  label="Mes"
-                  placeholder="MM"
+              <div>
+                <label className="text-sm text-white">Tipo de persona</label>
+                <select
                   required
-                  maxLength={2}
-                  value={cardData.exp_month}
-                  onChange={e => setCardData({...cardData, exp_month: e.target.value})}
-                />
-                <Input
-                  label="Año"
-                  placeholder="YY"
-                  required
-                  maxLength={2}
-                  value={cardData.exp_year}
-                  onChange={e => setCardData({...cardData, exp_year: e.target.value})}
-                />
-                <Input
-                  label="CVC"
-                  placeholder="123"
-                  type="password"
-                  required
-                  maxLength={4}
-                  value={cardData.cvc}
-                  onChange={e => setCardData({...cardData, cvc: e.target.value})}
-                />
+                  value={pseData.user_type}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPseData({...pseData, user_type: e.target.value})}
+                  className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white"
+                >
+                  <option value="">Selecciona el tipo de persona</option>
+                  <option value="0">Persona Natural</option>
+                  <option value="1">Persona Jurídica</option>
+                </select>
               </div>
+
+              <div>
+                <label className="text-sm text-white">Tipo de documento</label>
+                <select
+                  required
+                  value={pseData.user_legal_id_type}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPseData({...pseData, user_legal_id_type: e.target.value})}
+                  className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white"
+                >
+                  <option value="">Selecciona el tipo de documento</option>
+                  <option value="CC">Cédula de Ciudadanía</option>
+                  <option value="TI">Tarjeta de Identidad</option>
+                  <option value="RC">Registro Civil</option>
+                  <option value="TE">Tarjeta de Extranjería</option>
+                  <option value="CE">Cédula de Extranjería</option>
+                  <option value="NIT">NIT</option>
+                  <option value="PP">Pasaporte</option>
+                  <option value="DNI">DNI</option>
+                </select>
+              </div>
+
+              <Input
+                label="Número de documento"
+                placeholder="1234567890"
+                required
+                value={pseData.user_legal_id}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPseData({...pseData, user_legal_id: e.target.value.replace(/\D/g, '')})}
+              />
+
+              <div>
+                <label className="text-sm text-white">Banco</label>
+                <select
+                  required
+                  value={pseData.financial_institution_code}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPseData({...pseData, financial_institution_code: e.target.value})}
+                  className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white"
+                >
+                <option value="">Selecciona tu banco</option>
+                <option value="0001">Bancolombia</option>
+                <option value="1001">Banco de Bogotá</option>
+                <option value="1002">Banco Popular</option>
+                <option value="1006">Banco Itaú</option>
+                <option value="1007">Banco Corpbanca</option>
+                <option value="1009">Citibank</option>
+                <option value="1010">Banco de Occidente</option>
+                <option value="1012">Banco Caja Social</option>
+                <option value="1013">Banco Davivienda</option>
+                <option value="1014">Scotiabank Colpatria</option>
+                <option value="1019">Banco Pichincha</option>
+                <option value="1022">Banco Unión</option>
+                <option value="1023">Banco Finandina</option>
+                <option value="1032">Banco de Crédito</option>
+                <option value="1035">Banco Coomeva</option>
+                <option value="1037">Banco Falabella</option>
+                <option value="1040">Banco Agrario</option>
+                <option value="1041">Banco AV Villas</option>
+                <option value="1042">Banco W</option>
+                <option value="1043">Banco Caja de Compensación Familiar - Colsubsidio</option>
+                <option value="1044">Banco Multibanca Colpatria</option>
+                <option value="1045">Banco Serfinanza</option>
+                <option value="1046">Banco Tequendama</option>
+                <option value="1047">Banco Mundo Mujer</option>
+                <option value="1048">Banco Santander de Negocios Colombia</option>
+                <option value="1049">Banco GNB Sudameris</option>
+                <option value="1050">Banco Cooperativo Coopcentral</option>
+                <option value="1051">Bancoomeva</option>
+                <option value="1052">Banco Fondecom</option>
+                <option value="1053">Banco Credifinanciera</option>
+                <option value="1054">Banco Credicorp</option>
+                <option value="1055">Banco RCI Colombia</option>
+                <option value="1056">Banco Compartir</option>
+                <option value="1057">Banco BBVA Colombia</option>
+                <option value="1058">Banco Procultura</option>
+                <option value="1059">Bancamia</option>
+                <option value="1060">Banco Paga Todo</option>
+                <option value="1061">Banco Fundación</option>
+                <option value="1062">Banco J.P. Morgan Colombia</option>
+                <option value="1063">Banco Mibanco</option>
+                <option value="1064">Banco de las Microfinanzas - BANCAMIA</option>
+                <option value="1065">Banco BTG Pactual</option>
+                <option value="1066">Banco Serfinanza</option>
+                <option value="1067">Banco Tuya</option>
+                <option value="1068">Confiar Cooperativa Financiera</option>
+                <option value="1069">Cotrafa Cooperativa Financiera</option>
+                <option value="1070">Cootrasmed Cooperativa Financiera</option>
+                <option value="1071">Financiera Juriscoop</option>
+                <option value="1072">Juriscoop</option>
+                <option value="1073">Confiar</option>
+                <option value="1074">Cotrafa</option>
+                <option value="1075">Cootrasmed</option>
+                <option value="1076">Financiera Juriscoop</option>
+                <option value="1077">Juriscoop</option>
+                </select>
+              </div>
+
+              <Input
+                label="Descripción del pago"
+                placeholder="Pago de productos Melo Sportt"
+                required
+                value={pseData.payment_description}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPseData({...pseData, payment_description: e.target.value})}
+              />
 
               {error && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400 text-sm">
@@ -729,15 +863,12 @@ export function WompiPayment({
                 </div>
               )}
 
-              {/* Datos de prueba (solo en sandbox) */}
-              {isSandbox && <TestCardsPanel />}
-
               <div className="flex gap-4 pt-4">
                 <Button type="button" variant="outline" onClick={() => setPaymentStep('methods')}>
                   Atrás
                 </Button>
                 <Button type="submit" className="flex-1" isLoading={isProcessing}>
-                  Pagar {formatCurrency(total)}
+                  Continuar con PSE - {formatCurrency(total)}
                 </Button>
               </div>
             </form>

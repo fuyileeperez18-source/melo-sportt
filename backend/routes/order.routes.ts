@@ -6,8 +6,7 @@ import { stripeService } from '../services/stripe.service.js';
 import { wompiService } from '../services/wompi.service.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import type { AuthRequest, OrderStatus } from '../types/index.js';
-import { Stripe } from 'stripe'; // If needed, or just keep as is
-import { sellerService } from '../services/seller.service.js';
+// removed unused imports
 
 const router = Router();
 
@@ -181,6 +180,19 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // Calculate total amount in cents
     const totalAmountInCents = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
 
+    // Helper: normalize phone to Wompi expected local format (10 digits for CO)
+    const normalizePhoneForWompi = (raw?: string | null) => {
+      if (!raw) return undefined;
+      let phone = String(raw).replace(/\D/g, '');
+      // If includes country code for Colombia (57), take the last 10 digits
+      if (phone.length > 10 && (phone.startsWith('57') || phone.startsWith('0057'))) {
+        phone = phone.slice(-10);
+      }
+      // If still longer than 10, keep last 10 digits
+      if (phone.length > 10) phone = phone.slice(-10);
+      return phone;
+    };
+
     // Generate reference
     const reference = orderId || `ORDER_${Date.now()}_${req.user!.id}`;
 
@@ -203,8 +215,8 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
               console.warn('[Order Routes] city too short:', trimmedCity.length, 'characters. Skipping shipping_address.');
               // No enviar shipping_address si no cumple requisitos
             } else {
-              // Limpiar teléfono (solo números)
-              const cleanPhone = shippingAddress.phone_number?.replace(/\D/g, '') || undefined;
+              // Normalizar teléfono para Wompi (espera 10 dígitos locales en CO)
+              const cleanPhone = normalizePhoneForWompi(shippingAddress.phone_number) || undefined;
               
               // Asegurar código de país de 2 letras
               let countryCode = shippingAddress.country;
@@ -258,6 +270,17 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // Create transaction
     // Only include payment_method if provided (for direct card payments)
     // For PSE/Nequi redirect flows, we need to use payment_source_id or let Wompi handle it via checkout widget
+    // If using specific redirect payment types, validate presence of required extra fields
+    if (payment_type === 'PSE') {
+      const { financial_institution_code, user_type, user_legal_id_type, user_legal_id, payment_description } = req.body as any;
+      if (!financial_institution_code || typeof user_type === 'undefined' || !user_legal_id_type || !user_legal_id || !payment_description) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields for PSE: financial_institution_code, user_type, user_legal_id_type, user_legal_id, payment_description'
+        });
+      }
+    }
+
     const transactionData: any = {
       amount_in_cents: totalAmountInCents,
       currency: 'COP',
@@ -267,7 +290,7 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
       shipping_address: formattedShippingAddress,
       customer_data: {
         full_name: shippingAddress?.name,
-        phone_number: shippingAddress?.phone_number?.replace(/\D/g, ''),
+        phone_number: normalizePhoneForWompi(shippingAddress?.phone_number),
       },
     };
 
@@ -282,6 +305,10 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
         type: payment_type,
         installments: 1,
       };
+      // Add a generic payment_description if provided by frontend
+      if ((req.body as any).payment_description) {
+        transactionData.payment_method.payment_description = (req.body as any).payment_description;
+      }
       console.log('[Order Routes] Including payment_method with type for redirect flow:', payment_type);
     } else {
       // When no payment method or type is specified, Wompi requires either:
