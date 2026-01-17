@@ -79,9 +79,9 @@ export function ProductPage() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Product not found</h1>
-          <p className="text-gray-400 mb-6">The product you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate('/shop')}>Back to Shop</Button>
+          <h1 className="text-2xl font-bold text-white mb-4">Producto no encontrado</h1>
+          <p className="text-gray-400 mb-6">El producto que buscas no existe.</p>
+          <Button onClick={() => navigate('/shop')}>Volver a la tienda</Button>
         </div>
       </div>
     );
@@ -112,16 +112,16 @@ export function ProductPage() {
 
   const handleAddToCart = () => {
     if (sizes.length > 0 && !selectedSize) {
-      toast.error('Please select a size');
+      toast.error('Por favor selecciona una talla');
       return;
     }
     if (colors.length > 0 && !selectedColor) {
-      toast.error('Please select a color');
+      toast.error('Por favor selecciona un color');
       return;
     }
 
     addItem(product, quantity, selectedVariant || undefined, selectedAccessories);
-    toast.success('Added to cart!');
+    toast.success('¡Añadido al carrito!');
   };
 
   const handleShare = async () => {
@@ -191,7 +191,7 @@ export function ProductPage() {
                     ) : (
                       <SwiperSlide>
                         <div className="w-full h-full bg-primary-900 flex items-center justify-center">
-                          <span className="text-gray-500">No image available</span>
+                          <span className="text-gray-500">Imagen no disponible</span>
                         </div>
                       </SwiperSlide>
                     )}
@@ -206,7 +206,7 @@ export function ProductPage() {
                     )}
                     {product.is_featured && (
                       <span className="px-3 py-1 bg-white text-black text-sm font-bold rounded-full">
-                        FEATURED
+                        DESTACADO
                       </span>
                     )}
                   </div>
@@ -214,7 +214,7 @@ export function ProductPage() {
                   {/* Zoom hint */}
                   <div className="absolute bottom-4 right-4 z-10">
                     <span className="flex items-center gap-1 px-3 py-1 bg-black/50 backdrop-blur text-white text-xs rounded-full">
-                      <ZoomIn className="h-3 w-3" /> Pinch to zoom
+                      <ZoomIn className="h-3 w-3" /> Pellizca para hacer zoom
                     </span>
                   </div>
                 </div>
@@ -483,7 +483,7 @@ export function ProductPage() {
 
                 {/* Quantity */}
                 <div className="mb-8">
-                  <span className="text-sm font-medium text-white block mb-3">Quantity</span>
+                  <span className="text-sm font-medium text-white block mb-3">Cantidad</span>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center bg-primary-900 rounded-lg">
                       <button
@@ -502,7 +502,7 @@ export function ProductPage() {
                     </div>
                     {selectedVariant && (
                       <span className="text-sm text-gray-400">
-                        {selectedVariant.quantity} in stock
+                        {selectedVariant.quantity} en stock
                       </span>
                     )}
                   </div>
@@ -512,12 +512,12 @@ export function ProductPage() {
                 <div className="flex gap-4 mb-8">
                   <Button
                     onClick={handleAddToCart}
-                    disabled={!isInStock}
                     className="flex-1"
                     size="lg"
+                    disabled={!isInStock}
                     leftIcon={<ShoppingBag className="h-5 w-5" />}
                   >
-                    {isInStock ? 'Add to Cart' : 'Out of Stock'}
+                    {isInStock ? 'Añadir al carrito' : 'Sin stock'}
                   </Button>
                   <IconButton
                     onClick={() => {
@@ -546,7 +546,7 @@ export function ProductPage() {
                 <div className="grid grid-cols-2 gap-4 p-6 bg-primary-900 rounded-xl mb-8">
                   <div className="flex items-center gap-3">
                     <Truck className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm text-gray-300">Free shipping over $100</span>
+                    <span className="text-sm text-gray-300">Envío gratis sobre $100</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5 text-gray-400" />
@@ -601,7 +601,7 @@ export function ProductPage() {
                 activeTab === 'description' ? 'text-white' : 'text-gray-400 hover:text-white'
               )}
             >
-              Description
+              Descripción
               {activeTab === 'description' && (
                 <motion.div
                   layoutId="activeTab"

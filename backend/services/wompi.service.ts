@@ -4,11 +4,21 @@ import { env } from '../config/env.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 // Wompi API Configuration
-const WOMPI_API_URL = env.NODE_ENV === 'production'
-  ? 'https://production.wompi.co/v1'
-  : 'https://sandbox.wompi.co/v1';
+// Determine API URL based on public key prefix (more reliable than NODE_ENV)
+const getWompiApiUrl = () => {
+  if (!env.WOMPI_PUBLIC_KEY) {
+    return 'https://sandbox.wompi.co/v1'; // Default to sandbox if no key
+  }
+  // Check if it's a production key (pub_prod_) or test key (pub_test_)
+  if (env.WOMPI_PUBLIC_KEY.startsWith('pub_prod_')) {
+    return 'https://production.wompi.co/v1';
+  }
+  return 'https://sandbox.wompi.co/v1';
+};
 
-// Simulated mode flag
+const WOMPI_API_URL = getWompiApiUrl();
+
+// Simulated mode flag - only if no private key is set
 const SIMULATED_MODE = !env.WOMPI_PRIVATE_KEY;
 
 // In-memory storage for simulated transactions
@@ -80,10 +90,48 @@ export const wompiService = {
     }
 
     // REAL MODE
-    try {
-      const response = await axios.get(`${WOMPI_API_URL}/merchants/${env.WOMPI_PUBLIC_KEY}`);
+    if (!env.WOMPI_PUBLIC_KEY) {
+      throw new AppError('WOMPI_PUBLIC_KEY is required', 500);
+    }
 
-      const presignedAcceptance = response.data.data.presigned_acceptance;
+    try {
+      console.log('[WOMPI] Environment check:', {
+        NODE_ENV: env.NODE_ENV,
+        WOMPI_PUBLIC_KEY: env.WOMPI_PUBLIC_KEY ? `${env.WOMPI_PUBLIC_KEY.substring(0, 20)}... (length: ${env.WOMPI_PUBLIC_KEY.length})` : 'NOT_SET',
+        WOMPI_PRIVATE_KEY: env.WOMPI_PRIVATE_KEY ? `${env.WOMPI_PRIVATE_KEY.substring(0, 20)}... (length: ${env.WOMPI_PRIVATE_KEY.length})` : 'NOT_SET',
+        API_URL: WOMPI_API_URL,
+        SIMULATED_MODE: SIMULATED_MODE
+      });
+
+      const merchantUrl = `${WOMPI_API_URL}/merchants/${env.WOMPI_PUBLIC_KEY}`;
+      console.log(`[WOMPI] Getting acceptance token from: ${merchantUrl}`);
+      
+      const response = await axios.get(merchantUrl, {
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('[WOMPI] Response status:', response.status);
+      console.log('[WOMPI] Response data structure:', {
+        hasData: !!response.data?.data,
+        hasPresignedAcceptance: !!response.data?.data?.presigned_acceptance,
+      });
+
+      // Handle different response structures
+      const merchantData = response.data?.data || response.data;
+      
+      if (!merchantData) {
+        throw new AppError('Invalid response from Wompi API: missing data', 500);
+      }
+
+      const presignedAcceptance = merchantData.presigned_acceptance;
+
+      if (!presignedAcceptance) {
+        console.error('[WOMPI] Response data:', JSON.stringify(merchantData, null, 2));
+        throw new AppError('Invalid response from Wompi API: missing presigned_acceptance', 500);
+      }
 
       return {
         acceptance_token: presignedAcceptance.acceptance_token,
@@ -91,10 +139,28 @@ export const wompiService = {
         type: presignedAcceptance.type,
       };
     } catch (error: any) {
-      console.error('Wompi API Error:', error.response?.data || error.message);
+      console.error('[WOMPI] API Error details:', {
+        url: `${WOMPI_API_URL}/merchants/${env.WOMPI_PUBLIC_KEY?.substring(0, 20)}...`,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        code: error.code,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          timeout: error.config?.timeout,
+        }
+      });
+      
+      const errorMessage = error.response?.data?.error?.message 
+        || error.response?.data?.message 
+        || error.message 
+        || 'Unknown error';
+      
       throw new AppError(
-        `Failed to get acceptance token: ${error.message}`,
-        500
+        `Failed to get acceptance token: ${errorMessage}`,
+        error.response?.status || 500
       );
     }
   },
