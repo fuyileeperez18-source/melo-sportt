@@ -732,6 +732,7 @@ export function CheckoutPage() {
                   </h2>
                   <p className="text-gray-400 mb-2">
                     Tu pedido ha sido confirmado y será enviado pronto.
+                  </p>
                   {usedPaymentMethod === 'cash_on_delivery' && (
                     <p className="text-blue-400 mb-4 font-medium">
                       Te llamaremos pronto para confirmar que tu pedido ha sido exitoso.
