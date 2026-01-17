@@ -84,6 +84,7 @@ export function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'wompi' | 'cash_on_delivery'>('wompi');
+  const [usedPaymentMethod, setUsedPaymentMethod] = useState<'wompi' | 'cash_on_delivery' | null>(null);
 
   const { items, getSubtotal, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
@@ -102,7 +103,7 @@ export function CheckoutPage() {
   } = useForm<ShippingFormData>({
     resolver: zodResolver(shippingSchema),
     defaultValues: {
-      country: 'US',
+      country: 'CO',
     },
   });
 
@@ -236,14 +237,14 @@ export function CheckoutPage() {
       await orderService.create(orderData);
 
       setCurrentStep(2);
-      setUsedPaymentMethod('cash_on_delivery');
+      setUsedPaymentMethod('wompi');
       clearCart();
       toast.success('¡Pago exitoso! Tu pedido ha sido confirmado.');
     } catch (error: any) {
       console.error('Error saving order:', error);
       toast.error('El pago fue exitoso pero hubo un error guardando tu pedido. Contacta soporte.');
       setCurrentStep(2);
-      setUsedPaymentMethod('cash_on_delivery');
+      setUsedPaymentMethod('wompi');
       clearCart();
     } finally {
       setIsProcessing(false);

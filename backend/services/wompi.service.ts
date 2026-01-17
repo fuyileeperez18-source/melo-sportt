@@ -217,20 +217,37 @@ export const wompiService = {
       // First, get acceptance token
       const acceptanceToken = await this.getAcceptanceToken();
 
+      // Preparar payload para Wompi
+      const payload: any = {
+        acceptance_token: acceptanceToken.acceptance_token,
+        amount_in_cents: data.amount_in_cents,
+        currency: data.currency,
+        customer_email: data.customer_email,
+        reference: data.reference,
+      };
+
+      // Agregar campos opcionales solo si están presentes
+      if (data.payment_method) {
+        payload.payment_method = data.payment_method;
+      }
+      if (data.redirect_url) {
+        payload.redirect_url = data.redirect_url;
+      }
+      if (data.customer_data && (data.customer_data.full_name || data.customer_data.phone_number)) {
+        payload.customer_data = data.customer_data;
+      }
+      // Solo enviar shipping_address si tiene los campos mínimos requeridos
+      if (data.shipping_address && 
+          data.shipping_address.address_line_1 && 
+          data.shipping_address.city && 
+          data.shipping_address.country) {
+        payload.shipping_address = data.shipping_address;
+      }
+
       // Create transaction
       const response = await axios.post(
         `${WOMPI_API_URL}/transactions`,
-        {
-          acceptance_token: acceptanceToken.acceptance_token,
-          amount_in_cents: data.amount_in_cents,
-          currency: data.currency,
-          customer_email: data.customer_email,
-          payment_method: data.payment_method,
-          reference: data.reference,
-          redirect_url: data.redirect_url,
-          customer_data: data.customer_data,
-          shipping_address: data.shipping_address,
-        },
+        payload,
         {
           headers: {
             'Authorization': `Bearer ${env.WOMPI_PRIVATE_KEY}`,
@@ -253,10 +270,53 @@ export const wompiService = {
         currency: transaction.currency,
       };
     } catch (error: any) {
-      console.error('Wompi API Error:', error.response?.data || error.message);
+      console.error('Wompi API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      });
+
+      // Extraer mensaje de error más detallado
+      let errorMessage = 'Error al crear la transacción';
+      const errorData = error.response?.data;
+      
+      if (errorData?.error) {
+        if (typeof errorData.error === 'string') {
+          errorMessage = errorData.error;
+        } else if (errorData.error.messages) {
+          // Manejar mensajes de validación
+          const messages = errorData.error.messages;
+          const errorParts: string[] = [];
+          
+          if (messages.shipping_address) {
+            const shippingErrors = Array.isArray(messages.shipping_address)
+              ? messages.shipping_address
+              : Object.values(messages.shipping_address);
+            errorParts.push(`Dirección de envío: ${shippingErrors.join(', ')}`);
+          }
+          
+          if (messages.customer_email) {
+            errorParts.push(`Email: ${Array.isArray(messages.customer_email) ? messages.customer_email.join(', ') : messages.customer_email}`);
+          }
+          
+          if (errorData.error.reason) {
+            errorParts.push(errorData.error.reason);
+          }
+          
+          errorMessage = errorParts.length > 0 ? errorParts.join(' | ') : errorData.error.reason || errorMessage;
+        } else if (errorData.error.reason) {
+          errorMessage = errorData.error.reason;
+        }
+      } else if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       throw new AppError(
-        `Failed to create transaction: ${error.response?.data?.error?.reason || error.message}`,
-        500
+        `Failed to create transaction: ${errorMessage}`,
+        error.response?.status || 500
       );
     }
   },

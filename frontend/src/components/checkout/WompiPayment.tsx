@@ -242,6 +242,35 @@ export function WompiPayment({
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
       const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
 
+      // Preparar shipping_address con validación y formato correcto para Wompi
+      let formattedShippingAddress = undefined;
+      if (shippingAddress) {
+        // Limpiar y formatear teléfono (solo números)
+        const cleanPhone = shippingAddress.phone.replace(/\D/g, '');
+        
+        // Asegurar que el país esté en formato correcto (Wompi espera códigos ISO de 2 letras)
+        let countryCode = shippingAddress.country;
+        if (countryCode && countryCode.length > 2) {
+          // Si viene un código largo, intentar extraer las primeras 2 letras
+          countryCode = countryCode.substring(0, 2).toUpperCase();
+        }
+        
+        // Validar que los campos requeridos estén presentes
+        if (!shippingAddress.address || !shippingAddress.city || !countryCode) {
+          throw new Error('La dirección de envío debe incluir dirección, ciudad y país');
+        }
+
+        formattedShippingAddress = {
+          address_line_1: shippingAddress.address.trim(),
+          address_line_2: shippingAddress.apartment?.trim() || '',
+          country: countryCode.toUpperCase(),
+          region: shippingAddress.state?.trim() || shippingAddress.city.trim(),
+          city: shippingAddress.city.trim(),
+          name: `${shippingAddress.firstName?.trim() || ''} ${shippingAddress.lastName?.trim() || ''}`.trim() || 'Cliente',
+          phone_number: cleanPhone || undefined,
+        };
+      }
+
       const response = await fetch(`${API_URL}/orders/wompi/create-transaction`, {
         method: 'POST',
         headers: {
@@ -257,21 +286,37 @@ export function WompiPayment({
             installments: 1,
             token: cardTokenId
           } : undefined,
-          shippingAddress: shippingAddress ? {
-            address_line_1: shippingAddress.address,
-            address_line_2: shippingAddress.apartment || '',
-            country: shippingAddress.country,
-            region: shippingAddress.state,
-            city: shippingAddress.city,
-            name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-            phone_number: shippingAddress.phone,
-          } : undefined,
+          shippingAddress: formattedShippingAddress,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || 'Error al procesar la transacción');
+        
+        // Extraer mensaje de error más detallado de Wompi
+        let errorMessage = 'Error al procesar la transacción';
+        if (errorData.error) {
+          if (typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData.error.messages) {
+            // Si hay mensajes de validación específicos
+            const messages = errorData.error.messages;
+            if (messages.shipping_address) {
+              const shippingErrors = Array.isArray(messages.shipping_address) 
+                ? messages.shipping_address 
+                : Object.values(messages.shipping_address);
+              errorMessage = `Error en dirección de envío: ${shippingErrors.join(', ')}`;
+            } else {
+              errorMessage = errorData.error.reason || errorData.error.message || errorMessage;
+            }
+          } else if (errorData.error.reason) {
+            errorMessage = errorData.error.reason;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

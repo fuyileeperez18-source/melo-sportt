@@ -178,6 +178,37 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // Generate reference
     const reference = orderId || `ORDER_${Date.now()}_${req.user!.id}`;
 
+    // Validar y formatear shipping_address para Wompi
+    let formattedShippingAddress = undefined;
+    if (shippingAddress) {
+      // Wompi requiere que si se envía shipping_address, tenga ciertos campos
+      // Si falta información crítica, mejor no enviarlo (Wompi puede funcionar sin él)
+      if (shippingAddress.address_line_1 && shippingAddress.city && shippingAddress.country) {
+        // Limpiar teléfono (solo números)
+        const cleanPhone = shippingAddress.phone_number?.replace(/\D/g, '') || undefined;
+        
+        // Asegurar código de país de 2 letras
+        let countryCode = shippingAddress.country;
+        if (countryCode && countryCode.length > 2) {
+          countryCode = countryCode.substring(0, 2).toUpperCase();
+        } else if (countryCode) {
+          countryCode = countryCode.toUpperCase();
+        }
+
+        formattedShippingAddress = {
+          address_line_1: shippingAddress.address_line_1.trim(),
+          address_line_2: shippingAddress.address_line_2?.trim() || '',
+          country: countryCode || 'CO', // Default a Colombia si no se especifica
+          region: shippingAddress.region?.trim() || shippingAddress.city.trim(),
+          city: shippingAddress.city.trim(),
+          name: shippingAddress.name?.trim() || 'Cliente',
+          phone_number: cleanPhone,
+        };
+      }
+      // Si falta información crítica, no enviamos shipping_address
+      // Wompi puede procesar la transacción sin él
+    }
+
     // Create transaction
     const transaction = await wompiService.createTransaction({
       amount_in_cents: totalAmountInCents,
@@ -185,10 +216,10 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
       customer_email: customerEmail,
       reference,
       redirect_url: `${env.FRONTEND_URL}/checkout/wompi/callback`,
-      shipping_address: shippingAddress,
+      shipping_address: formattedShippingAddress,
       customer_data: {
         full_name: shippingAddress?.name,
-        phone_number: shippingAddress?.phone_number,
+        phone_number: shippingAddress?.phone_number?.replace(/\D/g, ''),
       },
     });
 
