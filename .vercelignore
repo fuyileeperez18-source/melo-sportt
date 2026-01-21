@@ -1,0 +1,8 @@
+# Ignore backend - it's deployed on Render
+backend/
+migrations/
+*.md
+railway.json
+Procfile
+# Only ignore root tsconfig.json (backend), not frontend tsconfig files
+/tsconfig.json
