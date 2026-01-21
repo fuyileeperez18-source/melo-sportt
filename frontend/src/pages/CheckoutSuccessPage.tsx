@@ -85,8 +85,8 @@ export function CheckoutSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black py-12">
-      <div className="container mx-auto px-6 max-w-2xl">
+    <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-2xl">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

@@ -649,8 +649,15 @@ export const wompiService = {
         return false;
       }
 
+      // ========= 🕵️‍♂️ START WEBHOOK DEBUGGING 🕵️‍♂️ =========
+      console.log('[Wompi Debug] Starting webhook signature verification...');
+      console.log(`[Wompi Debug] Received Signature: ${signature}`);
+      console.log(`[Wompi Debug] Received Timestamp: ${timestamp}`);
+      console.log(`[Wompi Debug] Signature Properties: ${JSON.stringify(properties)}`);
+
       // Construir la concatenación según las propiedades especificadas
       let concatenated = '';
+      const debugParts: Record<string, any> = {};
 
       for (const prop of properties) {
         // Convertir "transaction.id" a eventData.data.transaction.id
@@ -660,19 +667,20 @@ export const wompiService = {
           console.error(`❌ Property ${prop} not found in event data`);
           return false;
         }
-
+        
+        debugParts[prop] = value;
         concatenated += String(value);
       }
+      
+      console.log('[Wompi Debug] Concatenated Parts:', debugParts);
+      console.log(`[Wompi Debug] String from properties: "${concatenated}"`);
+      
+      // String to be hashed (concatenated properties + timestamp)
+      const stringToHash = concatenated + timestamp;
+      console.log(`[Wompi Debug] Final string before adding secret: "${stringToHash}"`);
 
       // Agregar timestamp y secret
       concatenated += timestamp + env.WOMPI_EVENTS_SECRET;
-
-      console.log('[Wompi] Checksum validation:', {
-        properties,
-        timestamp,
-        concatenatedLength: concatenated.length,
-        // NO loguear el concatenated completo por seguridad (contiene el secret)
-      });
 
       // Generar firma SHA256
       const expectedSignature = crypto
@@ -682,10 +690,14 @@ export const wompiService = {
 
       const isValid = signature.toLowerCase() === expectedSignature.toLowerCase();
 
+      console.log(`[Wompi Debug] Expected Signature: ${expectedSignature}`);
+      console.log(`[Wompi Debug] Signature is valid: ${isValid}`);
+      // ========= 🕵️‍♂️ END WEBHOOK DEBUGGING 🕵️‍♂️ =========
+
       if (!isValid) {
         console.error('[Wompi] Signature mismatch:', {
-          received: signature.substring(0, 16) + '...',
-          expected: expectedSignature.substring(0, 16) + '...',
+          received: signature,
+          expected: expectedSignature,
         });
       }
 
