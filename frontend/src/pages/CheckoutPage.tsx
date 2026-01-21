@@ -697,64 +697,194 @@ export function CheckoutPage() {
                   key="confirmation"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-12"
+                  className="text-center py-8"
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2, type: 'spring' }}
-                    className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-8"
-                  >
-                    <Check className="h-12 w-12 text-white" />
-                  </motion.div>
+                  <div className="max-w-6xl mx-auto">
 
-                  <h2 className="text-3xl font-bold text-white mb-4">
-                    ¡Gracias por tu compra!
-                  </h2>
-                  <p className="text-gray-400 mb-2">
-                    Tu pedido ha sido confirmado y será enviado pronto.
-                  </p>
-                  {usedPaymentMethod === 'cash_on_delivery' && (
-                    <p className="text-blue-400 mb-4 font-medium">
-                      Te llamaremos pronto para confirmar que tu pedido ha sido exitoso.
-                    </p>
-                  )}
+                    {/* Barra de Progreso Mejorada */}
+                    <div className="mb-12 max-w-4xl mx-auto">
+                      <div className="flex items-center justify-center px-4">
+                        {/* Paso 1: Envío */}
+                        <div className="flex items-center">
+                          <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-black">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 6 9 17l-5-5"></path>
+                              </svg>
+                            </div>
+                            <span className="mt-2 text-xs sm:text-sm font-medium text-white">Envío</span>
+                          </div>
+                          <div className="w-16 sm:w-24 h-0.5 mx-2 sm:mx-4 bg-white"></div>
+                        </div>
 
-                  <p className="text-white font-medium mb-8">
-                    Número de Pedido: <span className="text-green-400">{orderNumber}</span>
-                  </p>
+                        {/* Paso 2: Pago */}
+                        <div className="flex items-center">
+                          <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-black">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 6 9 17l-5-5"></path>
+                              </svg>
+                            </div>
+                            <span className="mt-2 text-xs sm:text-sm font-medium text-white">Pago</span>
+                          </div>
+                          <div className="w-16 sm:w-24 h-0.5 mx-2 sm:mx-4 bg-white"></div>
+                        </div>
 
-                  <div className="p-6 bg-primary-900 rounded-xl mb-8 max-w-md mx-auto">
-                    <h3 className="font-medium text-white mb-4 text-center">¿Qué sigue?</h3>
-                    <ul className="space-y-3">
-                      <li className="flex items-start justify-center gap-3">
-                        <Mail className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-300 text-sm">
-                          Recibirás una confirmación por correo en {shippingData?.email}
-                        </span>
-                      </li>
-                      <li className="flex items-start justify-center gap-3">
-                        <Package className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-300 text-sm">
-                          Te enviaremos actualizaciones de envío por correo y WhatsApp
-                        </span>
-                      </li>
-                      <li className="flex items-start justify-center gap-3">
-                        <Truck className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-300 text-sm">
-                          Tiempo estimado de entrega: {selectedShipping?.days}
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
+                        {/* Paso 3: Confirmación */}
+                        <div className="flex items-center">
+                          <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-black animate-pulse">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 6 9 17l-5-5"></path>
+                              </svg>
+                            </div>
+                            <span className="mt-2 text-xs sm:text-sm font-medium text-white">Confirmación</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button variant="outline" onClick={() => navigate('/account/orders')}>
-                      Ver Pedido
-                    </Button>
-                    <Button onClick={() => navigate('/shop')}>
-                      Seguir Comprando
-                    </Button>
+                    {/* Contenido Principal */}
+                    <div className="max-w-5xl mx-auto">
+                      <div className="text-center py-8 sm:py-12 px-4">
+
+                        {/* Icono de Check Grande */}
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.2, type: 'spring' }}
+                          className="w-20 h-20 sm:w-24 sm:h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-lg shadow-green-500/50"
+                        >
+                          <Check className="h-12 w-12 text-white" />
+                        </motion.div>
+
+                        {/* Título Principal */}
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+                          ¡Gracias por tu compra!
+                        </h2>
+
+                        {/* Subtítulo */}
+                        <p className="text-gray-400 mb-2 text-sm sm:text-base">
+                          Tu pedido ha sido confirmado y será enviado pronto.
+                        </p>
+
+                        {/* Mensaje adicional para pago contra entrega */}
+                        {usedPaymentMethod === 'cash_on_delivery' && (
+                          <p className="text-blue-400 mb-4 font-medium">
+                            Te llamaremos pronto para confirmar que tu pedido ha sido exitoso.
+                          </p>
+                        )}
+
+                        {/* Número de Pedido */}
+                        <div className="mb-8">
+                          <p className="text-white font-medium text-sm sm:text-base">
+                            Número de Pedido:
+                            <span className="text-green-400 font-bold block sm:inline mt-1 sm:mt-0">
+                              {orderNumber}
+                            </span>
+                          </p>
+                        </div>
+
+                        {/* Caja de Información "¿Qué sigue?" */}
+                        <div className="p-6 sm:p-8 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl mb-8 max-w-2xl mx-auto border border-gray-700 shadow-xl">
+                          <h3 className="font-semibold text-white mb-6 text-center text-lg sm:text-xl">
+                            ¿Qué sigue?
+                          </h3>
+                          <ul className="space-y-4 sm:space-y-5 text-left">
+                            {/* Email */}
+                            <li className="flex items-start gap-3 sm:gap-4">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                                <Mail className="h-5 w-5 text-green-400" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-gray-300 text-sm sm:text-base">
+                                  Recibirás una confirmación por correo en
+                                  <span className="text-white font-medium"> {shippingData?.email}</span>
+                                </p>
+                              </div>
+                            </li>
+
+                            {/* Actualizaciones */}
+                            <li className="flex items-start gap-3 sm:gap-4">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                                <Package className="h-5 w-5 text-blue-400" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-gray-300 text-sm sm:text-base">
+                                  Te enviaremos actualizaciones de envío por correo y WhatsApp
+                                </p>
+                              </div>
+                            </li>
+
+                            {/* Tiempo de Entrega */}
+                            <li className="flex items-start gap-3 sm:gap-4">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                                <Truck className="h-5 w-5 text-yellow-400" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-gray-300 text-sm sm:text-base">
+                                  Tiempo estimado de entrega:
+                                  <span className="text-white font-medium"> {selectedShipping?.days}</span>
+                                </p>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+
+                        {/* Botones de Acción */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
+                          <Button
+                            variant="outline"
+                            onClick={() => navigate('/account/orders')}
+                            className="w-full sm:w-auto relative inline-flex items-center justify-center gap-2 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black bg-transparent text-white border-2 border-white hover:bg-white hover:text-black h-12 px-8 text-base"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"></path>
+                              <path d="m12 12 4 10 1.7-4.3L22 16Z"></path>
+                            </svg>
+                            Ver Pedido
+                          </Button>
+
+                          <Button
+                            onClick={() => navigate('/shop')}
+                            className="w-full sm:w-auto relative inline-flex items-center justify-center gap-2 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black bg-white text-black hover:bg-gray-100 active:bg-gray-200 shadow-lg shadow-white/20 h-12 px-8 text-base"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="8" cy="21" r="1"></circle>
+                              <circle cx="19" cy="21" r="1"></circle>
+                              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                            </svg>
+                            Seguir Comprando
+                          </Button>
+                        </div>
+
+                        {/* Mensaje Adicional */}
+                        <div className="mt-8 pt-8 border-t border-gray-800 max-w-2xl mx-auto">
+                          <p className="text-gray-400 text-sm">
+                            ¿Tienes alguna pregunta? Contáctanos en
+                            <a href="mailto:soporte@melosportt.com" className="text-white hover:text-green-400 underline transition-colors ml-1">
+                              soporte@melosportt.com
+                            </a>
+                          </p>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-16 pt-8 border-t border-gray-800 max-w-6xl mx-auto">
+                      <div className="text-center text-gray-500 text-sm">
+                        <p>&copy; {new Date().getFullYear()} MELO SPORTT. Todos los derechos reservados.</p>
+                        <div className="mt-2 flex justify-center gap-4">
+                          <a href="#" className="hover:text-white transition-colors">Términos y Condiciones</a>
+                          <span>•</span>
+                          <a href="#" className="hover:text-white transition-colors">Política de Privacidad</a>
+                          <span>•</span>
+                          <a href="#" className="hover:text-white transition-colors">Política de Envíos</a>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 </motion.div>
               )}

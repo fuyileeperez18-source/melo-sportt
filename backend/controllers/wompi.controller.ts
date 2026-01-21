@@ -519,33 +519,35 @@ export const wompiSecurityController = {
       // Procesar localmente si es de este proyecto
       // Nota: Las funciones son async pero NO usamos await porque Wompi
       // requiere respuesta 200 inmediatamente. El procesamiento continua en background.
+      // Capturar referencia al objeto para mantener el contexto
+      const self = this;
       switch (event) {
         case 'transaction.updated':
-          this.handleTransactionUpdated(data.transaction).catch(err =>
+          self.handleTransactionUpdated(data.transaction).catch(err =>
             console.error('[WompiWebhook] Background error in handleTransactionUpdated:', err)
           );
           break;
 
         case 'transaction.payment_approved':
-          this.handlePaymentApproved(data.transaction).catch(err =>
+          self.handlePaymentApproved(data.transaction).catch(err =>
             console.error('[WompiWebhook] Background error in handlePaymentApproved:', err)
           );
           break;
 
         case 'transaction.payment_declined':
-          this.handlePaymentDeclined(data.transaction).catch(err =>
+          self.handlePaymentDeclined(data.transaction).catch(err =>
             console.error('[WompiWebhook] Background error in handlePaymentDeclined:', err)
           );
           break;
 
         case 'transaction.payment_voided':
-          this.handlePaymentVoided(data.transaction).catch(err =>
+          self.handlePaymentVoided(data.transaction).catch(err =>
             console.error('[WompiWebhook] Background error in handlePaymentVoided:', err)
           );
           break;
 
         case 'transaction.refund_applied':
-          this.handleRefundApplied(data.transaction).catch(err =>
+          self.handleRefundApplied(data.transaction).catch(err =>
             console.error('[WompiWebhook] Background error in handleRefundApplied:', err)
           );
           break;
