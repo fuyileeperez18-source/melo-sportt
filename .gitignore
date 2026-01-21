@@ -9,3 +9,4 @@ supabase/.temp/
 .gemini/
 gha-creds-*.json
 .vercel
+.aider*

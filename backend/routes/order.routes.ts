@@ -595,6 +595,20 @@ router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunc
 
         console.log(`[WOMPI WEBHOOK] Registered commissions for Order ${orderNumber}`);
       }
+    } else if (result && (result.status === 'DECLINED' || result.status === 'VOIDED' || result.status === 'ERROR')) {
+      const transactionId = result.id;
+      const orderNumber = result.reference;
+
+      console.log(`❌ [WOMPI WEBHOOK] Transaction ${result.status}: ${transactionId} for Order: ${orderNumber}`);
+
+      // Find order and update status to failed if it's not already paid
+      const order = await orderService.getByOrderNumber(orderNumber);
+
+      if (order && order.payment_status !== 'paid' && order.payment_status !== 'failed') {
+        await orderService.updatePaymentStatus(order.id, 'failed', transactionId);
+        // We keep the order status as 'pending' or move to 'cancelled' depending on business logic
+        // For now, marking payment as failed allows the user to try again or admin to see the failure
+      }
     }
 
     // Always respond 200 to acknowledge receipt

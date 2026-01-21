@@ -3,8 +3,14 @@ import type { DashboardMetrics } from '../types/index.js';
 
 export const analyticsService = {
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    // Fix timezone to Colombia (UTC-5) to ensure "Today" is accurate
+    const now = new Date();
+    const colombiaOffset = 5 * 60 * 60 * 1000;
+    const todayDate = new Date(now.getTime() - colombiaOffset);
+    const today = todayDate.toISOString().split('T')[0];
+    
+    const yesterdayDate = new Date(todayDate.getTime() - 86400000);
+    const yesterday = yesterdayDate.toISOString().split('T')[0];
 
     // Get today's PAID orders and revenue (only count confirmed sales)
     const todayResult = await query(

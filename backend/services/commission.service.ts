@@ -442,11 +442,11 @@ export const commissionService = {
     }));
 
     return {
-      total_revenue: parseFloat(salesRow.total_revenue) || 0,
-      total_orders: parseInt(salesRow.total_orders) || 0,
-      total_customers: parseInt(salesRow.total_customers) || 0,
-      total_products: parseInt(productsRow.total_products) || 0,
-      pending_commissions: parseFloat(commissionsRow.pending_commissions) || 0,
+      total_revenue: parseFloat(salesRow?.total_revenue || '0') || 0,
+      total_orders: parseInt(salesRow?.total_orders || '0') || 0,
+      total_customers: parseInt(salesRow?.total_customers || '0') || 0,
+      total_products: parseInt(productsRow?.total_products || '0') || 0,
+      pending_commissions: parseFloat(commissionsRow?.pending_commissions || '0') || 0,
       monthly_revenue: monthlyRevenue,
     };
   },

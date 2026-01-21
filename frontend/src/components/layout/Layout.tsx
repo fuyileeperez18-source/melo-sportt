@@ -1,5 +1,4 @@
 import { Outlet } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { CartDrawer } from '@/components/sections/CartDrawer';
@@ -12,31 +11,6 @@ import { PageTransition } from '@/components/animations/PageTransition';
 export function Layout() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* Toast notifications */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1a1a1a',
-            color: '#fff',
-            border: '1px solid #333',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
-
       {/* Header */}
       <Header />
 
@@ -72,17 +46,6 @@ export function Layout() {
 export function SimpleLayout() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1a1a1a',
-            color: '#fff',
-            border: '1px solid #333',
-          },
-        }}
-      />
       <Outlet />
     </div>
   );
@@ -92,17 +55,6 @@ export function SimpleLayout() {
 export function AdminLayout() {
   return (
     <div className="min-h-screen bg-primary-950 text-white">
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1a1a1a',
-            color: '#fff',
-            border: '1px solid #333',
-          },
-        }}
-      />
       <Outlet />
     </div>
   );

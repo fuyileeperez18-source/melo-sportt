@@ -116,23 +116,23 @@ export function CheckoutSuccessPage() {
                 </p>
               )}
 
-              <div className="p-6 bg-primary-900 rounded-xl text-left mb-8">
-                <h3 className="font-medium text-white mb-4">¿Qué sigue?</h3>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
+              <div className="p-6 bg-primary-900 rounded-xl mb-8">
+                <h3 className="font-medium text-white mb-4 text-center">¿Qué sigue?</h3>
+                <ul className="space-y-3 max-w-sm mx-auto">
+                  <li className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-gray-400 flex-shrink-0" />
                     <span className="text-gray-300 text-sm">
                       Recibirás una confirmación por correo electrónico
                     </span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <Package className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <li className="flex items-center gap-3">
+                    <Package className="h-5 w-5 text-gray-400 flex-shrink-0" />
                     <span className="text-gray-300 text-sm">
                       Te enviaremos actualizaciones sobre tu pedido
                     </span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <Truck className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <li className="flex items-center gap-3">
+                    <Truck className="h-5 w-5 text-gray-400 flex-shrink-0" />
                     <span className="text-gray-300 text-sm">
                       Prepararemos tu envío lo antes posible
                     </span>
@@ -160,8 +160,8 @@ export function CheckoutSuccessPage() {
                 Tu pago está siendo procesado. Te notificaremos cuando se confirme.
               </p>
 
-              <div className="p-6 bg-primary-900 rounded-xl text-left mb-8">
-                <p className="text-gray-300 text-sm">
+              <div className="p-6 bg-primary-900 rounded-xl mb-8">
+                <p className="text-gray-300 text-sm text-center">
                   Algunos métodos de pago pueden tardar hasta 2 días hábiles en procesarse.
                   Recibirás un correo cuando tu pago sea confirmado.
                 </p>

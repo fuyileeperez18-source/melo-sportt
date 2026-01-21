@@ -40,6 +40,7 @@ import {
   AdminDashboardPage,
   EditProfilePage,
   MyOrdersPage,
+  OrderDetailPage,
   MyCommissionsPage,
   OwnerDashboardPage,
   TeamManagementPage,

@@ -2,6 +2,7 @@ export { AccountPage } from './AccountPage';
 export { AdminDashboardPage } from './AdminDashboardPage';
 export { EditProfilePage } from './EditProfilePage';
 export { MyOrdersPage } from './MyOrdersPage';
+export { OrderDetailPage } from './OrderDetailPage';
 export { MyCommissionsPage } from './MyCommissionsPage';
 export { OwnerDashboardPage } from './OwnerDashboardPage';
 export { TeamManagementPage } from './TeamManagementPage';
