@@ -191,48 +191,46 @@ export function CheckoutSuccessPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 py-8 sm:py-12">
-        <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
-          {/* Barra de Progreso */}
-          <div className="mb-12 sm:mb-16">
+      {/* Main Content - TODO CENTRADO */}
+      <main className="flex-1 flex flex-col items-center justify-center py-8 sm:py-12">
+        <div className="w-full max-w-4xl px-4 sm:px-6">
+          {/* Barra de Progreso - UNA SOLA Y CENTRADA */}
+          <div className="mb-12 sm:mb-16 flex justify-center">
             <div className="flex items-center justify-center">
               {/* Paso 1: Envío */}
-              <div className="flex items-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white text-black shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5"></path>
-                    </svg>
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium text-white">Envío</span>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white text-black shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                  </svg>
                 </div>
-                <div className="w-12 sm:w-20 md:w-24 h-0.5 mx-2 sm:mx-3 bg-white"></div>
+                <span className="text-xs sm:text-sm font-medium text-white">Envío</span>
               </div>
+
+              {/* Línea 1 */}
+              <div className="w-12 sm:w-20 md:w-24 h-0.5 mx-2 sm:mx-3 bg-white"></div>
 
               {/* Paso 2: Pago */}
-              <div className="flex items-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white text-black shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5"></path>
-                    </svg>
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium text-white">Pago</span>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white text-black shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                  </svg>
                 </div>
-                <div className="w-12 sm:w-20 md:w-24 h-0.5 mx-2 sm:mx-3 bg-white"></div>
+                <span className="text-xs sm:text-sm font-medium text-white">Pago</span>
               </div>
 
+              {/* Línea 2 */}
+              <div className="w-12 sm:w-20 md:w-24 h-0.5 mx-2 sm:mx-3 bg-white"></div>
+
               {/* Paso 3: Confirmación */}
-              <div className="flex items-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-green-500 text-white shadow-lg shadow-green-500/50 animate-pulse">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5"></path>
-                    </svg>
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium text-green-400">Confirmación</span>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-green-500 text-white shadow-lg shadow-green-500/50 animate-pulse">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                  </svg>
                 </div>
+                <span className="text-xs sm:text-sm font-medium text-green-400">Confirmación</span>
               </div>
             </div>
           </div>
@@ -274,11 +272,11 @@ export function CheckoutSuccessPage() {
 
             {/* Caja de Información */}
             <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 mb-10 sm:mb-12 border border-gray-700 shadow-2xl max-w-2xl mx-auto">
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 text-center">
                 ¿Qué sigue?
               </h2>
 
-              <div className="space-y-5 sm:space-y-6 text-left">
+              <div className="space-y-5 sm:space-y-6">
                 {/* Email */}
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
@@ -289,8 +287,8 @@ export function CheckoutSuccessPage() {
                   </div>
                   <div className="flex-1 pt-1">
                     <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                      Recibirás una confirmación por correo en
-                      <span className="text-white font-semibold ml-1">{userEmail || 'tu correo registrado'}</span>
+                      Recibirás una confirmación por correo en{' '}
+                      <span className="text-white font-semibold">{userEmail || 'tu correo registrado'}</span>
                     </p>
                   </div>
                 </div>
@@ -324,8 +322,8 @@ export function CheckoutSuccessPage() {
                   </div>
                   <div className="flex-1 pt-1">
                     <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                      Tiempo estimado de entrega:
-                      <span className="text-white font-semibold ml-1">5-7 días hábiles</span>
+                      Tiempo estimado de entrega:{' '}
+                      <span className="text-white font-semibold">5-7 días hábiles</span>
                     </p>
                   </div>
                 </div>
