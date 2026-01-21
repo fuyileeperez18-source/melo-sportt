@@ -42,6 +42,10 @@ const envSchema = z.object({
   WHATSAPP_BOT_CATEGORIES: z.string().optional(),
   // Enable to expose Wompi API error payloads in responses for debugging (set to 'true')
   DEBUG_WOMPI_ERRORS: z.string().optional(),
+
+  // Webhook router: JSON map of project prefixes to webhook URLs
+  // Example: {"PROJ1":"https://proj1.com/webhook","PROJ2":"https://proj2.com/webhook"}
+  WOMPI_WEBHOOK_ROUTES: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
