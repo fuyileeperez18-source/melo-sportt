@@ -724,23 +724,23 @@ export function CheckoutPage() {
                     Número de Pedido: <span className="text-green-400">{orderNumber}</span>
                   </p>
 
-                  <div className="p-6 bg-primary-900 rounded-xl text-left mb-8 max-w-md mx-auto">
-                    <h3 className="font-medium text-white mb-4">¿Qué sigue?</h3>
+                  <div className="p-6 bg-primary-900 rounded-xl mb-8 max-w-md mx-auto">
+                    <h3 className="font-medium text-white mb-4 text-center">¿Qué sigue?</h3>
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3">
-                        <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <li className="flex items-start justify-center gap-3">
+                        <Mail className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                         <span className="text-gray-300 text-sm">
                           Recibirás una confirmación por correo en {shippingData?.email}
                         </span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <Package className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <li className="flex items-start justify-center gap-3">
+                        <Package className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                         <span className="text-gray-300 text-sm">
                           Te enviaremos actualizaciones de envío por correo y WhatsApp
                         </span>
                       </li>
-                      <li className="flex items-start gap-3">
-                        <Truck className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <li className="flex items-start justify-center gap-3">
+                        <Truck className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                         <span className="text-gray-300 text-sm">
                           Tiempo estimado de entrega: {selectedShipping?.days}
                         </span>
