@@ -1,6 +1,10 @@
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { query, pool } from '../config/database.js';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: join(process.cwd(), '.env') });
+
 
 async function runMigration() {
   const migrationName = process.argv[2];
