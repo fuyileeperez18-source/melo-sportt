@@ -52,8 +52,8 @@ export function WompiCallbackPage() {
         // Check transaction status
         if (transaction.status === 'APPROVED') {
           // Payment successful
-          const newOrderNumber = generateOrderNumber();
-          setOrderNumber(newOrderNumber);
+          const correctOrderNumber = transaction.reference;
+          setOrderNumber(correctOrderNumber);
 
           // Create order (you may want to pass the order data from localStorage or state)
           // For now, we'll just show success
@@ -64,7 +64,7 @@ export function WompiCallbackPage() {
 
           // Redirect to success page after 3 seconds
           setTimeout(() => {
-            navigate('/checkout/success?order=' + newOrderNumber);
+            navigate('/checkout/success?external_reference=' + correctOrderNumber);
           }, 3000);
         } else if (transaction.status === 'DECLINED') {
           setStatus('error');

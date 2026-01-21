@@ -439,7 +439,31 @@ export const orderService = {
       // Don't throw - invoice creation failure shouldn't block payment confirmation
     }
 
-    return order;
+    return result.rows[0] as Order;
+  },
+
+  async updatePaymentId(id: string, paymentId: string): Promise<Order> {
+    const result = await query(
+      `UPDATE orders SET payment_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [paymentId, id]
+    );
+    if (result.rows.length === 0) {
+      throw new AppError('Order not found', 404);
+    }
+    return result.rows[0] as Order;
+  },
+
+  async getByPaymentId(paymentId: string): Promise<Order> {
+    const result = await query(
+      'SELECT * FROM orders WHERE payment_id = $1',
+      [paymentId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new AppError('Orden no encontrada por payment_id', 404);
+    }
+
+    return result.rows[0] as Order;
   },
 
   async getByOrderNumber(orderNumber: string): Promise<Order> {

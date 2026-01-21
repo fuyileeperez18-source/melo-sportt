@@ -582,6 +582,21 @@ export const wompiSecurityController = {
         throw new AppError('Transaction not found', 404);
       }
 
+      // Asociar el ID de transacción de Wompi con nuestra orden interna
+      // para asegurar que el webhook pueda encontrarla.
+      try {
+        const { orderService } = await import('../services/order.service.js');
+        const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+        
+        if (order && !order.payment_id) {
+          await orderService.updatePaymentId(order.id, id);
+          console.log(`[WompiSecurity] Associated transaction ${id} with order ${order.order_number}`);
+        }
+      } catch (error) {
+        console.error(`[WompiSecurity] Failed to associate payment ID for transaction ${id}:`, error);
+        // No lanzar error, el flujo principal debe continuar.
+      }
+
       res.status(200).json({
         success: true,
         data: transaction,
@@ -601,6 +616,13 @@ export const wompiSecurityController = {
       status: transaction.status,
     });
 
+    // Si el estado es APPROVED, delegar al handler más completo.
+    if (transaction.status === 'APPROVED') {
+      console.log(`[WompiWebhook] Transaction updated to APPROVED, delegating to handlePaymentApproved.`);
+      await this.handlePaymentApproved(transaction);
+      return;
+    }
+
     try {
       const { orderService } = await import('../services/order.service.js');
 
@@ -614,7 +636,7 @@ export const wompiSecurityController = {
 
       // Mapear estados de Wompi a estados de orden
       const statusMap: Record<string, { orderStatus?: string; paymentStatus: string }> = {
-        'APPROVED': { orderStatus: 'confirmed', paymentStatus: 'paid' },
+        // 'APPROVED' is handled above
         'DECLINED': { paymentStatus: 'failed' },
         'VOIDED': { orderStatus: 'cancelled', paymentStatus: 'refunded' },
         'ERROR': { paymentStatus: 'failed' },
@@ -645,11 +667,15 @@ export const wompiSecurityController = {
       const { orderService } = await import('../services/order.service.js');
       const { query } = await import('../config/database.js');
 
-      // Buscar orden por referencia
-      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+      // Buscar orden por referencia o por ID de pago como fallback
+      let order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+      if (!order) {
+        console.log(`[WompiWebhook] Order not found by reference ${transaction.reference}, trying paymentId ${transaction.id}`);
+        order = await orderService.getByPaymentId(transaction.id).catch(() => null);
+      }
 
       if (!order) {
-        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        console.warn(`[WompiWebhook] CRITICAL: Order not found for reference: ${transaction.reference} or paymentId: ${transaction.id}`);
         return;
       }
 
@@ -787,11 +813,15 @@ export const wompiSecurityController = {
       const { orderService } = await import('../services/order.service.js');
       const { query } = await import('../config/database.js');
 
-      // Buscar orden por referencia
-      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+      // Buscar orden por referencia o por ID de pago como fallback
+      let order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+      if (!order) {
+        console.log(`[WompiWebhook] Order not found by reference ${transaction.reference}, trying paymentId ${transaction.id}`);
+        order = await orderService.getByPaymentId(transaction.id).catch(() => null);
+      }
 
       if (!order) {
-        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference} or paymentId: ${transaction.id}`);
         return;
       }
 
