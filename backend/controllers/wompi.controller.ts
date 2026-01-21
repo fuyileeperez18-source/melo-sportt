@@ -663,20 +663,47 @@ export const wompiSecurityController = {
   async handlePaymentApproved(transaction: any): Promise<void> {
     console.log('[WompiWebhook] Payment approved:', transaction.id);
 
+    const findOrderWithRetry = async (
+      reference: string,
+      paymentId: string,
+      retries = 3,
+      delay = 2000 // 2 seconds
+    ): Promise<any> => {
+      const { orderService } = await import('../services/order.service.js');
+      
+      for (let i = 0; i < retries; i++) {
+        // First, try by reference
+        let order = await orderService.getByOrderNumber(reference).catch(() => null);
+        
+        // If not found, try by paymentId
+        if (!order) {
+          order = await orderService.getByPaymentId(paymentId).catch(() => null);
+        }
+
+        if (order) {
+          console.log(`[WompiWebhook] Found order on attempt ${i + 1}`);
+          return order;
+        }
+
+        console.log(`[WompiWebhook] Order not found on attempt ${i + 1}. Retrying in ${delay / 1000}s...`);
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+
+      console.warn(`[WompiWebhook] CRITICAL: Order not found after ${retries} attempts for reference: ${reference} or paymentId: ${paymentId}`);
+      return null;
+    };
+
     try {
       const { orderService } = await import('../services/order.service.js');
       const { query } = await import('../config/database.js');
 
-      // Buscar orden por referencia o por ID de pago como fallback
-      let order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
-      if (!order) {
-        console.log(`[WompiWebhook] Order not found by reference ${transaction.reference}, trying paymentId ${transaction.id}`);
-        order = await orderService.getByPaymentId(transaction.id).catch(() => null);
-      }
+      // Buscar orden con reintentos
+      const order = await findOrderWithRetry(transaction.reference, transaction.id);
 
       if (!order) {
-        console.warn(`[WompiWebhook] CRITICAL: Order not found for reference: ${transaction.reference} or paymentId: ${transaction.id}`);
-        return;
+        return; // El error ya fue logueado en findOrderWithRetry
       }
 
       // Verificar si ya fue procesado (evitar duplicados)
