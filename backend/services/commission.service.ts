@@ -397,19 +397,23 @@ export const commissionService = {
    * Obtiene el dashboard del propietario con estadísticas de comisiones
    */
   async getOwnerDashboardStats() {
-    // Obtener estadísticas generales de ventas
+    // Obtener estadísticas generales de ventas (solo ordenes PAGADAS)
     const salesResult = await query(`
       SELECT
         COALESCE(SUM(total), 0) as total_revenue,
         COUNT(*) as total_orders,
-        COUNT(DISTINCT user_id) as total_customers,
-        COUNT(DISTINCT p.id) as total_products
-      FROM orders o
-      LEFT JOIN products p ON p.is_active = true
-      WHERE o.payment_status = 'paid'
+        COUNT(DISTINCT user_id) as total_customers
+      FROM orders
+      WHERE payment_status = 'paid'
+    `);
+
+    // Obtener total de productos activos (query separado para precision)
+    const productsResult = await query(`
+      SELECT COUNT(*) as total_products FROM products WHERE is_active = true
     `);
 
     const salesRow = salesResult.rows[0];
+    const productsRow = productsResult.rows[0];
 
     // Obtener comisiones pendientes
     const commissionsResult = await query(`
@@ -441,7 +445,7 @@ export const commissionService = {
       total_revenue: parseFloat(salesRow.total_revenue) || 0,
       total_orders: parseInt(salesRow.total_orders) || 0,
       total_customers: parseInt(salesRow.total_customers) || 0,
-      total_products: parseInt(salesRow.total_products) || 0,
+      total_products: parseInt(productsRow.total_products) || 0,
       pending_commissions: parseFloat(commissionsRow.pending_commissions) || 0,
       monthly_revenue: monthlyRevenue,
     };

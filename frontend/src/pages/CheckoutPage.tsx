@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -32,6 +32,7 @@ import { formatCurrency, generateOrderNumber } from '@/lib/utils';
 import { orderService } from '@/lib/services';
 import { cn } from '@/lib/utils';
 import { WompiPayment } from '@/components/checkout/WompiPayment';
+import type { CartItem } from '@/types';
 
 
 // Form schemas
@@ -87,6 +88,15 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'wompi' | 'cash_on_delivery'>('wompi');
   const [usedPaymentMethod, setUsedPaymentMethod] = useState<'wompi' | 'cash_on_delivery' | null>(null);
 
+  // Ref to capture order data when payment starts (prevents stale data in callback)
+  const orderDataRef = useRef<{
+    subtotal: number;
+    shippingCost: number;
+    tax: number;
+    total: number;
+    items: CartItem[];
+  } | null>(null);
+
   const { items, getSubtotal, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
 
@@ -124,6 +134,14 @@ export function CheckoutPage() {
 
   const onShippingSubmit = (data: ShippingFormData) => {
     setShippingData(data);
+    // Capture order data when moving to payment step to prevent stale data in callbacks
+    orderDataRef.current = {
+      subtotal,
+      shippingCost,
+      tax,
+      total,
+      items: [...items], // Clone items to preserve them
+    };
     setCurrentStep(1);
   };
 
@@ -190,66 +208,20 @@ export function CheckoutPage() {
   };
 
   const handlePaymentSuccess = async (paymentId: string) => {
-    const newOrderNumber = generateOrderNumber();
-    setOrderNumber(newOrderNumber);
-    setIsProcessing(true);
+    // The order was already created by the backend during prepareTransaction
+    // and will be updated to 'paid' status by the webhook
+    // We just need to show success to the user and clear the cart
 
-    try {
-      // Prepare order data
-      const subtotal = getSubtotal();
-      const selectedShipping = shippingMethods.find((m) => m.id === shippingMethod);
-      const shippingCost = subtotal >= 200000 ? 0 : (selectedShipping?.price || 0);
-      const tax = subtotal * 0.08;
-      const total = subtotal + shippingCost + tax;
+    // Extract reference from paymentId if it contains one, or use a placeholder
+    // The actual order_number is the reference used in Wompi (MST-timestamp-random)
+    const orderRef = paymentId.includes('MST-') ? paymentId : `Ref: ${paymentId}`;
+    setOrderNumber(orderRef);
 
-      const orderData = {
-        user_id: user?.id,
-        order_number: newOrderNumber,
-        subtotal,
-        discount: 0,
-        shipping_cost: shippingCost,
-        tax,
-        total,
-        status: 'confirmed' as const,
-        payment_status: 'paid' as const,
-        payment_method: 'wompi', // Cambiado de 'prepaid' a 'wompi' para consistencia
-        payment_id: paymentId,
-                shipping_address: {
-          email: shippingData?.email,
-          firstName: shippingData?.firstName,
-          lastName: shippingData?.lastName,
-          phone: shippingData?.phone,
-          address: shippingData?.address,
-          apartment: shippingData?.apartment,
-          city: shippingData?.city,
-          state: shippingData?.state,
-          postalCode: shippingData?.postalCode,
-          country: shippingData?.country,
-        },
-        items: items.map((item) => ({
-          product_id: item.product.id,
-          variant_id: item.variant?.id,
-          quantity: item.quantity,
-          price: typeof item.price === 'number' ? item.price : parseFloat(item.price),
-        })),
-      } as any;
-
-      // Create order in backend (this will also reduce stock)
-      await orderService.create(orderData);
-
-      setCurrentStep(2);
-      setUsedPaymentMethod('wompi');
-      clearCart();
-      toast.success('¡Pago exitoso! Tu pedido ha sido confirmado.');
-    } catch (error: any) {
-      console.error('Error saving order:', error);
-      toast.error('El pago fue exitoso pero hubo un error guardando tu pedido. Contacta soporte.');
-      setCurrentStep(2);
-      setUsedPaymentMethod('wompi');
-      clearCart();
-    } finally {
-      setIsProcessing(false);
-    }
+    setCurrentStep(2);
+    setUsedPaymentMethod('wompi');
+    clearCart();
+    toast.success('¡Pago exitoso! Tu pedido ha sido confirmado.');
+    setIsProcessing(false);
   };
 
   return (
@@ -666,6 +638,8 @@ export function CheckoutPage() {
                         title: item.product.name,
                         quantity: item.quantity,
                         unit_price: item.price,
+                        product_id: item.product.id, // Para crear orden en backend
+                        variant_id: item.variant?.id,
                       }))}
                       customerEmail={shippingData?.email || ''}
                       shippingAddress={shippingData ? {
@@ -678,6 +652,9 @@ export function CheckoutPage() {
                         lastName: shippingData.lastName,
                         phone: shippingData.phone,
                       } : undefined}
+                      subtotal={subtotal}
+                      shippingCost={shippingCost}
+                      tax={tax}
                       onSuccess={handlePaymentSuccess}
                       onBack={() => setCurrentStep(0)}
                       isProcessing={isProcessing}

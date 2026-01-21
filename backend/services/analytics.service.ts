@@ -6,17 +6,17 @@ export const analyticsService = {
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-    // Get today's orders and revenue
+    // Get today's PAID orders and revenue (only count confirmed sales)
     const todayResult = await query(
       `SELECT COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue
-       FROM orders WHERE created_at >= $1`,
+       FROM orders WHERE created_at >= $1 AND payment_status = 'paid'`,
       [today]
     );
 
-    // Get yesterday's orders and revenue
+    // Get yesterday's PAID orders and revenue
     const yesterdayResult = await query(
       `SELECT COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue
-       FROM orders WHERE created_at >= $1 AND created_at < $2`,
+       FROM orders WHERE created_at >= $1 AND created_at < $2 AND payment_status = 'paid'`,
       [yesterday, today]
     );
 
@@ -90,6 +90,8 @@ export const analyticsService = {
         (SELECT json_agg(pi) FROM product_images pi WHERE pi.product_id = p.id LIMIT 1) as images
        FROM order_items oi
        JOIN products p ON oi.product_id = p.id
+       JOIN orders o ON oi.order_id = o.id
+       WHERE o.payment_status = 'paid'
        GROUP BY p.id, p.name, p.price
        ORDER BY total_sold DESC
        LIMIT $1`,
@@ -117,6 +119,7 @@ export const analyticsService = {
         SUM(total) as revenue
        FROM orders
        WHERE created_at >= NOW() - INTERVAL '${days} days'
+         AND payment_status = 'paid'
        GROUP BY DATE(created_at)
        ORDER BY date`
     );
@@ -124,7 +127,7 @@ export const analyticsService = {
     return result.rows;
   },
 
-  // Get product stats for admin (sales, revenue, stock)
+  // Get product stats for admin (sales, revenue, stock) - only PAID orders
   async getProductStats(productId: string) {
     const productResult = await query(
       `SELECT
@@ -139,17 +142,17 @@ export const analyticsService = {
         COALESCE(
           (SELECT SUM(oi.quantity) FROM order_items oi
            JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.status NOT IN ('cancelled', 'refunded')), 0
+           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
         ) as total_sold,
         COALESCE(
           (SELECT COUNT(*) FROM order_items oi
            JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.status NOT IN ('cancelled', 'refunded')), 0
+           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
         ) as order_count,
         COALESCE(
           (SELECT SUM(oi.total) FROM order_items oi
            JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.status NOT IN ('cancelled', 'refunded')), 0
+           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
         ) as total_revenue
        FROM products p
        WHERE p.id = $1
@@ -160,7 +163,7 @@ export const analyticsService = {
     return productResult.rows[0] || null;
   },
 
-  // Get all products with their stats for admin dashboard
+  // Get all products with their stats for admin dashboard - only PAID orders
   async getAllProductsWithStats(limit = 50, offset = 0) {
     const result = await query(
       `SELECT
@@ -178,17 +181,17 @@ export const analyticsService = {
         COALESCE(
           (SELECT SUM(oi.quantity) FROM order_items oi
            JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.status NOT IN ('cancelled', 'refunded')), 0
+           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
         ) as total_sold,
         COALESCE(
           (SELECT COUNT(*) FROM order_items oi
            JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.status NOT IN ('cancelled', 'refunded')), 0
+           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
         ) as order_count,
         COALESCE(
           (SELECT SUM(oi.total) FROM order_items oi
            JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.status NOT IN ('cancelled', 'refunded')), 0
+           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
         ) as total_revenue
        FROM products p
        ORDER BY p.created_at DESC
@@ -199,7 +202,7 @@ export const analyticsService = {
     return result.rows;
   },
 
-  // Get revenue by category
+  // Get revenue by category (only PAID orders)
   async getRevenueByCategory() {
     const result = await query(
       `SELECT
@@ -212,7 +215,7 @@ export const analyticsService = {
        FROM categories c
        LEFT JOIN products p ON p.category_id = c.id
        LEFT JOIN order_items oi ON oi.product_id = p.id
-       LEFT JOIN orders o ON oi.order_id = o.id AND o.status NOT IN ('cancelled', 'refunded')
+       LEFT JOIN orders o ON oi.order_id = o.id AND o.payment_status = 'paid'
        WHERE c.is_active = true
        GROUP BY c.id, c.name, c.slug
        ORDER BY revenue DESC`
@@ -221,7 +224,7 @@ export const analyticsService = {
     return result.rows;
   },
 
-  // Get monthly revenue comparison
+  // Get monthly revenue comparison (only PAID orders)
   async getMonthlyRevenueComparison() {
     const result = await query(
       `SELECT
@@ -231,7 +234,7 @@ export const analyticsService = {
         COUNT(*) as orders
        FROM orders
        WHERE created_at >= NOW() - INTERVAL '12 months'
-         AND status NOT IN ('cancelled', 'refunded')
+         AND payment_status = 'paid'
        GROUP BY DATE_TRUNC('month', created_at)
        ORDER BY month`
     );
@@ -255,7 +258,7 @@ export const analyticsService = {
     return result.rows;
   },
 
-  // Get sales by gender
+  // Get sales by gender (only PAID orders)
   async getSalesByGender() {
     const result = await query(
       `SELECT
@@ -265,7 +268,7 @@ export const analyticsService = {
         COUNT(DISTINCT oi.order_id) as orders
        FROM products p
        LEFT JOIN order_items oi ON oi.product_id = p.id
-       LEFT JOIN orders o ON oi.order_id = o.id AND o.status NOT IN ('cancelled', 'refunded')
+       LEFT JOIN orders o ON oi.order_id = o.id AND o.payment_status = 'paid'
        WHERE p.gender IS NOT NULL
        GROUP BY p.gender
        ORDER BY revenue DESC`

@@ -18,6 +18,8 @@ const prepareTransactionSchema = z.object({
     title: z.string(),
     quantity: z.number().int().positive(),
     unit_price: z.number().positive(),
+    product_id: z.string().optional(), // Para crear order_items
+    variant_id: z.string().optional(),
   })).min(1, 'El carrito debe contener al menos un producto'),
 
   customer: z.object({
@@ -44,6 +46,11 @@ const prepareTransactionSchema = z.object({
   userLegalIdType: z.string().optional(),
   userLegalId: z.string().optional(),
   paymentDescription: z.string().optional(),
+
+  // Datos adicionales para crear la orden
+  subtotal: z.number().optional(),
+  shipping_cost: z.number().optional(),
+  tax: z.number().optional(),
 
   // redirectUrl is now automatically configured by the backend
   // but we accept it for backwards compatibility with frontend
@@ -98,7 +105,7 @@ export const wompiSecurityController = {
    */
   async prepareTransaction(req: Request, res: Response): Promise<void> {
     try {
-      console.log('🔄 [WompiSecurity] Preparing transaction...');
+      console.log('[WompiSecurity] Preparing transaction...');
 
       // 1. Validar y parsear input
       const {
@@ -106,7 +113,13 @@ export const wompiSecurityController = {
         customer,
         shippingAddress,
         paymentType,
+        subtotal,
+        shipping_cost,
+        tax,
       } = prepareTransactionSchema.parse(req.body);
+
+      // Obtener user_id del request autenticado
+      const userId = (req as any).user?.id;
 
       // 2. Calcular monto total EN CENTAVOS (sin redondeo)
       const totalInCents = items.reduce((sum, item) => {
@@ -119,11 +132,66 @@ export const wompiSecurityController = {
         throw new AppError('El monto total debe ser mayor a 0 COP', 400);
       }
 
+      const totalInPesos = totalInCents / 100;
+
       // 3. Generar referencia única (CSPRNG + timestamp)
       const reference = `MST-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`.toUpperCase();
 
       console.log(`[WompiSecurity] Generated reference: ${reference}`);
-      console.log(`[WompiSecurity] Total amount: ${totalInCents} cents (${totalInCents/100} COP)`);
+      console.log(`[WompiSecurity] Total amount: ${totalInCents} cents (${totalInPesos} COP)`);
+
+      // 3.5 CREAR ORDEN EN ESTADO PENDING antes de procesar pago
+      // Esto asegura que cuando llegue el webhook, la orden ya existe
+      let orderId: string | null = null;
+      try {
+        const { orderService } = await import('../services/order.service.js');
+
+        // Preparar datos de la orden
+        const orderItems = items.map(item => ({
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          quantity: item.quantity,
+          price: item.unit_price,
+        })).filter(item => item.product_id); // Solo incluir items con product_id
+
+        // Solo crear orden si tenemos product_ids (el frontend debe enviarlos)
+        if (orderItems.length > 0) {
+          const orderData = {
+            user_id: userId,
+            order_number: reference, // Usar la referencia de Wompi como order_number
+            subtotal: subtotal || totalInPesos,
+            discount: 0,
+            shipping_cost: shipping_cost || 0,
+            tax: tax || 0,
+            total: totalInPesos,
+            status: 'pending' as const,
+            payment_status: 'pending' as const,
+            payment_method: 'wompi',
+            shipping_address: shippingAddress ? {
+              name: shippingAddress.name,
+              address: shippingAddress.addressLine1,
+              apartment: shippingAddress.addressLine2,
+              city: shippingAddress.city,
+              state: shippingAddress.region,
+              country: shippingAddress.country,
+              phone: shippingAddress.phone,
+              email: customer.email,
+            } : { email: customer.email },
+            notes: `Pago pendiente - Wompi ref: ${reference}`,
+            items: orderItems,
+          };
+
+          // Crear orden sin reducir stock (se reducirá cuando el pago sea confirmado)
+          const order = await orderService.create(orderData as any, false);
+          orderId = order.id;
+          console.log(`[WompiSecurity] Pre-created order ${reference} with ID ${orderId}`);
+        } else {
+          console.log('[WompiSecurity] No product_ids provided, skipping order pre-creation');
+        }
+      } catch (orderError: any) {
+        console.error('[WompiSecurity] Failed to pre-create order:', orderError.message);
+        // Continuar sin crear orden - el frontend la creará después del pago
+      }
 
       // 4. Obtener tokens de aceptación (Habeas Data - REQUERIDO)
       let acceptanceToken: string;
@@ -388,36 +456,98 @@ export const wompiSecurityController = {
   /**
    * Maneja webhooks de Wompi (eventos asíncronos)
    * POST /api/wompi/webhook
+   *
+   * ROUTER: Si la referencia tiene un prefijo de otro proyecto,
+   * reenvía el webhook a ese proyecto.
    */
-  handleWebhook(req: Request, res: Response): void {
+  async handleWebhook(req: Request, res: Response): Promise<void> {
     try {
       const { event, data, timestamp } = req.body;
+      const reference = data?.transaction?.reference || '';
 
       console.log(`[WompiWebhook] Received event: ${event}`, {
         timestamp,
         transactionId: data?.transaction?.id,
+        reference,
       });
 
-      // Manejar diferentes tipos de eventos
+      // Extraer prefijo de la referencia (ej: "PROJ1_ORDER123" -> "PROJ1")
+      const prefixMatch = reference.match(/^([A-Z0-9]+)[-_]/i);
+      const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : null;
+
+      // Verificar si es de este proyecto (MST = Melo-Sportt)
+      const isLocalProject = prefix === 'MST' || !prefix;
+
+      // Cargar rutas de webhooks de otros proyectos
+      let webhookRoutes: Record<string, string> = {};
+      if (env.WOMPI_WEBHOOK_ROUTES) {
+        try {
+          webhookRoutes = JSON.parse(env.WOMPI_WEBHOOK_ROUTES);
+        } catch (e) {
+          console.error('[WompiWebhook] Error parsing WOMPI_WEBHOOK_ROUTES:', e);
+        }
+      }
+
+      // Si el prefijo corresponde a otro proyecto, reenviar
+      if (prefix && !isLocalProject && webhookRoutes[prefix]) {
+        const targetUrl = webhookRoutes[prefix];
+        console.log(`[WompiWebhook] Forwarding to ${prefix}: ${targetUrl}`);
+
+        try {
+          const forwardResponse = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              // Reenviar headers importantes de Wompi
+              ...(req.headers['x-event-checksum'] && {
+                'X-Event-Checksum': req.headers['x-event-checksum'] as string,
+              }),
+            },
+            body: JSON.stringify(req.body),
+          });
+
+          console.log(`[WompiWebhook] Forward response from ${prefix}: ${forwardResponse.status}`);
+        } catch (forwardError) {
+          console.error(`[WompiWebhook] Error forwarding to ${prefix}:`, forwardError);
+        }
+
+        // Responder OK a Wompi inmediatamente
+        res.status(200).send('FORWARDED');
+        return;
+      }
+
+      // Procesar localmente si es de este proyecto
+      // Nota: Las funciones son async pero NO usamos await porque Wompi
+      // requiere respuesta 200 inmediatamente. El procesamiento continua en background.
       switch (event) {
         case 'transaction.updated':
-          this.handleTransactionUpdated(data.transaction);
+          this.handleTransactionUpdated(data.transaction).catch(err =>
+            console.error('[WompiWebhook] Background error in handleTransactionUpdated:', err)
+          );
           break;
 
         case 'transaction.payment_approved':
-          this.handlePaymentApproved(data.transaction);
+          this.handlePaymentApproved(data.transaction).catch(err =>
+            console.error('[WompiWebhook] Background error in handlePaymentApproved:', err)
+          );
           break;
 
         case 'transaction.payment_declined':
-          this.handlePaymentDeclined(data.transaction);
+          this.handlePaymentDeclined(data.transaction).catch(err =>
+            console.error('[WompiWebhook] Background error in handlePaymentDeclined:', err)
+          );
           break;
 
         case 'transaction.payment_voided':
-          this.handlePaymentVoided(data.transaction);
+          this.handlePaymentVoided(data.transaction).catch(err =>
+            console.error('[WompiWebhook] Background error in handlePaymentVoided:', err)
+          );
           break;
 
         case 'transaction.refund_applied':
-          this.handleRefundApplied(data.transaction);
+          this.handleRefundApplied(data.transaction).catch(err =>
+            console.error('[WompiWebhook] Background error in handleRefundApplied:', err)
+          );
           break;
 
         default:
@@ -463,50 +593,279 @@ export const wompiSecurityController = {
     }
   },
 
-  // Handlers para webhooks
-  handleTransactionUpdated(transaction: any): void {
+  // Handlers para webhooks - Implementaciones reales
+  async handleTransactionUpdated(transaction: any): Promise<void> {
     console.log('[WompiWebhook] Transaction updated:', {
       id: transaction.id,
       reference: transaction.reference,
       status: transaction.status,
     });
 
-    // TODO: Actualizar estado del pedido en base de datos
-    // TODO: Enviar notificación al cliente si es aprobado
-    // TODO: Liberar inventario si es declinado
-    // TODO: Activar flujo de envío si es aprobado
+    try {
+      const { orderService } = await import('../services/order.service.js');
+
+      // Buscar orden por referencia (order_number)
+      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+
+      if (!order) {
+        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        return;
+      }
+
+      // Mapear estados de Wompi a estados de orden
+      const statusMap: Record<string, { orderStatus?: string; paymentStatus: string }> = {
+        'APPROVED': { orderStatus: 'confirmed', paymentStatus: 'paid' },
+        'DECLINED': { paymentStatus: 'failed' },
+        'VOIDED': { orderStatus: 'cancelled', paymentStatus: 'refunded' },
+        'ERROR': { paymentStatus: 'failed' },
+        'PENDING': { paymentStatus: 'pending' },
+      };
+
+      const mapping = statusMap[transaction.status];
+      if (mapping) {
+        // Actualizar estado de pago
+        await orderService.updatePaymentStatus(order.id, mapping.paymentStatus, transaction.id);
+
+        // Actualizar estado de orden si aplica
+        if (mapping.orderStatus) {
+          await orderService.updateStatus(order.id, mapping.orderStatus as any);
+        }
+
+        console.log(`[WompiWebhook] Order ${order.order_number} updated: payment=${mapping.paymentStatus}, status=${mapping.orderStatus || 'unchanged'}`);
+      }
+    } catch (error) {
+      console.error('[WompiWebhook] Error handling transaction update:', error);
+    }
   },
 
-  handlePaymentApproved(transaction: any): void {
-    console.log('✅ [WompiWebhook] Payment approved:', transaction.id);
+  async handlePaymentApproved(transaction: any): Promise<void> {
+    console.log('[WompiWebhook] Payment approved:', transaction.id);
 
-    // TODO: Marcar pedido como pagado
-    // TODO: Enviar email de confirmación
-    // TODO: Actualizar inventario
-    // TODO: Notificar al vendedor
+    try {
+      const { orderService } = await import('../services/order.service.js');
+      const { query } = await import('../config/database.js');
+
+      // Buscar orden por referencia
+      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+
+      if (!order) {
+        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        return;
+      }
+
+      // Verificar si ya fue procesado (evitar duplicados)
+      if (order.payment_status === 'paid') {
+        console.log(`[WompiWebhook] Order ${order.order_number} already marked as paid, skipping`);
+        return;
+      }
+
+      // Actualizar orden como pagada y confirmada
+      await orderService.updatePaymentStatus(order.id, 'paid', transaction.id);
+      await orderService.updateStatus(order.id, 'confirmed');
+
+      // Reducir stock de productos (la orden se creo con reduceStock=false)
+      const orderItemsResult = await query(
+        'SELECT product_id, variant_id, quantity FROM order_items WHERE order_id = $1',
+        [order.id]
+      );
+
+      for (const item of orderItemsResult.rows) {
+        // Reducir stock del producto
+        await query(`
+          UPDATE products
+          SET quantity = quantity - $1,
+              total_sold = COALESCE(total_sold, 0) + $1,
+              updated_at = NOW()
+          WHERE id = $2 AND track_quantity = true
+        `, [item.quantity, item.product_id]);
+
+        // Reducir stock de variante si aplica
+        if (item.variant_id) {
+          await query(`
+            UPDATE product_variants
+            SET quantity = quantity - $1, updated_at = NOW()
+            WHERE id = $2
+          `, [item.quantity, item.variant_id]);
+        }
+      }
+
+      console.log(`[WompiWebhook] Stock reduced for order ${order.order_number}`);
+
+      // Crear comisiones para todos los miembros del equipo con porcentaje de comision
+      const teamMembersResult = await query(`
+        SELECT id, user_id, position, commission_percentage
+        FROM team_members
+        WHERE commission_percentage > 0
+      `);
+
+      for (const member of teamMembersResult.rows) {
+        const commissionAmount = parseFloat(order.total.toString()) * (parseFloat(member.commission_percentage) / 100);
+
+        // Verificar que no exista ya una comision para este pedido y miembro
+        const existingCommission = await query(
+          'SELECT id FROM commissions WHERE order_id = $1 AND team_member_id = $2',
+          [order.id, member.id]
+        );
+
+        if (existingCommission.rows.length === 0) {
+          await query(`
+            INSERT INTO commissions (
+              team_member_id, order_id, order_total, commission_percentage, commission_amount, status
+            ) VALUES ($1, $2, $3, $4, $5, 'pending')
+          `, [
+            member.id,
+            order.id,
+            order.total,
+            member.commission_percentage,
+            commissionAmount
+          ]);
+
+          console.log(`[WompiWebhook] Commission created for team member ${member.id}: $${commissionAmount.toFixed(2)}`);
+        }
+      }
+
+      console.log(`[WompiWebhook] Order ${order.order_number} marked as paid and confirmed`);
+    } catch (error) {
+      console.error('[WompiWebhook] Error handling payment approved:', error);
+    }
   },
 
-  handlePaymentDeclined(transaction: any): void {
-    console.log('❌ [WompiWebhook] Payment declined:', transaction.id);
+  async handlePaymentDeclined(transaction: any): Promise<void> {
+    console.log('[WompiWebhook] Payment declined:', transaction.id);
 
-    // TODO: Marcar pedido como fallido
-    // TODO: Liberar inventario reservado
-    // TODO: Notificar al cliente
+    try {
+      const { orderService } = await import('../services/order.service.js');
+      const { query } = await import('../config/database.js');
+
+      // Buscar orden por referencia
+      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+
+      if (!order) {
+        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        return;
+      }
+
+      // Marcar pedido como fallido
+      await orderService.updatePaymentStatus(order.id, 'failed', transaction.id);
+
+      // Restaurar inventario - obtener items de la orden
+      const orderItemsResult = await query(
+        'SELECT product_id, variant_id, quantity FROM order_items WHERE order_id = $1',
+        [order.id]
+      );
+
+      for (const item of orderItemsResult.rows) {
+        // Restaurar stock del producto
+        await query(`
+          UPDATE products
+          SET quantity = quantity + $1,
+              total_sold = GREATEST(0, COALESCE(total_sold, 0) - $1),
+              updated_at = NOW()
+          WHERE id = $2 AND track_quantity = true
+        `, [item.quantity, item.product_id]);
+
+        // Restaurar stock de variante si aplica
+        if (item.variant_id) {
+          await query(`
+            UPDATE product_variants
+            SET quantity = quantity + $1, updated_at = NOW()
+            WHERE id = $2
+          `, [item.quantity, item.variant_id]);
+        }
+      }
+
+      console.log(`[WompiWebhook] Order ${order.order_number} marked as failed, inventory restored`);
+    } catch (error) {
+      console.error('[WompiWebhook] Error handling payment declined:', error);
+    }
   },
 
-  handlePaymentVoided(transaction: any): void {
-    console.log('🔄 [WompiWebhook] Payment voided:', transaction.id);
+  async handlePaymentVoided(transaction: any): Promise<void> {
+    console.log('[WompiWebhook] Payment voided:', transaction.id);
 
-    // TODO: Anular pedido
-    // TODO: Reembolsar si aplica
-    // TODO: Liberar inventario
+    try {
+      const { orderService } = await import('../services/order.service.js');
+      const { query } = await import('../config/database.js');
+
+      // Buscar orden por referencia
+      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+
+      if (!order) {
+        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        return;
+      }
+
+      // Anular pedido
+      await orderService.updatePaymentStatus(order.id, 'refunded', transaction.id);
+      await orderService.updateStatus(order.id, 'cancelled');
+
+      // Restaurar inventario
+      const orderItemsResult = await query(
+        'SELECT product_id, variant_id, quantity FROM order_items WHERE order_id = $1',
+        [order.id]
+      );
+
+      for (const item of orderItemsResult.rows) {
+        await query(`
+          UPDATE products
+          SET quantity = quantity + $1,
+              total_sold = GREATEST(0, COALESCE(total_sold, 0) - $1),
+              updated_at = NOW()
+          WHERE id = $2 AND track_quantity = true
+        `, [item.quantity, item.product_id]);
+
+        if (item.variant_id) {
+          await query(`
+            UPDATE product_variants
+            SET quantity = quantity + $1, updated_at = NOW()
+            WHERE id = $2
+          `, [item.quantity, item.variant_id]);
+        }
+      }
+
+      // Cancelar comisiones pendientes asociadas a esta orden
+      await query(`
+        UPDATE commissions
+        SET status = 'cancelled', updated_at = NOW()
+        WHERE order_id = $1 AND status = 'pending'
+      `, [order.id]);
+
+      console.log(`[WompiWebhook] Order ${order.order_number} voided, inventory restored, commissions cancelled`);
+    } catch (error) {
+      console.error('[WompiWebhook] Error handling payment voided:', error);
+    }
   },
 
-  handleRefundApplied(transaction: any): void {
-    console.log('💰 [WompiWebhook] Refund applied:', transaction.id);
+  async handleRefundApplied(transaction: any): Promise<void> {
+    console.log('[WompiWebhook] Refund applied:', transaction.id);
 
-    // TODO: Actualizar estado de reembolso
-    // TODO: Notificar al cliente
+    try {
+      const { orderService } = await import('../services/order.service.js');
+      const { query } = await import('../config/database.js');
+
+      // Buscar orden por referencia
+      const order = await orderService.getByOrderNumber(transaction.reference).catch(() => null);
+
+      if (!order) {
+        console.warn(`[WompiWebhook] Order not found for reference: ${transaction.reference}`);
+        return;
+      }
+
+      // Actualizar estado de reembolso
+      await orderService.updatePaymentStatus(order.id, 'refunded', transaction.id);
+      await orderService.updateStatus(order.id, 'refunded');
+
+      // Cancelar comisiones asociadas
+      await query(`
+        UPDATE commissions
+        SET status = 'cancelled', updated_at = NOW()
+        WHERE order_id = $1 AND status IN ('pending', 'approved')
+      `, [order.id]);
+
+      console.log(`[WompiWebhook] Order ${order.order_number} refunded, commissions cancelled`);
+    } catch (error) {
+      console.error('[WompiWebhook] Error handling refund:', error);
+    }
   },
 
   // Utilidades

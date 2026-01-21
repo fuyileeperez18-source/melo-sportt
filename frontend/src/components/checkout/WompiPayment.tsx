@@ -124,6 +124,8 @@ interface WompiPaymentProps {
     title: string;
     quantity: number;
     unit_price: number;
+    product_id?: string; // Para crear orden en backend
+    variant_id?: string;
   }>;
   customerEmail: string;
   shippingAddress?: {
@@ -136,6 +138,9 @@ interface WompiPaymentProps {
     lastName: string;
     phone: string;
   };
+  subtotal?: number;
+  shippingCost?: number;
+  tax?: number;
   onSuccess: (transactionId: string) => void;
   onBack: () => void;
   isProcessing: boolean;
@@ -147,6 +152,9 @@ export function WompiPayment({
   items,
   customerEmail,
   shippingAddress,
+  subtotal,
+  shippingCost,
+  tax,
   onSuccess,
   onBack,
   isProcessing,
@@ -353,10 +361,14 @@ export function WompiPayment({
 
       // Build request body - include payment_method or payment_type based on what we have
       const requestBody: any = {
-        items,
+        items, // Now includes product_id and variant_id for creating order
         customerEmail,
         orderId: reference,
         shippingAddress: formattedShippingAddress,
+        // Include order calculation data for backend to create order
+        subtotal,
+        shipping_cost: shippingCost,
+        tax,
       };
 
       // Include payment_method if we have a card token (for direct card payments)

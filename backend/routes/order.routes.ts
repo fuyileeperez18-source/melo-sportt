@@ -113,23 +113,28 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response, next: Nex
 // Create Wompi transaction
 router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { 
-      items, 
-      orderId, 
-      customerEmail, 
-      shippingAddress, 
-      payment_method, 
+    const {
+      items,
+      orderId,
+      customerEmail,
+      shippingAddress,
+      payment_method,
       payment_type,
       financial_institution_code,
       user_type,
       user_legal_id_type,
       user_legal_id,
-      payment_description
+      payment_description,
+      subtotal,
+      shipping_cost,
+      tax,
     } = z.object({
       items: z.array(z.object({
         title: z.string(),
         quantity: z.number().int().positive(),
         unit_price: z.number().positive(),
+        product_id: z.string().optional(), // Para crear orden
+        variant_id: z.string().optional(),
       })),
       orderId: z.string().optional(),
       customerEmail: z.string().email(),
@@ -154,6 +159,9 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
       user_legal_id_type: z.string().optional(),
       user_legal_id: z.string().optional(),
       payment_description: z.string().optional(),
+      subtotal: z.number().optional(),
+      shipping_cost: z.number().optional(),
+      tax: z.number().optional(),
     }).parse(req.body);
 
     // Calculate total amount in cents (multiply by 100 to convert pesos to centavos)
@@ -235,8 +243,56 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
       return undefined;
     };
 
-    // Generate reference
-    const reference = orderId || `ORDER_${Date.now()}_${req.user!.id}`;
+    // Generate reference using MST prefix for consistency
+    const reference = orderId || `MST-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    // Create order in PENDING status before processing payment
+    // This ensures the order exists when the webhook arrives
+    let orderId_created: string | null = null;
+    const totalInPesos = totalAmountInCents / 100;
+    const orderItems = items.map(item => ({
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+      price: item.unit_price,
+    })).filter(item => item.product_id);
+
+    if (orderItems.length > 0) {
+      try {
+        const orderData = {
+          user_id: req.user!.id,
+          order_number: reference,
+          subtotal: subtotal || totalInPesos,
+          discount: 0,
+          shipping_cost: shipping_cost || 0,
+          tax: tax || 0,
+          total: totalInPesos,
+          status: 'pending' as const,
+          payment_status: 'pending' as const,
+          payment_method: 'wompi',
+          shipping_address: shippingAddress ? {
+            name: shippingAddress.name,
+            address: shippingAddress.address_line_1,
+            apartment: shippingAddress.address_line_2,
+            city: shippingAddress.city,
+            state: shippingAddress.region,
+            country: shippingAddress.country,
+            phone: shippingAddress.phone_number,
+            email: customerEmail,
+          } : { email: customerEmail },
+          notes: `Pago pendiente - Wompi ref: ${reference}`,
+          items: orderItems,
+        };
+
+        // Create order WITHOUT reducing stock (stock will be reduced when payment is confirmed)
+        const order = await orderService.create(orderData as any, false);
+        orderId_created = order.id;
+        console.log(`[Order Routes] Pre-created order ${reference} with ID ${orderId_created}`);
+      } catch (orderError: any) {
+        console.error('[Order Routes] Failed to pre-create order:', orderError.message);
+        // Continue without creating order - webhook will handle it
+      }
+    }
 
     // Validar y formatear shipping_address para Wompi
     let formattedShippingAddress = undefined;
@@ -471,6 +527,33 @@ router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunc
         await orderService.updatePaymentStatus(order.id, 'paid', transactionId);
         await orderService.updateStatus(order.id, 'confirmed');
 
+        // Reduce stock for order items
+        const { query: dbQuery } = await import('../config/database.js');
+        const orderItemsResult = await dbQuery(
+          'SELECT product_id, variant_id, quantity FROM order_items WHERE order_id = $1',
+          [order.id]
+        );
+
+        for (const item of orderItemsResult.rows) {
+          await dbQuery(`
+            UPDATE products
+            SET quantity = quantity - $1,
+                total_sold = COALESCE(total_sold, 0) + $1,
+                updated_at = NOW()
+            WHERE id = $2 AND track_quantity = true
+          `, [item.quantity, item.product_id]);
+
+          if (item.variant_id) {
+            await dbQuery(`
+              UPDATE product_variants
+              SET quantity = quantity - $1, updated_at = NOW()
+              WHERE id = $2
+            `, [item.quantity, item.variant_id]);
+          }
+        }
+
+        console.log(`[WOMPI WEBHOOK] Stock reduced for order ${orderNumber}`);
+
         // Register commission (10%)
         const totalAmount = result.amount_in_cents / 100;
         const commissionData = wompiService.calculateCommission(result.amount_in_cents);
@@ -484,7 +567,33 @@ router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunc
           fuyi_phone: env.FUYI_PHONE_NUMBER || '573238020198'
         });
 
-        console.log(`💰 [WOMPI COMMISSION] Registered 10% for Order ${orderNumber}`);
+        // Create commissions for team members
+        const teamMembersResult = await dbQuery(`
+          SELECT id, user_id, position, commission_percentage
+          FROM team_members
+          WHERE commission_percentage > 0
+        `);
+
+        for (const member of teamMembersResult.rows) {
+          const commissionAmount = parseFloat(order.total.toString()) * (parseFloat(member.commission_percentage) / 100);
+
+          const existingCommission = await dbQuery(
+            'SELECT id FROM commissions WHERE order_id = $1 AND team_member_id = $2',
+            [order.id, member.id]
+          );
+
+          if (existingCommission.rows.length === 0) {
+            await dbQuery(`
+              INSERT INTO commissions (
+                team_member_id, order_id, order_total, commission_percentage, commission_amount, status
+              ) VALUES ($1, $2, $3, $4, $5, 'pending')
+            `, [member.id, order.id, order.total, member.commission_percentage, commissionAmount]);
+
+            console.log(`[WOMPI WEBHOOK] Team commission created for member ${member.id}: $${commissionAmount.toFixed(2)}`);
+          }
+        }
+
+        console.log(`[WOMPI WEBHOOK] Registered commissions for Order ${orderNumber}`);
       }
     }
 
