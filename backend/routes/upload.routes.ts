@@ -41,7 +41,7 @@ router.post(
   authenticate,
   requireAdmin,
   upload.single('image'),
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response) => {
     try {
       if (!req.file) {
         res.status(400).json({
@@ -79,7 +79,7 @@ router.post(
   authenticate,
   requireAdmin,
   upload.array('images', 10),
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
 
@@ -118,11 +118,12 @@ router.delete(
   '/image/:publicId(*)',
   authenticate,
   requireAdmin,
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const publicId = Array.isArray(req.params.publicId) ? req.params.publicId[0] : req.params.publicId;
       if (!publicId) {
-        return res.status(400).json({ success: false, error: 'Public ID is required' });
+        res.status(400).json({ success: false, error: 'Public ID is required' });
+        return;
       }
       await uploadService.deleteImage(publicId);
 
@@ -149,11 +150,12 @@ router.post(
   authenticate,
   requireAdmin,
   upload.single('image'),
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const productId = Array.isArray(req.params.productId) ? req.params.productId[0] : req.params.productId;
       if (!productId) {
-          return res.status(400).json({ success: false, error: 'Product ID is required' });
+          res.status(400).json({ success: false, error: 'Product ID is required' });
+          return;
       }
 
       if (!req.file) {
@@ -208,11 +210,12 @@ router.post(
   authenticate,
   requireAdmin,
   upload.array('images', 10),
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const productId = Array.isArray(req.params.productId) ? req.params.productId[0] : req.params.productId;
       if (!productId) {
-          return res.status(400).json({ success: false, error: 'Product ID is required' });
+          res.status(400).json({ success: false, error: 'Product ID is required' });
+          return;
       }
       const files = req.files as Express.Multer.File[];
 

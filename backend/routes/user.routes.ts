@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import type { ParsedQs } from 'qs';
 import { z } from 'zod';
 import { userService } from '../services/user.service.js';
 import { authenticate, requireAdmin, requireSuperAdmin } from '../middleware/auth.js';
@@ -6,8 +7,14 @@ import type { AuthRequest } from '../types/index.js';
 
 const router = Router();
 
-const getStringParam = (param: string | string[] | undefined): string | undefined => {
-    if (Array.isArray(param)) return param[0];
+const getStringParam = (param: string | string[] | undefined | ParsedQs | (string | ParsedQs)[]): string | undefined => {
+    if (Array.isArray(param)) {
+        return param[0] as string | undefined;
+    }
+    if (param && typeof param === 'object') {
+        // Handle ParsedQs object - convert to string
+        return String(param);
+    }
     return param as string | undefined;
 }
 
@@ -357,13 +364,7 @@ router.get('/dashboard/owner', authenticate, requireSuperAdmin, async (_req: Req
 // Get all admins
 router.get('/admins', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const filters = {
-      role: getStringParam(req.query.role),
-      search: getStringParam(req.query.search),
-      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
-    };
-    const admins = await userService.getAllAdmins(filters);
+    const admins = await userService.getAllAdmins();
     res.json({ success: true, data: admins });
   } catch (error) {
     next(error);

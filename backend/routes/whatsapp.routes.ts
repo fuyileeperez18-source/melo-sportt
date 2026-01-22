@@ -176,7 +176,7 @@ router.get('/catalog', (req: Request, res: Response) => {
 // Ver estado de conversación
 router.get('/conversation/:phone', (req: Request, res: Response) => {
   try {
-    const { phone } = req.params;
+    const phone = Array.isArray(req.params.phone) ? req.params.phone[0] : req.params.phone;
     const conversation = whatsappBotService.getConversationState(phone);
 
     if (!conversation) {

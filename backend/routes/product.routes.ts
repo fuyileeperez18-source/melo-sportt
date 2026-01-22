@@ -106,6 +106,9 @@ router.get('/:id/related', async (req: Request, res: Response, next: NextFunctio
     }
     const { categoryId: categoryIdQuery } = req.query;
     const categoryId = Array.isArray(categoryIdQuery) ? categoryIdQuery[0] : categoryIdQuery as string;
+    if (!categoryId || typeof categoryId !== 'string') {
+        return res.status(400).json({ success: false, error: 'Category ID is required and must be a string' });
+    }
 
     const products = await productService.getRelated(id, categoryId);
     res.json({ success: true, data: products });
