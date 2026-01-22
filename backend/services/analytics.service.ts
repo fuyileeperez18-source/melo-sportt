@@ -136,7 +136,11 @@ export const analyticsService = {
       [days]
     );
 
-    return result.rows;
+    return result.rows.map((row: { date: string; orders: string; revenue: string }) => ({
+      date: row.date,
+      orders: parseInt(row.orders),
+      revenue: parseFloat(row.revenue) || 0,
+    }));
   },
 
   // Get product stats for admin (sales, revenue, stock) - only PAID orders

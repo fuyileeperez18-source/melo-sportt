@@ -33,7 +33,7 @@ class AnalyticsService {
         EXTRACT(YEAR FROM created_at) as year,
         EXTRACT(MONTH FROM created_at) as month,
         COUNT(*) as total_products,
-        COUNT(CASE WHEN status = 'active' THEN 1 END) as active_products
+        COUNT(CASE WHEN is_active = true THEN 1 END) as active_products
       FROM products
       GROUP BY EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)
       ORDER BY year DESC, month DESC
