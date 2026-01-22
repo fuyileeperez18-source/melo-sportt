@@ -52,6 +52,14 @@ export interface Address {
   postal_code: string;
   country: string;
   is_default: boolean;
+  // Extended fields for order snapshots
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  apartment?: string;
+  postalCode?: string;
 }
 
 // Team member (for store staff like owner, developer, etc.)
@@ -260,6 +268,7 @@ export interface Order {
   payment_status: PaymentStatus;
   payment_method: string;
   payment_id?: string;
+  mp_preference_id?: string;
   shipping_address: Address;
   billing_address: Address;
   tracking_number?: string;

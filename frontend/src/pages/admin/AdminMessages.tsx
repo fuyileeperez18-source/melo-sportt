@@ -114,6 +114,7 @@ export function AdminMessages() {
 
   async function loadConversations() {
     try {
+      const response = await messageService.getConversations();
       // Verify response.data existence and structure
       const conversationsData = response?.data?.conversations || (Array.isArray(response?.data) ? response.data : []);
       setConversations(conversationsData);

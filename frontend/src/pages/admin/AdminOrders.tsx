@@ -18,6 +18,8 @@ import {
   Mail,
   Filter,
   X,
+  RefreshCw,
+  User,
 } from 'lucide-react';
 
 import { Button, IconButton } from '@/components/ui/Button';
