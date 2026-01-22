@@ -114,8 +114,9 @@ export function AdminMessages() {
 
   async function loadConversations() {
     try {
-      const response = await messageService.getConversations(1, 100);
-      setConversations(response.data.conversations);
+      // Verify response.data existence and structure
+      const conversationsData = response?.data?.conversations || (Array.isArray(response?.data) ? response.data : []);
+      setConversations(conversationsData);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');

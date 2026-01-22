@@ -164,7 +164,7 @@ export function WompiPayment({
 
   // Estado del componente
   const [error, setError] = useState<string | null>(null);
-  const [paymentStep, setPaymentStep] = useState<'methods' | 'card_form' | 'pse_form' | 'processing' | 'success'>('methods');
+  const [paymentStep, setPaymentStep] = useState<'methods' | 'card_form' | 'pse_form' | 'nequi_form' | 'processing' | 'success'>('methods');
   const [cardData, setCardData] = useState({
     number: '',
     cvc: '',
@@ -182,6 +182,9 @@ export function WompiPayment({
   const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
   const [showTestCards, setShowTestCards] = useState(false);
   const [reference, setReference] = useState<string>('');
+
+  const [nequiPhone, setNequiPhone] = useState<string>('');
+  const [showNequiForm, setShowNequiForm] = useState(false);
 
   // Detectar ambiente
   const environment = detectEnvironment(
@@ -387,6 +390,14 @@ export function WompiPayment({
 
         // Include payment_description for all redirect flows
         requestBody.payment_description = `Pago de pedido ${reference} - Melo Sportt`;
+
+        // Add NEQUI phone if available
+        if (paymentType === 'NEQUI' && nequiPhone) {
+          requestBody.payment_method = {
+            type: 'NEQUI',
+            phone_number: nequiPhone
+          };
+        }
 
         // For PSE, include additional required fields
         if (paymentType === 'PSE' && pseData) {
@@ -721,8 +732,8 @@ export function WompiPayment({
             {/* Nequi específico */}
             <button
               onClick={() => {
-                console.log('[WompiPayment] User selected Nequi - creating transaction with payment_type');
-                handleCreateTransaction(undefined, 'NEQUI');
+                console.log('[WompiPayment] User selected Nequi - showing Nequi form');
+                setPaymentStep('nequi_form');
               }}
               className="w-full p-4 bg-primary-800 rounded-lg border border-primary-700 hover:border-purple-500 transition-all text-left flex items-center gap-4"
             >
@@ -882,6 +893,57 @@ export function WompiPayment({
                 </Button>
                 <Button type="submit" className="flex-1" isLoading={isProcessing}>
                   Continuar con PSE - {formatCurrency(total)}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+
+        {paymentStep === 'nequi_form' && (
+          <motion.div
+            key="nequi_form"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (nequiPhone.length < 10) {
+                toast.error('Número de celular inválido');
+                return;
+              }
+              handleCreateTransaction(undefined, 'NEQUI');
+            }} className="space-y-4">
+              <h3 className="text-lg font-medium text-white mb-4">Número de Nequi</h3>
+
+              <div className="p-4 bg-purple-500/10 rounded-lg mb-4">
+                <p className="text-sm text-gray-300">
+                  Ingresa el número de celular asociado a tu cuenta Nequi. Te enviaremos una notificación push a tu app para confirmar el pago.
+                </p>
+              </div>
+
+              <Input
+                label="Número de Celular Nequi"
+                placeholder="300 123 4567"
+                required
+                type="tel"
+                value={nequiPhone}
+                onChange={(e) => setNequiPhone(e.target.value.replace(/\D/g, ''))}
+                maxLength={10}
+                leftIcon={<Smartphone className="h-5 w-5" />}
+              />
+
+              <div className="flex gap-4 pt-4">
+                <Button type="button" variant="outline" onClick={() => setPaymentStep('methods')}>
+                  Atrás
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  isLoading={isProcessing}
+                  disabled={nequiPhone.length < 10}
+                >
+                  Continuar con Nequi - {formatCurrency(total)}
                 </Button>
               </div>
             </form>

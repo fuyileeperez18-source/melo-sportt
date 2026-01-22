@@ -18,7 +18,8 @@ import {
   DollarSign,
   Calendar,
   Hash,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { orderService } from '@/lib/services';
@@ -513,15 +514,24 @@ export function OrderDetailPage() {
             Si tienes alguna pregunta sobre tu pedido, no dudes en contactarnos.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/account/messages"
+            <button
+              onClick={() => {
+                // Open chat with order context
+                // This assumes useChatStore is available or we navigate to a chat page with order data
+                navigate('/account/messages', {
+                  state: {
+                    orderId: order.id,
+                    orderNumber: order.order_number
+                  }
+                });
+              }}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-full font-medium hover:bg-zinc-200 transition-colors"
             >
-              <Mail className="w-5 h-5" />
-              Enviar Mensaje
-            </Link>
+              <MessageSquare className="w-5 h-5" />
+              Chat sobre este pedido
+            </button>
             <a
-              href="https://wa.me/573001234567"
+              href={`https://wa.me/573001234567?text=Hola,%20tengo%20una%20consulta%20sobre%20mi%20pedido%20%23${order.order_number}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-colors"

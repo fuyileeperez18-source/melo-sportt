@@ -12,7 +12,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  RefreshCw,
+  Smartphone,
+  CreditCard,
   MessageSquare,
   Mail,
   Filter,
@@ -355,16 +356,154 @@ export function AdminOrders() {
             </div>
 
             {/* Customer info */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 className="text-black font-semibold mb-3 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Cliente
+                </h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">Nombre</p>
+                    <p className="font-medium text-black">
+                      {selectedOrder.shipping_address?.firstName} {selectedOrder.shipping_address?.lastName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">Email</p>
+                    <p className="font-medium text-black break-all">{selectedOrder.shipping_address?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">Teléfono de Contacto</p>
+                    <p className="font-medium text-black">{selectedOrder.shipping_address?.phone}</p>
+                  </div>
+                  {/* Display user ID if linked */}
+                  {selectedOrder.user_id && (
+                    <div>
+                      <p className="text-gray-500 text-xs uppercase tracking-wider">ID Usuario</p>
+                      <p className="font-mono text-xs text-gray-700">{selectedOrder.user_id}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 className="text-black font-semibold mb-3 flex items-center gap-2">
+                  <Truck className="w-4 h-4" />
+                  Envío
+                </h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">Dirección</p>
+                    <p className="font-medium text-black">{selectedOrder.shipping_address?.address}</p>
+                    {selectedOrder.shipping_address?.apartment && (
+                      <p className="text-gray-600 text-sm">{selectedOrder.shipping_address?.apartment}</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">Ubicación</p>
+                    <p className="font-medium text-black">
+                      {selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.state}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      {selectedOrder.shipping_address?.postalCode}, {selectedOrder.shipping_address?.country}
+                    </p>
+                  </div>
+                  {selectedOrder.tracking_number && (
+                    <div className="pt-2 border-t border-gray-200 mt-2">
+                      <p className="text-gray-500 text-xs uppercase tracking-wider">Guía de Rastreo</p>
+                      <p className="font-medium text-blue-600">{selectedOrder.tracking_number}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Details */}
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h3 className="text-black font-semibold mb-3">Cliente</h3>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-black font-medium">
-                  {selectedOrder.user_id?.charAt(0).toUpperCase() || 'U'}
+              <h3 className="text-black font-semibold mb-3 flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Detalles del Pago
+              </h3>
+              <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-gray-500 text-xs uppercase tracking-wider">Método</p>
+                  <div className="flex flex-col">
+                    <p className="font-medium text-black capitalize">
+                      {selectedOrder.payment_method?.replace(/_/g, ' ') || 'No especificado'}
+                    </p>
+                    {/* Check if payment method is Nequi based on string or custom logic if available */}
+                    {(selectedOrder.payment_method?.toLowerCase().includes('nequi') ||
+                      // Fallback: check raw data if stored in custom fields, for now rely on payment_method string
+                      false) && (
+                      <span className="text-xs text-purple-600 font-medium flex items-center gap-1">
+                        <Smartphone className="w-3 h-3" />
+                        Nequi
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div>
-                  <p className="text-black font-medium">{selectedOrder.user_id}</p>
-                  <p className="text-gray-600 text-sm">ID: {selectedOrder.user_id}</p>
+                  <p className="text-gray-500 text-xs uppercase tracking-wider">Estado</p>
+                  <span className={cn(
+                    'font-medium',
+                    paymentConfig[selectedOrder.payment_status as keyof typeof paymentConfig]?.color
+                  )}>
+                    {paymentConfig[selectedOrder.payment_status as keyof typeof paymentConfig]?.label}
+                  </span>
                 </div>
+                <div>
+                  <p className="text-gray-500 text-xs uppercase tracking-wider">ID Transacción</p>
+                  <p className="font-mono text-sm text-gray-700 break-all">
+                    {selectedOrder.payment_id || selectedOrder.mp_preference_id || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs uppercase tracking-wider">Total</p>
+                  <p className="font-bold text-black">{formatCurrency(selectedOrder.total)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Items */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                <h3 className="text-black font-semibold flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Productos ({selectedOrder.items.length})
+                </h3>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {selectedOrder.items.map((item) => (
+                  <div key={item.id} className="p-4 flex gap-4 items-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 border border-gray-200">
+                      <img
+                        src={item.product?.images?.[0]?.url || 'https://via.placeholder.com/64'}
+                        alt={item.product?.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-black truncate">{item.product?.name}</p>
+                      {item.variant && (
+                        <p className="text-sm text-gray-500">
+                          {item.variant.options?.map(opt => `${opt.name}: ${opt.value}`).join(' | ')}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400 font-mono mt-1">
+                        SKU: {item.variant?.sku || item.product?.sku}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-black">
+                        {formatCurrency(item.price)} x {item.quantity}
+                      </p>
+                      <p className="font-bold text-black">
+                        {formatCurrency(item.total)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

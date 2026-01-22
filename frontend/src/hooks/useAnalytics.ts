@@ -22,6 +22,17 @@ export interface AnalyticsDashboardData {
     quantity: number;
     products: number;
   }>;
+  traffic: {
+    totalViews: number;
+    totalVisitors: number;
+    conversionRate: number;
+  };
+  trafficSources: Array<{
+    source: string;
+    visits: number;
+    orders: number;
+    revenue: number;
+  }>;
   generalStats: {
     totalSales: number;
     totalOrders: number;
@@ -45,6 +56,18 @@ export interface AnalyticsChartData {
     category: string;
     sales: number;
     quantity: number;
+  }>;
+  trafficData: Array<{
+    date: string;
+    views: number;
+    uniqueVisitors: number;
+    conversionRate: number;
+  }>;
+  trafficSources: Array<{
+    source: string;
+    visits: number;
+    orders: number;
+    revenue: number;
   }>;
 }
 
