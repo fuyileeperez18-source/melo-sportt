@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS analytics_sales_by_month (
 -- Crear tabla de analítica de productos
 CREATE TABLE IF NOT EXISTS analytics_product_performance (
   id SERIAL PRIMARY KEY,
-  product_id INTEGER NOT NULL REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
   year INTEGER NOT NULL,
   month INTEGER NOT NULL,
   total_sales DECIMAL(10, 2) NOT NULL DEFAULT 0,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS analytics_user_stats (
 -- Crear tabla de analítica de categorías
 CREATE TABLE IF NOT EXISTS analytics_category_performance (
   id SERIAL PRIMARY KEY,
-  category_id INTEGER NOT NULL REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  category_id UUID NOT NULL REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE,
   year INTEGER NOT NULL,
   month INTEGER NOT NULL,
   total_sales DECIMAL(10, 2) NOT NULL DEFAULT 0,
