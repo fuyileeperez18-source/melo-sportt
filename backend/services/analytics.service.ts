@@ -8,22 +8,25 @@ export const analyticsService = {
     const colombiaOffset = 5 * 60 * 60 * 1000;
     const todayDate = new Date(now.getTime() - colombiaOffset);
     const today = todayDate.toISOString().split('T')[0];
-    
+
     const yesterdayDate = new Date(todayDate.getTime() - 86400000);
     const yesterday = yesterdayDate.toISOString().split('T')[0];
+
+    const tomorrowDate = new Date(todayDate.getTime() + 86400000);
+    const tomorrow = tomorrowDate.toISOString().split('T')[0];
 
     // Get today's PAID orders and revenue (only count confirmed sales)
     const todayResult = await query(
       `SELECT COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue
-       FROM orders WHERE created_at >= $1 AND payment_status = 'paid'`,
+       FROM orders WHERE CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) = $1 AND payment_status = 'paid'`,
       [today]
     );
 
     // Get yesterday's PAID orders and revenue
     const yesterdayResult = await query(
       `SELECT COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue
-       FROM orders WHERE created_at >= $1 AND created_at < $2 AND payment_status = 'paid'`,
-      [yesterday, today]
+       FROM orders WHERE CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) = $1 AND payment_status = 'paid'`,
+      [yesterday]
     );
 
     // Get pending orders
@@ -38,7 +41,7 @@ export const analyticsService = {
 
     // Get new customers today
     const newCustomersResult = await query(
-      `SELECT COUNT(*) as count FROM users WHERE created_at >= $1`,
+      `SELECT COUNT(*) as count FROM users WHERE CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) = $1`,
       [today]
     );
 
@@ -75,10 +78,10 @@ export const analyticsService = {
 
   async getRevenueByPeriod(startDate: string, endDate: string) {
     const result = await query(
-      `SELECT DATE(created_at) as date, SUM(total) as revenue
+      `SELECT DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') as date, SUM(total) as revenue
        FROM orders
-       WHERE created_at >= $1 AND created_at <= $2 AND payment_status = 'paid'
-       GROUP BY DATE(created_at)
+       WHERE DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') >= $1 AND DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') <= $2 AND payment_status = 'paid'
+       GROUP BY DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')
        ORDER BY date`,
       [startDate, endDate]
     );
@@ -93,7 +96,9 @@ export const analyticsService = {
     const result = await query(
       `SELECT p.id, p.name, p.price, SUM(oi.quantity) as total_sold,
         COALESCE(SUM(oi.total), 0) as total_revenue,
-        (SELECT json_agg(pi) FROM product_images pi WHERE pi.product_id = p.id LIMIT 1) as images
+        COALESCE(
+          (SELECT json_agg(pi) FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = true LIMIT 1), '[]'
+        ) as images
        FROM order_items oi
        JOIN products p ON oi.product_id = p.id
        JOIN orders o ON oi.order_id = o.id
@@ -120,14 +125,15 @@ export const analyticsService = {
 
   async getSalesOverview(days = 30) {
     const result = await query(
-      `SELECT DATE(created_at) as date,
+      `SELECT DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') as date,
         COUNT(*) as orders,
         SUM(total) as revenue
        FROM orders
-       WHERE created_at >= NOW() - INTERVAL '${days} days'
+       WHERE created_at >= (NOW() AT TIME ZONE 'UTC' - ($1 * INTERVAL '1 day'))
          AND payment_status = 'paid'
-       GROUP BY DATE(created_at)
-       ORDER BY date`
+       GROUP BY DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota')
+       ORDER BY date`,
+      [days]
     );
 
     return result.rows;
@@ -144,23 +150,15 @@ export const analyticsService = {
         p.sku,
         p.is_active,
         p.is_featured,
-        (SELECT json_agg(pi) FROM product_images pi WHERE pi.product_id = p.id LIMIT 1) as images,
         COALESCE(
-          (SELECT SUM(oi.quantity) FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
-        ) as total_sold,
-        COALESCE(
-          (SELECT COUNT(*) FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
-        ) as order_count,
-        COALESCE(
-          (SELECT SUM(oi.total) FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
-        ) as total_revenue
+          (SELECT json_agg(pi) FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = true LIMIT 1), '[]'
+        ) as images,
+        COALESCE(SUM(oi.quantity), 0) as total_sold,
+        COALESCE(COUNT(DISTINCT oi.order_id), 0) as order_count,
+        COALESCE(SUM(oi.total), 0) as total_revenue
        FROM products p
+       LEFT JOIN order_items oi ON oi.product_id = p.id
+       LEFT JOIN orders o ON oi.order_id = o.id AND o.payment_status = 'paid'
        WHERE p.id = $1
        GROUP BY p.id`,
       [productId]
@@ -184,22 +182,13 @@ export const analyticsService = {
         COALESCE(
           (SELECT json_agg(pi) FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = true LIMIT 1), '[]'
         ) as images,
-        COALESCE(
-          (SELECT SUM(oi.quantity) FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
-        ) as total_sold,
-        COALESCE(
-          (SELECT COUNT(*) FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
-        ) as order_count,
-        COALESCE(
-          (SELECT SUM(oi.total) FROM order_items oi
-           JOIN orders o ON oi.order_id = o.id
-           WHERE oi.product_id = p.id AND o.payment_status = 'paid'), 0
-        ) as total_revenue
+        COALESCE(SUM(oi.quantity), 0) as total_sold,
+        COALESCE(COUNT(DISTINCT oi.order_id), 0) as order_count,
+        COALESCE(SUM(oi.total), 0) as total_revenue
        FROM products p
+       LEFT JOIN order_items oi ON oi.product_id = p.id
+       LEFT JOIN orders o ON oi.order_id = o.id AND o.payment_status = 'paid'
+       GROUP BY p.id
        ORDER BY p.created_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset]

@@ -4,10 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { query } from '../config/database.js';
 import { env } from '../config/env.js';
 import { AppError } from '../middleware/errorHandler.js';
-import type { User, JwtPayload } from '../types/index.js';
+import type { User, JwtPayload, PublicUser } from '../types/index.js';
 
 export const authService = {
-  async signUp(email: string, password: string, fullName: string): Promise<{ user: User; token: string }> {
+  async signUp(email: string, password: string, fullName: string): Promise<{ user: PublicUser; token: string }> {
     // Check if user exists
     const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
@@ -26,13 +26,13 @@ export const authService = {
       [userId, email, fullName, hashedPassword]
     );
 
-    const user = result.rows[0] as User;
-    const token = this.generateToken(user);
+    const user = result.rows[0] as PublicUser;
+    const token = this.generateToken({ ...user, id: userId, role: 'customer' });
 
     return { user, token };
   },
 
-  async signIn(email: string, password: string): Promise<{ user: User; token: string }> {
+  async signIn(email: string, password: string): Promise<{ user: PublicUser; token: string }> {
     console.log('🔐 [authService.signIn] Attempting login for:', email);
 
     // Get user with password
@@ -60,14 +60,14 @@ export const authService = {
 
     // Remove password hash from user object
     const { password_hash: _, ...user } = userRow;
-    const token = this.generateToken(user as User);
+    const token = this.generateToken(user as PublicUser);
 
     console.log('✅ [authService.signIn] Token generated for:', email);
 
-    return { user: user as User, token };
+    return { user: user as PublicUser, token };
   },
 
-  generateToken(user: User): string {
+  generateToken(user: PublicUser): string {
     const payload: JwtPayload = {
       userId: user.id,
       email: user.email,

@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { query } from '../config/database.js';
 import { AppError } from '../middleware/errorHandler.js';
-import type { User, Address, TeamMember, Commission, CommissionSummary, UserNotification } from '../types/index.js';
+import type { User, Address, TeamMember, Commission, CommissionSummary, UserNotification, PublicUser } from '../types/index.js';
 
 interface UserFilters {
   role?: string;
@@ -20,7 +20,7 @@ const USER_SELECT_FIELDS = `
 `;
 
 export const userService = {
-  async getProfile(userId: string): Promise<User & { addresses: Address[]; team_member?: TeamMember }> {
+  async getProfile(userId: string): Promise<PublicUser & { addresses: Address[]; team_member?: TeamMember }> {
     const result = await query(
       `SELECT ${USER_SELECT_FIELDS},
         COALESCE(
@@ -39,10 +39,10 @@ export const userService = {
     // Update last_login
     await query('UPDATE users SET last_login = NOW() WHERE id = $1', [userId]);
 
-    return result.rows[0] as User & { addresses: Address[]; team_member?: TeamMember };
+    return result.rows[0] as PublicUser & { addresses: Address[]; team_member?: TeamMember };
   },
 
-  async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
+  async updateProfile(userId: string, updates: Partial<User>): Promise<PublicUser> {
     const allowedFields = [
       'full_name', 'phone', 'avatar_url', 'bio', 'birth_date',
       'document_type', 'document_number', 'preferred_size',
@@ -81,10 +81,10 @@ export const userService = {
       throw new AppError('User not found', 404);
     }
 
-    return result.rows[0] as User;
+    return result.rows[0] as PublicUser;
   },
 
-  async updateUserRole(userId: string, role: string): Promise<User> {
+  async updateUserRole(userId: string, role: string): Promise<PublicUser> {
     const result = await query(
       `UPDATE users SET role = $1, updated_at = NOW()
        WHERE id = $2
@@ -96,10 +96,10 @@ export const userService = {
       throw new AppError('User not found', 404);
     }
 
-    return result.rows[0] as User;
+    return result.rows[0] as PublicUser;
   },
 
-  async getAll(filters?: UserFilters): Promise<{ data: User[]; count: number }> {
+  async getAll(filters?: UserFilters): Promise<{ data: PublicUser[]; count: number }> {
     let sql = `
       SELECT id, email, full_name, phone, avatar_url, role, created_at, updated_at
       FROM users
@@ -143,7 +143,7 @@ export const userService = {
     }
 
     const result = await query(sql, params);
-    return { data: result.rows as User[], count };
+    return { data: result.rows as PublicUser[], count };
   },
 
   // Address management
@@ -219,7 +219,14 @@ export const userService = {
 
   async getTeamMember(userId: string): Promise<TeamMember | null> {
     const result = await query(
-      `SELECT tm.*, row_to_json(u) as user
+      `SELECT tm.*,
+        json_build_object(
+          'id', u.id,
+          'email', u.email,
+          'full_name', u.full_name,
+          'avatar_url', u.avatar_url,
+          'role', u.role
+        ) as user
        FROM team_members tm
        JOIN users u ON u.id = tm.user_id
        WHERE tm.user_id = $1`,
@@ -230,7 +237,14 @@ export const userService = {
 
   async getAllTeamMembers(): Promise<TeamMember[]> {
     const result = await query(
-      `SELECT tm.*, row_to_json(u) as user
+      `SELECT tm.*,
+        json_build_object(
+          'id', u.id,
+          'email', u.email,
+          'full_name', u.full_name,
+          'avatar_url', u.avatar_url,
+          'role', u.role
+        ) as user
        FROM team_members tm
        JOIN users u ON u.id = tm.user_id
        ORDER BY tm.joined_at ASC`
@@ -488,7 +502,7 @@ export const userService = {
 
   // ==================== ADMIN MANAGEMENT ====================
 
-  async getAllAdmins(): Promise<User[]> {
+  async getAllAdmins(): Promise<PublicUser[]> {
     const result = await query(
       `SELECT id, email, full_name, phone, avatar_url, role, created_at, updated_at
        FROM users
@@ -500,10 +514,10 @@ export const userService = {
          END,
          created_at ASC`
     );
-    return result.rows as User[];
+    return result.rows as PublicUser[];
   },
 
-  async createAdmin(data: { email: string; password: string; full_name: string }): Promise<User> {
+  async createAdmin(data: { email: string; password: string; full_name: string }): Promise<PublicUser> {
     // Check if user already exists
     const existingUser = await query('SELECT id FROM users WHERE email = $1', [data.email]);
     if (existingUser.rows.length > 0) {
@@ -520,10 +534,10 @@ export const userService = {
       [userId, data.email, data.full_name, hashedPassword]
     );
 
-    return result.rows[0] as User;
+    return result.rows[0] as PublicUser;
   },
 
-  async updateAdmin(adminId: string, updates: { full_name?: string; email?: string; password?: string }): Promise<User> {
+  async updateAdmin(adminId: string, updates: { full_name?: string; email?: string; password?: string }): Promise<PublicUser> {
     const fields: string[] = [];
     const values: unknown[] = [];
     let paramIndex = 1;
@@ -569,7 +583,7 @@ export const userService = {
       throw new AppError('Admin not found or cannot be updated', 404);
     }
 
-    return result.rows[0] as User;
+    return result.rows[0] as PublicUser;
   },
 
   async deleteAdmin(adminId: string): Promise<void> {

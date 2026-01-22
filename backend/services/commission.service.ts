@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import type { Commission, TeamMember, CommissionSummary, CommissionPayment, User } from '../types/index.js';
+import type { Commission, TeamMember, CommissionSummary, CommissionPayment, PublicUser } from '../types/index.js';
 
 /**
  * Servicio de comisiones actualizado para trabajar con las tablas team_members y commissions
@@ -38,7 +38,7 @@ export const commissionService = {
         is_active: row.is_active,
         created_at: row.user_created_at,
         updated_at: row.user_updated_at,
-      } as User,
+      } as PublicUser,
       position: row.position,
       commission_percentage: parseFloat(row.commission_percentage),
       can_manage_products: row.can_manage_products,
@@ -88,7 +88,7 @@ export const commissionService = {
         is_active: row.is_active,
         created_at: row.user_created_at,
         updated_at: row.user_updated_at,
-      } as User,
+      } as PublicUser,
       position: row.position,
       commission_percentage: parseFloat(row.commission_percentage),
       can_manage_products: row.can_manage_products,
@@ -228,7 +228,7 @@ export const commissionService = {
           is_active: true,
           created_at: row.created_at,
           updated_at: row.updated_at,
-        } as User,
+        } as PublicUser,
         position: row.position,
         commission_percentage: parseFloat(row.team_commission_percentage),
         can_manage_products: row.can_manage_products,

@@ -54,7 +54,12 @@ router.post('/signin', async (req: Request, res: Response, next: NextFunction) =
 router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     console.log('👤 [AUTH] GET /me - Request received for user:', req.user?.id);
-    res.json({ success: true, data: { user: req.user } });
+    if (req.user) {
+      const { password_hash, ...publicUser } = req.user;
+      res.json({ success: true, data: { user: publicUser } });
+    } else {
+      res.status(401).json({ success: false, error: 'User not authenticated' });
+    }
   } catch (error) {
     console.error('❌ [AUTH] GET /me - Error:', error);
     next(error);

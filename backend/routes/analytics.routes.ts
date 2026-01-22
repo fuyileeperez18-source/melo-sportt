@@ -12,7 +12,7 @@ const router = Router();
 // Get dashboard metrics (using real data)
 router.get('/dashboard', authenticate, requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const metrics = await analyticsServiceReal.getDashboardData();
+    const metrics = await analyticsService.getDashboardMetrics();
     res.json({ success: true, data: metrics });
   } catch (error) {
     next(error);

@@ -8,6 +8,7 @@ export type DocumentType = 'cc' | 'ce' | 'passport' | 'nit';
 export interface User {
   id: string;
   email: string;
+  password_hash: string;
   full_name: string;
   phone?: string;
   avatar_url?: string;
@@ -37,11 +38,13 @@ export interface UserPreferences {
   currency?: string;
 }
 
+export type PublicUser = Omit<User, 'password_hash'>;
+
 // Team member (for store staff like owner, developer, etc.)
 export interface TeamMember {
   id: string;
   user_id: string;
-  user?: User;
+  user?: PublicUser;
   position: string; // 'owner', 'developer', 'manager', etc
   commission_percentage: number;
   can_manage_products: boolean;
@@ -229,7 +232,7 @@ export interface Order {
   id: string;
   order_number: string;
   user_id: string;
-  user?: User;
+  user?: PublicUser;
   items?: OrderItem[];
   subtotal: number;
   discount: number;
@@ -278,7 +281,7 @@ export interface ChatMessage {
 export interface Conversation {
   id: string;
   user_id?: string;
-  user?: User;
+  user?: PublicUser;
   channel: 'website' | 'whatsapp' | 'instagram';
   status: 'active' | 'resolved' | 'pending';
   assigned_to?: string;
