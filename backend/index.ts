@@ -26,7 +26,7 @@ const allowedOrigins = env.ALLOWED_ORIGINS
   : [env.FRONTEND_URL];
 
 // Add Vercel preview deployments automatically
-const vercelPreviewPattern = /^https:\/\/melo-sportt(-git-[a-z0-9-]+)?\.vercel\.app$/;
+const vercelPreviewPattern = /^https:\/\/melo-sportt(?:-.*)?\.vercel\.app$/;
 
 app.use(cors({
   origin: (origin, callback) => {
