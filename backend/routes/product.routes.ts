@@ -86,7 +86,11 @@ router.get('/admin', authenticate, requireAdmin, async (req: Request, res: Respo
 // Get product by slug
 router.get('/slug/:slug', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const product = await productService.getBySlug(req.params.slug);
+    const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+    if (!slug) {
+        return res.status(400).json({ success: false, error: 'Slug is required' });
+    }
+    const product = await productService.getBySlug(slug);
     res.json({ success: true, data: product });
   } catch (error) {
     next(error);
@@ -96,8 +100,14 @@ router.get('/slug/:slug', async (req: Request, res: Response, next: NextFunction
 // Get related products
 router.get('/:id/related', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { categoryId } = req.query;
-    const products = await productService.getRelated(req.params.id, categoryId as string);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+    const { categoryId: categoryIdQuery } = req.query;
+    const categoryId = Array.isArray(categoryIdQuery) ? categoryIdQuery[0] : categoryIdQuery as string;
+
+    const products = await productService.getRelated(id, categoryId);
     res.json({ success: true, data: products });
   } catch (error) {
     next(error);
@@ -107,7 +117,11 @@ router.get('/:id/related', async (req: Request, res: Response, next: NextFunctio
 // Get product by ID
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const product = await productService.getById(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+    const product = await productService.getById(id);
     res.json({ success: true, data: product });
   } catch (error) {
     next(error);
@@ -167,8 +181,12 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response,
 // Update product (Admin)
 router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
     const data = productSchema.partial().parse(req.body);
-    const product = await productService.update(req.params.id, data);
+    const product = await productService.update(id, data);
     res.json({ success: true, data: product });
   } catch (error) {
     next(error);
@@ -178,7 +196,11 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 // Delete product (Admin)
 router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await productService.delete(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+    await productService.delete(id);
     res.json({ success: true, message: 'Product deleted' });
   } catch (error) {
     next(error);
@@ -188,7 +210,11 @@ router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Resp
 // Add product image
 router.post('/:id/images', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const image = await productService.addImage(req.params.id, req.body);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+    const image = await productService.addImage(id, req.body);
     res.status(201).json({ success: true, data: image });
   } catch (error) {
     next(error);
@@ -198,7 +224,11 @@ router.post('/:id/images', authenticate, requireAdmin, async (req: Request, res:
 // Delete product image
 router.delete('/images/:imageId', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await productService.deleteImage(req.params.imageId);
+    const imageId = Array.isArray(req.params.imageId) ? req.params.imageId[0] : req.params.imageId;
+    if (!imageId) {
+        return res.status(400).json({ success: false, error: 'Image ID is required' });
+    }
+    await productService.deleteImage(imageId);
     res.json({ success: true, message: 'Image deleted' });
   } catch (error) {
     next(error);
@@ -208,7 +238,11 @@ router.delete('/images/:imageId', authenticate, requireAdmin, async (req: Reques
 // Add product variant
 router.post('/:id/variants', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const variant = await productService.addVariant(req.params.id, req.body);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+    const variant = await productService.addVariant(id, req.body);
     res.status(201).json({ success: true, data: variant });
   } catch (error) {
     next(error);
@@ -218,7 +252,11 @@ router.post('/:id/variants', authenticate, requireAdmin, async (req: Request, re
 // Update product variant
 router.put('/variants/:variantId', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const variant = await productService.updateVariant(req.params.variantId, req.body);
+    const variantId = Array.isArray(req.params.variantId) ? req.params.variantId[0] : req.params.variantId;
+    if (!variantId) {
+        return res.status(400).json({ success: false, error: 'Variant ID is required' });
+    }
+    const variant = await productService.updateVariant(variantId, req.body);
     res.json({ success: true, data: variant });
   } catch (error) {
     next(error);
@@ -228,7 +266,11 @@ router.put('/variants/:variantId', authenticate, requireAdmin, async (req: Reque
 // Delete product variant
 router.delete('/variants/:variantId', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await productService.deleteVariant(req.params.variantId);
+    const variantId = Array.isArray(req.params.variantId) ? req.params.variantId[0] : req.params.variantId;
+    if (!variantId) {
+        return res.status(400).json({ success: false, error: 'Variant ID is required' });
+    }
+    await productService.deleteVariant(variantId);
     res.json({ success: true, message: 'Variant deleted' });
   } catch (error) {
     next(error);

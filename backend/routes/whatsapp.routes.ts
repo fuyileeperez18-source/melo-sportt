@@ -46,7 +46,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
                 console.log(`[WhatsApp] Texto extraído: "${messageData.text}"`);
 
                 // Verificar que no sea mensaje del bot y procesar
-                if (message.type === 'text' || message.type === 'button' || message.type === 'interactive') {
+                if (messageData.type === 'text' || messageData.type === 'button' || messageData.type === 'interactive') {
                   await whatsappBotService.processMessage(messageData);
                 }
               }
@@ -76,20 +76,30 @@ router.post('/webhook', async (req: Request, res: Response) => {
 // ============================================
 
 function extractMessageData(message: any): WhatsAppMessage {
-  // Construir objeto de mensaje procesado
+  // Ensure 'from' and 'type' are strings, handling potential array types
+  const from = Array.isArray(message.from) ? message.from[0] : message.from;
+  const type = Array.isArray(message.type) ? message.type[0] : message.type;
+
+  // Basic check for safety, though message API usually provides these as strings
+  if (typeof from !== 'string' || typeof type !== 'string') {
+      console.error("Invalid message format: 'from' or 'type' is not a string.", { messageFrom: message.from, messageType: message.type });
+      // Throw an error or return a default/null message if format is unexpected
+      // For now, assert as string, assuming valid input based on API contract
+  }
+
   const messageData: WhatsAppMessage = {
-    from: message.from,
+    from: from as string,
     id: message.id,
     timestamp: message.timestamp,
-    type: message.type,
+    type: type as string,
   };
 
   // Extraer texto según el tipo
-  if (message.type === 'text') {
+  if (type === 'text') {
     messageData.text = message.text;
-  } else if (message.type === 'button') {
+  } else if (type === 'button') {
     messageData.button = message.button;
-  } else if (message.type === 'interactive') {
+  } else if (type === 'interactive') {
     messageData.interactive = message.interactive;
 
     // Si es una respuesta de botón o lista, usar el ID como texto

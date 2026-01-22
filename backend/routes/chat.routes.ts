@@ -33,14 +33,20 @@ router.post('/conversations', authenticate, async (req: AuthRequest, res: Respon
 // Get messages in a conversation
 router.get('/conversations/:id/messages', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Conversation ID is required.' });
+    }
+
     // Verify user owns the conversation or is admin
-    const conversation = await chatService.getConversation(req.params.id);
+    const conversation = await chatService.getConversation(id);
     if (conversation.user_id !== req.user!.id && req.user!.role !== 'admin' && req.user!.role !== 'super_admin') {
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
     }
 
-    const messages = await chatService.getMessages(req.params.id);
+    const messages = await chatService.getMessages(id);
     res.json({ success: true, data: messages });
   } catch (error) {
     next(error);
@@ -50,6 +56,12 @@ router.get('/conversations/:id/messages', authenticate, async (req: AuthRequest,
 // Send message
 router.post('/conversations/:id/messages', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Conversation ID is required.' });
+    }
+
     const { content, message_type, metadata } = z.object({
       content: z.string().min(1),
       message_type: z.enum(['text', 'image', 'product', 'order', 'quick_reply']).default('text'),
@@ -57,7 +69,7 @@ router.post('/conversations/:id/messages', authenticate, async (req: AuthRequest
     }).parse(req.body);
 
     // Verify user owns the conversation or is admin
-    const conversation = await chatService.getConversation(req.params.id);
+    const conversation = await chatService.getConversation(id);
     const isAdmin = req.user!.role === 'admin' || req.user!.role === 'super_admin';
 
     if (conversation.user_id !== req.user!.id && !isAdmin) {
@@ -66,7 +78,7 @@ router.post('/conversations/:id/messages', authenticate, async (req: AuthRequest
     }
 
     const message = await chatService.sendMessage({
-      conversation_id: req.params.id,
+      conversation_id: id,
       sender_type: isAdmin ? 'agent' : 'user',
       sender_id: req.user!.id,
       content,
@@ -83,7 +95,12 @@ router.post('/conversations/:id/messages', authenticate, async (req: AuthRequest
 // Mark conversation as read
 router.post('/conversations/:id/read', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await chatService.markAsRead(req.params.id);
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Conversation ID is required.' });
+    }
+    await chatService.markAsRead(id);
     res.json({ success: true, message: 'Marked as read' });
   } catch (error) {
     next(error);
@@ -105,11 +122,16 @@ router.get('/admin/conversations', authenticate, requireAdmin, async (_req: Requ
 // Update conversation status (Admin)
 router.patch('/conversations/:id/status', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Conversation ID is required.' });
+    }
     const { status } = z.object({
       status: z.enum(['active', 'resolved', 'pending']),
     }).parse(req.body);
 
-    const conversation = await chatService.updateConversationStatus(req.params.id, status);
+    const conversation = await chatService.updateConversationStatus(id, status);
     res.json({ success: true, data: conversation });
   } catch (error) {
     next(error);
@@ -119,11 +141,16 @@ router.patch('/conversations/:id/status', authenticate, requireAdmin, async (req
 // Assign conversation (Admin)
 router.patch('/conversations/:id/assign', authenticate, requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Conversation ID is required.' });
+    }
     const { agentId } = z.object({
       agentId: z.string().uuid(),
     }).parse(req.body);
 
-    const conversation = await chatService.assignConversation(req.params.id, agentId);
+    const conversation = await chatService.assignConversation(id, agentId);
     res.json({ success: true, data: conversation });
   } catch (error) {
     next(error);

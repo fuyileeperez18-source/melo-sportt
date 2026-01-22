@@ -76,7 +76,17 @@ router.put(
   requireAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const { id: idFromParams } = req.params;
+      const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: 'ID de comisión es requerido',
+        });
+        return;
+      }
+
       const { status } = req.body;
 
       if (!status || !['pending', 'approved', 'paid', 'cancelled'].includes(status)) {
@@ -165,7 +175,17 @@ router.put(
   requireSuperAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const { id: idFromParams } = req.params;
+      const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: 'ID de miembro de equipo es requerido',
+        });
+        return;
+      }
+      
       const teamMember = await commissionService.updateTeamMember(id, req.body);
 
       res.json({

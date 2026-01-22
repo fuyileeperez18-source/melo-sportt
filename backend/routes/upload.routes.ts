@@ -51,8 +51,10 @@ router.post(
         return;
       }
 
-      const folder = (req.body.folder as string) || 'melo-sportt/products';
-      const result = await uploadService.uploadImage(req.file, folder);
+      const folder = Array.isArray(req.body.folder) ? req.body.folder[0] : req.body.folder;
+      const targetFolder = folder || 'melo-sportt/products';
+
+      const result = await uploadService.uploadImage(req.file, targetFolder);
 
       res.json({
         success: true,
@@ -89,8 +91,10 @@ router.post(
         return;
       }
 
-      const folder = (req.body.folder as string) || 'melo-sportt/products';
-      const results = await uploadService.uploadMultipleImages(files, folder);
+      const folder = Array.isArray(req.body.folder) ? req.body.folder[0] : req.body.folder;
+      const targetFolder = folder || 'melo-sportt/products';
+
+      const results = await uploadService.uploadMultipleImages(files, targetFolder);
 
       res.json({
         success: true,
@@ -116,7 +120,10 @@ router.delete(
   requireAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { publicId } = req.params;
+      const publicId = Array.isArray(req.params.publicId) ? req.params.publicId[0] : req.params.publicId;
+      if (!publicId) {
+        return res.status(400).json({ success: false, error: 'Public ID is required' });
+      }
       await uploadService.deleteImage(publicId);
 
       res.json({
@@ -144,7 +151,10 @@ router.post(
   upload.single('image'),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { productId } = req.params;
+      const productId = Array.isArray(req.params.productId) ? req.params.productId[0] : req.params.productId;
+      if (!productId) {
+          return res.status(400).json({ success: false, error: 'Product ID is required' });
+      }
 
       if (!req.file) {
         res.status(400).json({
@@ -200,7 +210,10 @@ router.post(
   upload.array('images', 10),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { productId } = req.params;
+      const productId = Array.isArray(req.params.productId) ? req.params.productId[0] : req.params.productId;
+      if (!productId) {
+          return res.status(400).json({ success: false, error: 'Product ID is required' });
+      }
       const files = req.files as Express.Multer.File[];
 
       if (!files || files.length === 0) {

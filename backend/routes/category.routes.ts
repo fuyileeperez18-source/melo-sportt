@@ -21,7 +21,12 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
 // Get category by slug
 router.get('/slug/:slug', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const category = await categoryService.getBySlug(req.params.slug);
+    const { slug: slugFromParams } = req.params;
+    const slug = Array.isArray(slugFromParams) ? slugFromParams[0] : slugFromParams;
+    if (!slug) {
+        return res.status(400).json({ success: false, error: 'Slug is required.' });
+    }
+    const category = await categoryService.getBySlug(slug);
     res.json({ success: true, data: category });
   } catch (error) {
     next(error);
@@ -54,8 +59,13 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response,
 // Update category (Admin)
 router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Category ID is required.' });
+    }
     const data = categorySchema.partial().parse(req.body);
-    const category = await categoryService.update(req.params.id, data);
+    const category = await categoryService.update(id, data);
     res.json({ success: true, data: category });
   } catch (error) {
     next(error);
@@ -65,7 +75,12 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 // Delete category (Admin)
 router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await categoryService.delete(req.params.id);
+    const { id: idFromParams } = req.params;
+    const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Category ID is required.' });
+    }
+    await categoryService.delete(id);
     res.json({ success: true, message: 'Category deleted' });
   } catch (error) {
     next(error);

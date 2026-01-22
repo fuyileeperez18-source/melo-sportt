@@ -571,7 +571,8 @@ export const wompiSecurityController = {
    */
   async getTransaction(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const { id: idFromParams } = req.params;
+      const id = Array.isArray(idFromParams) ? idFromParams[0] : idFromParams;
 
       if (!id) {
         throw new AppError('Transaction ID is required', 400);

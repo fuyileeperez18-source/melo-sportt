@@ -6,6 +6,11 @@ import type { AuthRequest } from '../types/index.js';
 
 const router = Router();
 
+const getStringParam = (param: string | string[] | undefined): string | undefined => {
+    if (Array.isArray(param)) return param[0];
+    return param as string | undefined;
+}
+
 // Profile update schema with all new fields
 const profileUpdateSchema = z.object({
   full_name: z.string().min(2).optional(),
@@ -105,8 +110,10 @@ router.post('/addresses', authenticate, async (req: AuthRequest, res: Response, 
 // Update address
 router.put('/addresses/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Address ID is required' });
     const data = addressSchema.partial().parse(req.body);
-    const address = await userService.updateAddress(req.params.id, req.user!.id, data);
+    const address = await userService.updateAddress(id, req.user!.id, data);
     res.json({ success: true, data: address });
   } catch (error) {
     next(error);
@@ -116,7 +123,9 @@ router.put('/addresses/:id', authenticate, async (req: AuthRequest, res: Respons
 // Delete address
 router.delete('/addresses/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await userService.deleteAddress(req.params.id, req.user!.id);
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Address ID is required' });
+    await userService.deleteAddress(id, req.user!.id);
     res.json({ success: true, message: 'Address deleted' });
   } catch (error) {
     next(error);
@@ -129,8 +138,8 @@ router.delete('/addresses/:id', authenticate, async (req: AuthRequest, res: Resp
 router.get('/', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filters = {
-      role: req.query.role as string,
-      search: req.query.search as string,
+      role: getStringParam(req.query.role),
+      search: getStringParam(req.query.search),
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
       offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
     };
@@ -144,7 +153,9 @@ router.get('/', authenticate, requireAdmin, async (req: Request, res: Response, 
 // Get user by ID (Admin)
 router.get('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const profile = await userService.getProfile(req.params.id);
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'User ID is required' });
+    const profile = await userService.getProfile(id);
     res.json({ success: true, data: profile });
   } catch (error) {
     next(error);
@@ -154,11 +165,14 @@ router.get('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 // Update user role (Super Admin only)
 router.put('/:id/role', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { role } = z.object({
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'User ID is required' });
+
+    const data = z.object({
       role: z.enum(['customer', 'admin', 'super_admin']),
     }).parse(req.body);
 
-    const updatedUser = await userService.updateUserRole(req.params.id, role);
+    const updatedUser = await userService.updateUserRole(id, data.role);
     res.json({ success: true, data: updatedUser });
   } catch (error) {
     next(error);
@@ -213,6 +227,9 @@ router.post('/team', authenticate, requireSuperAdmin, async (req: AuthRequest, r
 // Update team member (Super Admin only)
 router.put('/team/:userId', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const userId = getStringParam(req.params.userId);
+    if (!userId) return res.status(400).json({ success: false, error: 'User ID is required' });
+
     const data = z.object({
       position: z.string().min(1).optional(),
       commission_percentage: z.number().min(0).max(100).optional(),
@@ -225,7 +242,7 @@ router.put('/team/:userId', authenticate, requireSuperAdmin, async (req: Request
       notes: z.string().optional(),
     }).parse(req.body);
 
-    const teamMember = await userService.updateTeamMember(req.params.userId, data);
+    const teamMember = await userService.updateTeamMember(userId, data);
     res.json({ success: true, data: teamMember });
   } catch (error) {
     next(error);
@@ -243,7 +260,7 @@ router.get('/commissions/me', authenticate, async (req: AuthRequest, res: Respon
     }
 
     const filters = {
-      status: req.query.status as string,
+      status: getStringParam(req.query.status),
       limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
       offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
     };
@@ -273,11 +290,14 @@ router.get('/commissions/summary', authenticate, async (req: AuthRequest, res: R
 // Update commission status (Super Admin only - owner pays commissions)
 router.put('/commissions/:id/status', authenticate, requireSuperAdmin, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Commission ID is required' });
+
     const { status } = z.object({
       status: z.enum(['pending', 'approved', 'paid', 'cancelled']),
     }).parse(req.body);
 
-    const commission = await userService.updateCommissionStatus(req.params.id, status, req.user!.id);
+    const commission = await userService.updateCommissionStatus(id, status, req.user!.id);
     res.json({ success: true, data: commission });
   } catch (error) {
     next(error);
@@ -301,7 +321,9 @@ router.get('/notifications', authenticate, async (req: AuthRequest, res: Respons
 // Mark notification as read
 router.put('/notifications/:id/read', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await userService.markNotificationAsRead(req.params.id, req.user!.id);
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Notification ID is required' });
+    await userService.markNotificationAsRead(id, req.user!.id);
     res.json({ success: true });
   } catch (error) {
     next(error);
@@ -333,9 +355,15 @@ router.get('/dashboard/owner', authenticate, requireSuperAdmin, async (_req: Req
 // ==================== ADMIN MANAGEMENT (SUPER ADMIN ONLY) ====================
 
 // Get all admins
-router.get('/admins', authenticate, requireSuperAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/admins', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const admins = await userService.getAllAdmins();
+    const filters = {
+      role: getStringParam(req.query.role),
+      search: getStringParam(req.query.search),
+      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+    };
+    const admins = await userService.getAllAdmins(filters);
     res.json({ success: true, data: admins });
   } catch (error) {
     next(error);
@@ -361,13 +389,16 @@ router.post('/admins', authenticate, requireSuperAdmin, async (req: Request, res
 // Update an admin
 router.put('/admins/:id', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Admin ID is required' });
+
     const data = z.object({
       email: z.string().email().optional(),
       password: z.string().min(8).optional(),
       full_name: z.string().min(2).optional(),
     }).parse(req.body);
 
-    const admin = await userService.updateAdmin(req.params.id, data);
+    const admin = await userService.updateAdmin(id, data);
     res.json({ success: true, data: admin });
   } catch (error) {
     next(error);
@@ -377,7 +408,9 @@ router.put('/admins/:id', authenticate, requireSuperAdmin, async (req: Request, 
 // Delete an admin
 router.delete('/admins/:id', authenticate, requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await userService.deleteAdmin(req.params.id);
+    const id = getStringParam(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Admin ID is required' });
+    await userService.deleteAdmin(id);
     res.json({ success: true, message: 'Admin deleted successfully' });
   } catch (error) {
     next(error);

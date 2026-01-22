@@ -494,7 +494,11 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
 // Get Wompi transaction status
 router.get('/wompi/transaction/:transactionId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const transaction = await wompiService.getTransaction(req.params.transactionId);
+    const transactionId = Array.isArray(req.params.transactionId) ? req.params.transactionId[0] : req.params.transactionId;
+    if (!transactionId) {
+        return res.status(400).json({ success: false, error: 'Transaction ID is required' });
+    }
+    const transaction = await wompiService.getTransaction(transactionId);
     res.json({ success: true, data: transaction });
   } catch (error) {
     next(error);
@@ -664,7 +668,11 @@ router.post('/wompi/simulate-payment', authenticate, async (req: AuthRequest, re
 // Get order by ID
 router.get('/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const order = await orderService.getById(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Order ID is required' });
+    }
+    const order = await orderService.getById(id);
 
     // Check if user owns the order or is admin
     if (order.user_id !== req.user!.id && req.user!.role !== 'admin' && req.user!.role !== 'super_admin') {
@@ -700,11 +708,15 @@ router.get('/', authenticate, requireAdmin, async (req: Request, res: Response, 
 // Update order status (Admin)
 router.patch('/:id/status', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Order ID is required' });
+    }
     const { status } = z.object({
       status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']),
     }).parse(req.body);
 
-    const order = await orderService.updateStatus(req.params.id, status as OrderStatus);
+    const order = await orderService.updateStatus(id, status as OrderStatus);
     res.json({ success: true, data: order });
   } catch (error) {
     next(error);
@@ -714,12 +726,16 @@ router.patch('/:id/status', authenticate, requireAdmin, async (req: Request, res
 // Update order tracking (Admin)
 router.patch('/:id/tracking', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Order ID is required' });
+    }
     const { trackingNumber, trackingUrl } = z.object({
       trackingNumber: z.string().min(1),
       trackingUrl: z.string().url().optional(),
     }).parse(req.body);
 
-    const order = await orderService.updateTracking(req.params.id, trackingNumber, trackingUrl);
+    const order = await orderService.updateTracking(id, trackingNumber, trackingUrl);
     res.json({ success: true, data: order });
   } catch (error) {
     next(error);
@@ -729,11 +745,15 @@ router.patch('/:id/tracking', authenticate, requireAdmin, async (req: Request, r
 // Refund order (Admin) - Manual refund process for Wompi payments
 router.post('/:id/refund', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Order ID is required' });
+    }
     const { amount } = z.object({
       amount: z.number().positive().optional(),
     }).parse(req.body);
 
-    const order = await orderService.getById(req.params.id);
+    const order = await orderService.getById(id);
 
     if (!order.payment_id) {
       res.status(400).json({ success: false, error: 'No payment to refund' });
@@ -742,14 +762,14 @@ router.post('/:id/refund', authenticate, requireAdmin, async (req: Request, res:
 
     // Update order status for manual refund process
     // Note: Wompi refunds must be processed manually through the Wompi dashboard
-    await orderService.updatePaymentStatus(req.params.id, amount ? 'partially_refunded' : 'refunded');
-    await orderService.updateStatus(req.params.id, 'refunded');
+    await orderService.updatePaymentStatus(id, amount ? 'partially_refunded' : 'refunded');
+    await orderService.updateStatus(id, 'refunded');
 
     res.json({
       success: true,
       data: {
         message: 'Order marked as refunded. Please process the refund manually through Wompi dashboard.',
-        order_id: req.params.id,
+        order_id: id,
         payment_id: order.payment_id
       }
     });
@@ -761,7 +781,11 @@ router.post('/:id/refund', authenticate, requireAdmin, async (req: Request, res:
 // Confirm cash on delivery payment (Admin)
 router.post('/:id/confirm-cash-payment', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const order = await orderService.confirmCashOnDelivery(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+        return res.status(400).json({ success: false, error: 'Order ID is required' });
+    }
+    const order = await orderService.confirmCashOnDelivery(id);
     res.json({ success: true, data: order });
   } catch (error) {
     next(error);

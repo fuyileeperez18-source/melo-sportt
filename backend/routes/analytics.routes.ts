@@ -69,7 +69,14 @@ router.get('/sales-overview', authenticate, requireAdmin, async (req: Request, r
 // Get product stats for admin
 router.get('/products/:productId/stats', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await analyticsService.getProductStats(req.params.productId);
+    const { productId: productIdFromParams } = req.params;
+    const productId = Array.isArray(productIdFromParams) ? productIdFromParams[0] : productIdFromParams;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+    
+    const data = await analyticsService.getProductStats(productId);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
