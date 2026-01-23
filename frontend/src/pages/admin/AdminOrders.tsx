@@ -472,11 +472,11 @@ export function AdminOrders() {
               <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
                 <h3 className="text-black font-semibold flex items-center gap-2">
                   <Package className="w-4 h-4" />
-                  Productos ({selectedOrder.items.length})
+                  Productos ({selectedOrder.items?.length || 0})
                 </h3>
               </div>
               <div className="divide-y divide-gray-100">
-                {selectedOrder.items.map((item) => (
+                {selectedOrder.items?.map((item) => (
                   <div key={item.id} className="p-4 flex gap-4 items-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 border border-gray-200">
                       <img
