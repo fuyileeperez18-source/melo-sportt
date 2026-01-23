@@ -239,7 +239,7 @@ function App() {
               path="/account/orders/:id"
               element={
                 <ProtectedRoute>
-                  <div className="min-h-screen bg-black py-20 text-center text-white">Order Details</div>
+                  <OrderDetailPage />
                 </ProtectedRoute>
               }
             />

@@ -715,7 +715,9 @@ export const wompiSecurityController = {
       }
 
       // Actualizar orden como pagada y confirmada
-      await orderService.updatePaymentStatus(order.id, 'paid', transaction.id);
+      // Extraer metodo de pago si esta disponible (ej: NEQUI, CARD)
+      const paymentMethod = transaction.payment_method_type;
+      await orderService.updatePaymentStatus(order.id, 'paid', transaction.id, paymentMethod);
       await orderService.updateStatus(order.id, 'confirmed');
 
       // Reducir stock de productos (la orden se creo con reduceStock=false)

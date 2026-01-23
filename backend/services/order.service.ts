@@ -280,10 +280,10 @@ export const orderService = {
     return result.rows[0] as Order;
   },
 
-  async updatePaymentStatus(id: string, paymentStatus: string, paymentId?: string): Promise<Order> {
+  async updatePaymentStatus(id: string, paymentStatus: string, paymentId?: string, paymentMethod?: string): Promise<Order> {
     const result = await query(
-      `UPDATE orders SET payment_status = $1, payment_id = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
-      [paymentStatus, paymentId, id]
+      `UPDATE orders SET payment_status = $1, payment_id = $2, payment_method = COALESCE($4, payment_method), updated_at = NOW() WHERE id = $3 RETURNING *`,
+      [paymentStatus, paymentId, id, paymentMethod]
     );
 
     if (result.rows.length === 0) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   MessageSquare,
@@ -19,6 +19,7 @@ import messageService, { type Conversation, type Message } from '@/services/mess
 
 export function MessagesPage() {
   const { user } = useAuthStore();
+  const location = useLocation();
   const { isConnected, joinConversation, leaveConversation, onNewMessage, onMessageEdited, onMessageDeleted, sendTyping } = useSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -29,6 +30,45 @@ export function MessagesPage() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Handle location state for initiating chat about an order
+  useEffect(() => {
+    if (location.state?.orderId) {
+      handleOrderChat(location.state.orderId, location.state.orderNumber);
+    }
+  }, [location.state]);
+
+  async function handleOrderChat(orderId: string, orderNumber: string) {
+    try {
+      setIsLoading(true);
+      // Check if conversation exists
+      const existingConv = conversations.find(c => c.orderId === orderId);
+
+      if (existingConv) {
+        setSelectedConversation(existingConv);
+      } else {
+        // Create new conversation context
+        // In a real app we might want to creating it immediately via API
+        const response = await messageService.createOrGetConversation({
+          orderId: orderId,
+          initialMessage: `Consulta sobre pedido #${orderNumber}`
+        });
+
+        if (response.data) {
+           // Reload conversations to include the new one
+           await loadConversations();
+           // Find it in the updated list (or use the response if complete)
+           // For safety re-find it in just-loaded list
+           const newConv = response.data; // Assuming response.data is the conversation
+           setSelectedConversation(newConv);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling order chat:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   // Cargar conversaciones al montar
   useEffect(() => {
