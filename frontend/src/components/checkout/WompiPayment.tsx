@@ -520,6 +520,14 @@ export function WompiPayment({
   // Tokenizar tarjeta y crear pago
   const handleTokenizeAndPay = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[WompiPayment] handleTokenizeAndPay called');
+    console.log('[WompiPayment] Card data:', {
+      numberLength: cardData.number.length,
+      cvcLength: cardData.cvc.length,
+      exp_month: cardData.exp_month,
+      exp_year: cardData.exp_year,
+      card_holder: cardData.card_holder
+    });
     setIsProcessing(true);
     setError(null);
 
@@ -527,7 +535,9 @@ export function WompiPayment({
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
       // Always read fresh token from localStorage to avoid stale tokens
       const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
-      
+
+      console.log('[WompiPayment] Auth token present:', !!token);
+
       if (!token) {
         throw new Error('No se encontró token de autenticación. Por favor, inicia sesión nuevamente.');
       }
@@ -543,6 +553,7 @@ export function WompiPayment({
         throw new Error('Fecha de vencimiento inválida');
       }
 
+      console.log('[WompiPayment] Calling tokenize endpoint...');
       // En sandbox, podemos enviar directamente al backend
       // En producción, esto debería usar el SDK de Wompi en el frontend
       const response = await fetch(`${API_URL}/orders/wompi/tokenize`, {
@@ -568,9 +579,10 @@ export function WompiPayment({
       }
 
       const result = await response.json();
+      console.log('[WompiPayment] Tokenization successful, token ID:', result.data?.id);
       await handleCreateTransaction(result.data.id);
     } catch (err: any) {
-      console.error('Tokenization error:', err);
+      console.error('[WompiPayment] Tokenization error:', err);
       setError(err.message || 'Error al validar la tarjeta. Verifica los datos e intenta de nuevo.');
       setIsProcessing(false);
     }
