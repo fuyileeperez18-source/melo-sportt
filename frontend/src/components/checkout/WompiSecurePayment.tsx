@@ -14,6 +14,23 @@ import {
   User,
   MapPin,
 } from 'lucide-react';
+import { RefreshCw } from 'lucide-react'; // Importar RefreshCw para el botón de reintento
+
+// Importar Modal component
+import { Modal } from '@/components/ui/Modal'; // Asegúrate de que este path es correcto para tu proyecto
+
+// Si no tienes un componente Modal, puedes crear uno simple o usar un div con backdrop
+const SimpleModal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-primary-800 rounded-lg p-6 max-w-md mx-4 border border-primary-700">
+        {children}
+      </div>
+    </div>
+  );
+};
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/stores/authStore';
@@ -77,14 +94,178 @@ export function WompiSecurePayment({
   const { isAuthenticated } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<'idle' | 'preparing' | 'ready' | 'cancelled' | 'failed'>('idle');
   const [preparedTransaction, setPreparedTransaction] = useState<PreparedTransaction | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const environment = import.meta.env.VITE_WOMPI_PUBLIC_KEY?.startsWith('pub_prod_')
     ? 'production'
     : 'sandbox';
 
   const isSandbox = environment === 'sandbox';
+
+  // Clean any existing URL params to prevent auto-verification on retry
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    url.searchParams.delete('reference');
+    window.history.replaceState({}, '', url.toString());
+  }, []);  // Solo se ejecuta al montar el componente la primera vez
+
+  const resetTransaction = () => {
+    setPreparedTransaction(null);
+    setAcceptedTerms(false);
+    setStatus('idle');
+    setError(null);
+    setIsProcessing(false);
+    // Limpiar parámetros de URL de transacciones previas
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    url.searchParams.delete('reference');
+    window.history.replaceState({}, '', url.toString());
+  };  // Restablece completamente el estado para permitir reintentos
+
+  const handleCancel = () => {
+    setShowCancelModal(true);
+  };
+
+  const confirmCancel = () => {
+    setShowCancelModal(false);
+    resetTransaction();
+    setStatus('cancelled');
+    onBack();
+  };  // Cancelación confirmada, retorna al paso anterior
+
+  const retryPayment = () => {
+    resetTransaction();
+    prepareTransaction();
+  };  // Reintentar crea una transacción nueva y limpia
+
+  const setTransactionFailed = (message: string) => {
+    setError(message);
+    setStatus('failed');
+    setIsProcessing(false);
+  };  // Maneja fallos específicos para mostrar opciones de reintento
+
+  const setTransactionCancelled = (message: string) => {
+    setError(message);
+    setStatus('cancelled');
+    setIsProcessing(false);
+  };  // Maneja cancelaciones para mostrar UI apropiada
+
+  const isRetryable = status === 'failed' || status === 'cancelled'; // Determina si mostrar opciones de reintento
+
+  const environment = import.meta.env.VITE_WOMPI_PUBLIC_KEY?.startsWith('pub_prod_')
+    ? 'production'
+    : 'sandbox';  // No cambia, solo movido después de las funciones
+
+  const isSandbox = environment === 'sandbox';  // No cambia, solo movido después de las funciones
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    url.searchParams.delete('reference');
+    window.history.replaceState({}, '', url.toString());
+  }, []); // Este useEffect se mantiene aquí. No es duplicado, sino necesario en esta posición.
+
+  // Constantes e interfaces no necesitan cambios, solo se ajusta su posición si el orden lo requiere. Las constantes/funciones puras se definen antes de sus usos.
+
+  // MONTE: prepareTransaction solo usa dependencias declaradas: [customerEmail, items, shippingAddress]
+  // Por lo tanto: // Preparar transacción con el backend (FASE 1)
+  const prepareTransaction = useCallback(async () => {
+    setIsProcessing(true);
+    setError(null);
+    setStatus('preparing');
+
+    try {
+      const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+      // 1. Llamar al backend para preparar transacción segura
+      const response = await fetch(`${API_URL}/wompi/prepare`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items,
+          customer: {
+            email: customerEmail,
+            fullName: shippingAddress
+              ? `${shippingAddress.firstName} ${shippingAddress.lastName}`
+              : 'Cliente',
+            phone: shippingAddress?.phone,
+          },
+          shippingAddress: shippingAddress && {
+            addressLine1: shippingAddress.address,
+            addressLine2: shippingAddress.apartment,
+            city: shippingAddress.city,
+            region: shippingAddress.state,
+            country: shippingAddress.country,
+            name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+            phone: shippingAddress.phone,
+          },
+          redirectUrl: `${window.location.origin}/checkout/success`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al preparar la transacción');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al preparar la transacción');
+      }
+
+      setPreparedTransaction(result.data);
+      setStatus('ready');  // La transacción está lista para pago
+      console.log('✅ Transacción preparada:', {
+        reference: result.data.reference,
+        amountInCents: result.data.amountInCents,
+      });
+
+    } catch (err: any) {
+      console.error('Error preparing transaction:', err);
+      setTransactionFailed(err.message || 'Error al preparar el pago. Intenta de nuevo.');
+    } finally {
+      if (status !== 'failed') {
+        setIsProcessing(false);
+      }
+    }
+  }, [customerEmail, items, shippingAddress, status]); // status se añade para lectura segura en el finally
+
+  useEffect(() => {
+    // Evita reprocesamiento automático si ya se intentó y falló o fue cancelado
+    if (status === 'idle' || status === 'preparing') {
+      prepareTransaction();
+    }
+  }, [prepareTransaction, status]);
+
+  // Abrir widget de Wompi con datos del backend
+  const openWompiWidget = () => {
+    if (!preparedTransaction || !acceptedTerms) return;
+
+    // Limpiar parámetros viejos antes de empezar nueva transacción
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    url.searchParams.delete('reference');
+    window.history.replaceState({}, '', url.toString());
+
+    // Crear formulario dinámico para el widget de Wompi
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://checkout.wompi.co/l/pay';
+    form.style.display = 'none';
 
   // Preparar transacción con el backend (FASE 1)
   const prepareTransaction = useCallback(async () => {
@@ -280,8 +461,18 @@ export function WompiSecurePayment({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <EnvironmentBadge />
-        {preparedTransaction && (
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleCancel}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            disabled={isProcessing}
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span className="text-sm">Volver</span>
+          </button>
+          <EnvironmentBadge />
+        </div>
+        {preparedTransaction && status === 'ready' && (
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <span>Ref:</span>
             <code className="text-blue-400 font-mono">
@@ -291,18 +482,49 @@ export function WompiSecurePayment({
         )}
       </div>
 
-      {/* Error */}
+      {/* Error con opciones de reintento */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3"
+          className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg"
         >
-          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-red-400 font-medium">Error</p>
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="flex items-start gap-3 mb-4">
+            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-400 font-medium">
+                {status === 'cancelled' ? 'Pago Cancelado' : 'Error'}
+              </p>
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
           </div>
+
+          {/* Opciones de reintento */}
+          {isRetryable && (
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={retryPayment}
+                variant="primary"
+                className="flex-1 flex items-center justify-center gap-2"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Reintentar Pago
+              </Button>
+              <Button
+                onClick={handleCancel}
+                variant="secondary"
+                className="flex-1"
+                disabled={isProcessing}
+              >
+                Cambiar Método
+              </Button>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -443,7 +665,36 @@ export function WompiSecurePayment({
             pruebas.
           </p>
         </div>
-      )}
+)}
+
+      {/* Modal de Confirmación de Cancelación */}
+      <SimpleModal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)}>
+        <div className="p-2">
+          <h3 className="text-lg font-bold text-white mb-4">
+            ¿Cancelar Pago?
+          </h3>
+          <p className="text-sm text-gray-300 mb-6">
+            Si cancelas, perderás el progreso actual y tendrás que comenzar de nuevo.
+            ¿Estás seguro de que deseas cancelar este pago?
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setShowCancelModal(false)}
+              className="flex-1"
+            >
+              No, Continuar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmCancel}
+              className="flex-1"
+            >
+              Sí, Cancelar
+            </Button>
+          </div>
+        </div>
+      </SimpleModal>
     </div>
   );
 }
