@@ -570,19 +570,31 @@ export function WompiPayment({
         pollTransaction(result.data.id);
       } else if (paymentType === 'PSE') {
         // PSE requiere redirección al banco
-        // La URL viene SOLO en async_payment_url, NO usar checkout_url para PSE
         const asyncUrl = result.data.async_payment_url;
-        console.log('[WompiPayment] PSE async_payment_url:', asyncUrl);
-        console.log('[WompiPayment] Full PSE response:', result.data);
+        const transactionStatus = result.data.status;
+        console.log('[WompiPayment] PSE Response:', {
+          asyncUrl,
+          status: transactionStatus,
+          id: result.data.id,
+          paymentMethodType: result.data.payment_method_type,
+        });
 
         if (asyncUrl) {
+          // Producción: redirigir al banco
           console.log('[WompiPayment] Redirecting to bank URL:', asyncUrl);
           window.location.href = asyncUrl;
-        } else {
-          // En sandbox con banco de prueba (código "1" o "2"), Wompi aprueba/rechaza
-          // automáticamente sin redirección al banco. Hacer polling del estado.
-          console.log('[WompiPayment] No async_payment_url (sandbox mode), polling transaction status...');
+        } else if (transactionStatus === 'PENDING') {
+          // Si está pendiente, hacer polling - puede ser sandbox o producción esperando URL
+          console.log('[WompiPayment] Transaction PENDING, starting polling...');
+          toast('Procesando pago PSE...', { icon: '🏦' });
           pollTransaction(result.data.id);
+        } else if (transactionStatus === 'APPROVED') {
+          // Ya aprobado (sandbox)
+          setPaymentStep('success');
+          setTimeout(() => onSuccess(result.data.id), 1500);
+        } else {
+          // Error o estado desconocido
+          throw new Error('No se pudo obtener la URL del banco. Por favor intenta de nuevo o usa otro método de pago.');
         }
       } else {
         // Otros métodos - redirigir al checkout
