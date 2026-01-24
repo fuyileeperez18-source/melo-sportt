@@ -594,6 +594,25 @@ export const wompiService = {
       };
     }
 
+    // Lista de bancos principales para producción (fallback)
+    const productionBanks = [
+      { financial_institution_code: '1007', financial_institution_name: 'Bancolombia' },
+      { financial_institution_code: '1507', financial_institution_name: 'Nequi' },
+      { financial_institution_code: '1551', financial_institution_name: 'Daviplata' },
+      { financial_institution_code: '1001', financial_institution_name: 'Banco de Bogotá' },
+      { financial_institution_code: '1051', financial_institution_name: 'Davivienda' },
+      { financial_institution_code: '1013', financial_institution_name: 'BBVA Colombia' },
+      { financial_institution_code: '1023', financial_institution_name: 'Banco de Occidente' },
+      { financial_institution_code: '1002', financial_institution_name: 'Banco Popular' },
+      { financial_institution_code: '1040', financial_institution_name: 'Banco Agrario' },
+      { financial_institution_code: '1052', financial_institution_name: 'Banco AV Villas' },
+      { financial_institution_code: '1062', financial_institution_name: 'Banco Falabella' },
+      { financial_institution_code: '1014', financial_institution_name: 'Itaú' },
+      { financial_institution_code: '1060', financial_institution_name: 'Banco Pichincha' },
+      { financial_institution_code: '1009', financial_institution_name: 'Citibank' },
+      { financial_institution_code: '1006', financial_institution_name: 'Banco Itaú Corpbanca' },
+    ];
+
     try {
       console.log('[Wompi Service] Getting financial institutions from Wompi API...');
       const response = await axios.get(
@@ -609,13 +628,10 @@ export const wompiService = {
       return response.data;
     } catch (error: any) {
       console.error('Wompi Financial Institutions Error:', error.response?.data || error.message);
-      // En caso de error, devolver bancos de prueba como fallback
-      console.log('[Wompi Service] Falling back to test banks');
+      // En caso de error en producción, devolver lista de bancos principales
+      console.log('[Wompi Service] Falling back to hardcoded production banks');
       return {
-        data: [
-          { financial_institution_code: '1', financial_institution_name: 'Banco de prueba (Aprueba)' },
-          { financial_institution_code: '2', financial_institution_name: 'Banco de prueba (Rechaza)' },
-        ]
+        data: productionBanks
       };
     }
   },
