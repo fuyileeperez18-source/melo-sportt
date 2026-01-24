@@ -56,7 +56,7 @@ const TEST_DATA = {
       number: '4242424242424242',
       cvc: '123',
       exp_month: '12',
-      exp_year: '25',
+      exp_year: '28',
       holder: 'Juan Pérez',
       description: 'Transacción aprobada (Bancolombia)'
     },
@@ -64,7 +64,7 @@ const TEST_DATA = {
       number: '4111111111111111',
       cvc: '123',
       exp_month: '12',
-      exp_year: '25',
+      exp_year: '28',
       holder: 'Juan Pérez',
       description: 'Transacción declinada (Banco rechaza)'
     },
