@@ -579,9 +579,10 @@ export function WompiPayment({
           console.log('[WompiPayment] Redirecting to bank URL:', asyncUrl);
           window.location.href = asyncUrl;
         } else {
-          // Wompi puede no devolver la URL inmediatamente, hacer polling
-          console.log('[WompiPayment] No async_payment_url yet, starting polling...');
-          pollForPseUrl(result.data.id);
+          // En sandbox con banco de prueba (código "1" o "2"), Wompi aprueba/rechaza
+          // automáticamente sin redirección al banco. Hacer polling del estado.
+          console.log('[WompiPayment] No async_payment_url (sandbox mode), polling transaction status...');
+          pollTransaction(result.data.id);
         }
       } else {
         // Otros métodos - redirigir al checkout
