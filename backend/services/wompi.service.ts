@@ -524,13 +524,22 @@ export const wompiService = {
     card_holder: string;
   }) {
     if (SIMULATED_MODE) {
+      console.log('🧪 [SIMULATED WOMPI] Tokenizing card');
       return {
-        id: `tok_test_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-        status: 'CREATED'
+        data: {
+          id: `tok_test_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          status: 'CREATED',
+          brand: 'VISA',
+          name: data.card_holder,
+          last_four: data.number.slice(-4),
+          exp_month: data.exp_month,
+          exp_year: data.exp_year,
+        }
       };
     }
 
     try {
+      console.log('[Wompi Service] Tokenizing card...');
       const response = await axios.post(
         `${WOMPI_API_URL}/tokens/cards`,
         data,
@@ -541,10 +550,55 @@ export const wompiService = {
           },
         }
       );
+      console.log('[Wompi Service] Card tokenized successfully:', {
+        tokenId: response.data?.data?.id,
+        status: response.data?.data?.status,
+      });
       return response.data;
     } catch (error: any) {
       console.error('Wompi Tokenization Error:', error.response?.data || error.message);
       throw new AppError(`Error en tokenización: ${error.response?.data?.error?.reason || error.message}`, 400);
+    }
+  },
+
+  /**
+   * Get financial institutions for PSE payments
+   */
+  async getFinancialInstitutions() {
+    if (SIMULATED_MODE) {
+      console.log('🧪 [SIMULATED WOMPI] Getting financial institutions');
+      return {
+        data: [
+          { financial_institution_code: '1007', financial_institution_name: 'Bancolombia' },
+          { financial_institution_code: '1001', financial_institution_name: 'Banco de Bogotá' },
+          { financial_institution_code: '1013', financial_institution_name: 'Banco Davivienda' },
+          { financial_institution_code: '1057', financial_institution_name: 'Banco BBVA Colombia' },
+          { financial_institution_code: '1051', financial_institution_name: 'Bancoomeva' },
+          { financial_institution_code: '1040', financial_institution_name: 'Banco Agrario' },
+          { financial_institution_code: '1041', financial_institution_name: 'Banco AV Villas' },
+          { financial_institution_code: '1023', financial_institution_name: 'Banco de Occidente' },
+          { financial_institution_code: '1019', financial_institution_name: 'Scotiabank Colpatria' },
+          { financial_institution_code: '1002', financial_institution_name: 'Banco Popular' },
+        ]
+      };
+    }
+
+    try {
+      console.log('[Wompi Service] Getting financial institutions...');
+      const response = await axios.get(
+        `${WOMPI_API_URL}/pse/financial_institutions`,
+        {
+          headers: {
+            'Authorization': `Bearer ${env.WOMPI_PUBLIC_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log('[Wompi Service] Financial institutions retrieved:', response.data?.data?.length || 0, 'banks');
+      return response.data;
+    } catch (error: any) {
+      console.error('Wompi Financial Institutions Error:', error.response?.data || error.message);
+      throw new AppError(`Error obteniendo instituciones financieras: ${error.response?.data?.error?.reason || error.message}`, 400);
     }
   },
 

@@ -497,6 +497,43 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
   }
 });
 
+// Tokenize card for Wompi payment
+router.post('/wompi/tokenize', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { number, cvc, exp_month, exp_year, card_holder } = z.object({
+      number: z.string().min(13).max(19),
+      cvc: z.string().min(3).max(4),
+      exp_month: z.string().min(1).max(2),
+      exp_year: z.string().min(2).max(2),
+      card_holder: z.string().min(2),
+    }).parse(req.body);
+
+    console.log('[Order Routes] Tokenizing card for user:', req.user!.id);
+
+    const result = await wompiService.tokenizeCard({
+      number: number.replace(/\s/g, ''),
+      cvc,
+      exp_month: exp_month.padStart(2, '0'),
+      exp_year,
+      card_holder: card_holder.toUpperCase(),
+    });
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get PSE financial institutions
+router.get('/wompi/financial-institutions', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await wompiService.getFinancialInstitutions();
+    res.json({ success: true, data: result.data });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get Wompi transaction status
 router.get('/wompi/transaction/:transactionId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

@@ -185,6 +185,11 @@ export function WompiPayment({
 
   const [nequiPhone, setNequiPhone] = useState<string>('');
   const [showNequiForm, setShowNequiForm] = useState(false);
+  const [financialInstitutions, setFinancialInstitutions] = useState<Array<{
+    financial_institution_code: string;
+    financial_institution_name: string;
+  }>>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
 
   // Detectar ambiente
   const environment = detectEnvironment(
@@ -196,6 +201,42 @@ export function WompiPayment({
   // Generar referencia al montar
   useEffect(() => {
     setReference(generateReference());
+  }, []);
+
+  // Cargar instituciones financieras para PSE
+  useEffect(() => {
+    const loadFinancialInstitutions = async () => {
+      setLoadingBanks(true);
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+        const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
+
+        if (!token) {
+          console.warn('[WompiPayment] No token for loading banks');
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/orders/wompi/financial-institutions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data && Array.isArray(result.data)) {
+            setFinancialInstitutions(result.data);
+            console.log('[WompiPayment] Loaded', result.data.length, 'financial institutions');
+          }
+        }
+      } catch (err) {
+        console.error('[WompiPayment] Error loading financial institutions:', err);
+      } finally {
+        setLoadingBanks(false);
+      }
+    };
+
+    loadFinancialInstitutions();
   }, []);
 
   // Polling para verificar estado de transacción
@@ -754,6 +795,97 @@ export function WompiPayment({
           </motion.div>
         )}
 
+        {paymentStep === 'card_form' && (
+          <motion.div
+            key="card_form"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <form onSubmit={handleTokenizeAndPay} className="space-y-4">
+              <h3 className="text-lg font-medium text-white mb-4">Datos de la Tarjeta</h3>
+
+              {/* Panel de tarjetas de prueba (solo sandbox) */}
+              {isSandbox && <TestCardsPanel />}
+
+              <Input
+                label="Número de tarjeta"
+                placeholder="4242 4242 4242 4242"
+                required
+                value={cardData.number}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardData({...cardData, number: e.target.value.replace(/\D/g, '')})}
+                maxLength={19}
+                leftIcon={<CreditCard className="h-5 w-5" />}
+              />
+
+              <Input
+                label="Nombre del titular"
+                placeholder="JUAN PÉREZ"
+                required
+                value={cardData.card_holder}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardData({...cardData, card_holder: e.target.value.toUpperCase()})}
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm text-white">Mes</label>
+                  <select
+                    required
+                    value={cardData.exp_month}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCardData({...cardData, exp_month: e.target.value})}
+                    className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white border border-primary-700"
+                  >
+                    <option value="">MM</option>
+                    {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                      <option key={m} value={m.toString().padStart(2, '0')}>{m.toString().padStart(2, '0')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-white">Año</label>
+                  <select
+                    required
+                    value={cardData.exp_year}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCardData({...cardData, exp_year: e.target.value})}
+                    className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white border border-primary-700"
+                  >
+                    <option value="">AA</option>
+                    {Array.from({length: 10}, (_, i) => {
+                      const year = new Date().getFullYear() - 2000 + i;
+                      return <option key={year} value={year.toString()}>{year}</option>;
+                    })}
+                  </select>
+                </div>
+                <Input
+                  label="CVC"
+                  placeholder="123"
+                  required
+                  type="password"
+                  value={cardData.cvc}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardData({...cardData, cvc: e.target.value.replace(/\D/g, '')})}
+                  maxLength={4}
+                />
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  {error}
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <Button type="button" variant="outline" onClick={() => setPaymentStep('methods')} leftIcon={<ChevronLeft className="h-4 w-4" />}>
+                  Atrás
+                </Button>
+                <Button type="submit" className="flex-1" isLoading={isProcessing} leftIcon={<Lock className="h-4 w-4" />}>
+                  Pagar {formatCurrency(total)}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+
         {paymentStep === 'pse_form' && (
           <motion.div
             key="pse_form"
@@ -812,63 +944,15 @@ export function WompiPayment({
                   required
                   value={pseData.financial_institution_code}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPseData({...pseData, financial_institution_code: e.target.value})}
-                  className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white"
+                  className="w-full bg-primary-800 rounded-lg p-2 mt-1 text-white border border-primary-700"
+                  disabled={loadingBanks}
                 >
-                <option value="">Selecciona tu banco</option>
-                <option value="0001">Bancolombia</option>
-                <option value="1001">Banco de Bogotá</option>
-                <option value="1002">Banco Popular</option>
-                <option value="1006">Banco Itaú</option>
-                <option value="1007">Banco Corpbanca</option>
-                <option value="1009">Citibank</option>
-                <option value="1010">Banco de Occidente</option>
-                <option value="1012">Banco Caja Social</option>
-                <option value="1013">Banco Davivienda</option>
-                <option value="1014">Scotiabank Colpatria</option>
-                <option value="1019">Banco Pichincha</option>
-                <option value="1022">Banco Unión</option>
-                <option value="1023">Banco Finandina</option>
-                <option value="1032">Banco de Crédito</option>
-                <option value="1035">Banco Coomeva</option>
-                <option value="1037">Banco Falabella</option>
-                <option value="1040">Banco Agrario</option>
-                <option value="1041">Banco AV Villas</option>
-                <option value="1042">Banco W</option>
-                <option value="1043">Banco Caja de Compensación Familiar - Colsubsidio</option>
-                <option value="1044">Banco Multibanca Colpatria</option>
-                <option value="1045">Banco Serfinanza</option>
-                <option value="1046">Banco Tequendama</option>
-                <option value="1047">Banco Mundo Mujer</option>
-                <option value="1048">Banco Santander de Negocios Colombia</option>
-                <option value="1049">Banco GNB Sudameris</option>
-                <option value="1050">Banco Cooperativo Coopcentral</option>
-                <option value="1051">Bancoomeva</option>
-                <option value="1052">Banco Fondecom</option>
-                <option value="1053">Banco Credifinanciera</option>
-                <option value="1054">Banco Credicorp</option>
-                <option value="1055">Banco RCI Colombia</option>
-                <option value="1056">Banco Compartir</option>
-                <option value="1057">Banco BBVA Colombia</option>
-                <option value="1058">Banco Procultura</option>
-                <option value="1059">Bancamia</option>
-                <option value="1060">Banco Paga Todo</option>
-                <option value="1061">Banco Fundación</option>
-                <option value="1062">Banco J.P. Morgan Colombia</option>
-                <option value="1063">Banco Mibanco</option>
-                <option value="1064">Banco de las Microfinanzas - BANCAMIA</option>
-                <option value="1065">Banco BTG Pactual</option>
-                <option value="1066">Banco Serfinanza</option>
-                <option value="1067">Banco Tuya</option>
-                <option value="1068">Confiar Cooperativa Financiera</option>
-                <option value="1069">Cotrafa Cooperativa Financiera</option>
-                <option value="1070">Cootrasmed Cooperativa Financiera</option>
-                <option value="1071">Financiera Juriscoop</option>
-                <option value="1072">Juriscoop</option>
-                <option value="1073">Confiar</option>
-                <option value="1074">Cotrafa</option>
-                <option value="1075">Cootrasmed</option>
-                <option value="1076">Financiera Juriscoop</option>
-                <option value="1077">Juriscoop</option>
+                  <option value="">{loadingBanks ? 'Cargando bancos...' : 'Selecciona tu banco'}</option>
+                  {financialInstitutions.map((bank) => (
+                    <option key={bank.financial_institution_code} value={bank.financial_institution_code}>
+                      {bank.financial_institution_name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
