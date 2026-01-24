@@ -570,14 +570,17 @@ export function WompiPayment({
         pollTransaction(result.data.id);
       } else if (paymentType === 'PSE') {
         // PSE requiere redirección al banco
-        // La URL puede venir en async_payment_url (respuesta directa) o checkout_url (widget)
-        const redirectUrl = result.data.async_payment_url || result.data.checkout_url;
-        console.log('[WompiPayment] PSE redirect URL:', redirectUrl);
-        if (redirectUrl) {
-          window.location.href = redirectUrl;
+        // La URL viene SOLO en async_payment_url, NO usar checkout_url para PSE
+        const asyncUrl = result.data.async_payment_url;
+        console.log('[WompiPayment] PSE async_payment_url:', asyncUrl);
+        console.log('[WompiPayment] Full PSE response:', result.data);
+
+        if (asyncUrl) {
+          console.log('[WompiPayment] Redirecting to bank URL:', asyncUrl);
+          window.location.href = asyncUrl;
         } else {
-          // Si no hay URL inmediata, hacer polling hasta obtenerla
-          console.log('[WompiPayment] No redirect URL yet, polling for async_payment_url...');
+          // Wompi puede no devolver la URL inmediatamente, hacer polling
+          console.log('[WompiPayment] No async_payment_url yet, starting polling...');
           pollForPseUrl(result.data.id);
         }
       } else {
