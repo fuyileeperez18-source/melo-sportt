@@ -382,18 +382,24 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
       }
     }
 
+    // Construir redirect_url para PSE y otros métodos que requieren redirección
+    const frontendUrl = env.FRONTEND_URL || 'https://melo-sportt.vercel.app';
+    const redirectUrl = `${frontendUrl}/checkout/confirmation?ref=${reference}`;
+
     const transactionData: any = {
       amount_in_cents: totalAmountInCents,
       currency: 'COP',
       customer_email: customerEmail,
       reference,
-      // redirect_url and webhook_url are configured automatically by the backend
+      redirect_url: redirectUrl, // URL donde el banco redirigirá después del pago
       shipping_address: formattedShippingAddress,
       customer_data: {
         full_name: shippingAddress?.name,
         phone_number: normalizePhoneForWompi(shippingAddress?.phone_number),
       },
     };
+
+    console.log('[Order Routes] Redirect URL for payment:', redirectUrl);
 
     // For Nequi, include phone number (required)
     if (payment_type === 'NEQUI') {

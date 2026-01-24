@@ -410,15 +410,20 @@ export const wompiService = {
         }
       );
       
-      console.log('[Wompi Service] Transaction created successfully:', {
-        transactionId: response.data.data?.id,
-        status: response.data.data?.status,
-        reference: response.data.data?.reference,
-      });
-
       const transaction = response.data.data;
 
-      // Generate checkout URL (Wompi Widget)
+      console.log('[Wompi Service] Transaction created successfully:', {
+        transactionId: transaction?.id,
+        status: transaction?.status,
+        reference: transaction?.reference,
+        paymentMethodType: transaction?.payment_method_type,
+        hasAsyncPaymentUrl: !!transaction?.payment_method?.extra?.async_payment_url,
+      });
+
+      // Para PSE, la URL de redirección viene en payment_method.extra.async_payment_url
+      const asyncPaymentUrl = transaction?.payment_method?.extra?.async_payment_url;
+
+      // Generate checkout URL (Wompi Widget) as fallback
       const checkoutUrl = `https://checkout.wompi.co/l/${transaction.id}`;
 
       return {
@@ -426,8 +431,11 @@ export const wompiService = {
         reference: transaction.reference,
         status: transaction.status,
         checkout_url: checkoutUrl,
+        // Para PSE, devolver la URL del banco
+        async_payment_url: asyncPaymentUrl,
         amount_in_cents: transaction.amount_in_cents,
         currency: transaction.currency,
+        payment_method_type: transaction.payment_method_type,
       };
     } catch (error: any) {
       // Log full error details for debugging
