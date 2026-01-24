@@ -313,6 +313,68 @@ export function WompiPayment({
     }, 2500); // 2.5 segundos entre intentos
   };
 
+  // Polling para obtener URL de PSE (async_payment_url)
+  const pollForPseUrl = async (id: string) => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
+
+    if (!token) {
+      setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      setIsProcessing(false);
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 10; // Max 25 segundos esperando URL
+
+    const interval = setInterval(async () => {
+      try {
+        attempts++;
+        console.log(`[WompiPayment] Polling PSE URL attempt ${attempts}/${maxAttempts}`);
+
+        const response = await fetch(`${API_URL}/orders/wompi/transaction/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.warn('Polling PSE: Error checking transaction');
+          return;
+        }
+
+        const result = await response.json();
+        const asyncUrl = result.data?.payment_method?.extra?.async_payment_url;
+
+        if (asyncUrl) {
+          clearInterval(interval);
+          console.log('[WompiPayment] PSE URL obtained:', asyncUrl);
+          window.location.href = asyncUrl;
+          return;
+        }
+
+        // Check if transaction failed
+        const status = result.data?.status;
+        if (status === 'DECLINED' || status === 'ERROR') {
+          clearInterval(interval);
+          setError('Error al procesar el pago PSE. Por favor intenta de nuevo.');
+          setPaymentStep('pse_form');
+          setIsProcessing(false);
+          return;
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setError('No se pudo obtener la URL del banco. Por favor intenta de nuevo.');
+          setPaymentStep('pse_form');
+          setIsProcessing(false);
+        }
+      } catch (err) {
+        console.error('PSE URL polling error:', err);
+      }
+    }, 2500);
+  };
+
   // Crear transacción con Wompi
   const handleCreateTransaction = async (cardTokenId?: string, paymentType?: 'CARD' | 'PSE' | 'NEQUI' | 'BANCOLOMBIA_TRANSFER', pseData?: any) => {
     setIsProcessing(true);
@@ -500,13 +562,26 @@ export function WompiPayment({
       }
 
       const result = await response.json();
+      console.log('[WompiPayment] Transaction created:', result.data);
 
       if (cardTokenId || paymentType === 'NEQUI') {
         // Con token de tarjeta o Nequi, hacemos polling del estado
         // Nequi funciona con polling, no con redirección
         pollTransaction(result.data.id);
+      } else if (paymentType === 'PSE') {
+        // PSE requiere redirección al banco
+        // La URL puede venir en async_payment_url (respuesta directa) o checkout_url (widget)
+        const redirectUrl = result.data.async_payment_url || result.data.checkout_url;
+        console.log('[WompiPayment] PSE redirect URL:', redirectUrl);
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          // Si no hay URL inmediata, hacer polling hasta obtenerla
+          console.log('[WompiPayment] No redirect URL yet, polling for async_payment_url...');
+          pollForPseUrl(result.data.id);
+        }
       } else {
-        // Para PSE (único método que requiere redirección), redirigir
+        // Otros métodos - redirigir al checkout
         window.location.href = result.data.checkout_url;
       }
     } catch (err: any) {
@@ -608,11 +683,14 @@ export function WompiPayment({
       if (!pseData.user_legal_id) {
         throw new Error('Por favor ingresa tu número de documento');
       }
-      if (!pseData.payment_description) {
-        throw new Error('Por favor ingresa una descripción del pago');
-      }
+      // Usar descripción por defecto si no se proporciona
+      const finalPseData = {
+        ...pseData,
+        payment_description: pseData.payment_description || `Compra en Melo Sportt - ${reference}`
+      };
 
-      await handleCreateTransaction(undefined, 'PSE', pseData);
+      console.log('[WompiPayment] PSE payment data:', finalPseData);
+      await handleCreateTransaction(undefined, 'PSE', finalPseData);
     } catch (err: any) {
       console.error('PSE form error:', err);
       setError(err.message || 'Error al procesar los datos de PSE. Verifica la información e intenta de nuevo.');
@@ -969,9 +1047,8 @@ export function WompiPayment({
               </div>
 
               <Input
-                label="Descripción del pago"
-                placeholder="Pago de productos Melo Sportt"
-                required
+                label="Descripción del pago (opcional)"
+                placeholder="Compra en Melo Sportt"
                 value={pseData.payment_description}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPseData({...pseData, payment_description: e.target.value})}
               />
