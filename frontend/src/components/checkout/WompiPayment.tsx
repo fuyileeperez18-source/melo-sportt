@@ -325,7 +325,7 @@ export function WompiPayment({
     }
 
     let attempts = 0;
-    const maxAttempts = 10; // Max 25 segundos esperando URL
+    const maxAttempts = 20; // Max 60 segundos esperando URL (20 * 3s)
 
     const interval = setInterval(async () => {
       try {
@@ -344,6 +344,12 @@ export function WompiPayment({
         }
 
         const result = await response.json();
+        console.log('[WompiPayment] PSE Poll result:', {
+          status: result.data?.status,
+          hasExtra: !!result.data?.payment_method?.extra,
+          extra: result.data?.payment_method?.extra,
+        });
+
         const asyncUrl = result.data?.payment_method?.extra?.async_payment_url;
 
         if (asyncUrl) {
@@ -353,11 +359,19 @@ export function WompiPayment({
           return;
         }
 
-        // Check if transaction failed
+        // Check if transaction completed or failed
         const status = result.data?.status;
-        if (status === 'DECLINED' || status === 'ERROR') {
+        if (status === 'APPROVED') {
           clearInterval(interval);
-          setError('Error al procesar el pago PSE. Por favor intenta de nuevo.');
+          console.log('[WompiPayment] PSE approved without redirect (sandbox)');
+          setPaymentStep('success');
+          setTimeout(() => onSuccess(id), 1500);
+          return;
+        }
+
+        if (status === 'DECLINED' || status === 'ERROR' || status === 'VOIDED') {
+          clearInterval(interval);
+          setError('El pago fue rechazado por el banco. Por favor intenta de nuevo.');
           setPaymentStep('pse_form');
           setIsProcessing(false);
           return;
@@ -365,7 +379,7 @@ export function WompiPayment({
 
         if (attempts >= maxAttempts) {
           clearInterval(interval);
-          setError('No se pudo obtener la URL del banco. Por favor intenta de nuevo.');
+          setError('Tiempo de espera agotado. El banco no respondió. Por favor intenta de nuevo.');
           setPaymentStep('pse_form');
           setIsProcessing(false);
         }
@@ -580,21 +594,22 @@ export function WompiPayment({
         });
 
         if (asyncUrl) {
-          // Producción: redirigir al banco
+          // Tenemos URL del banco, redirigir
           console.log('[WompiPayment] Redirecting to bank URL:', asyncUrl);
           window.location.href = asyncUrl;
         } else if (transactionStatus === 'PENDING') {
-          // Si está pendiente, hacer polling - puede ser sandbox o producción esperando URL
-          console.log('[WompiPayment] Transaction PENDING, starting polling...');
-          toast('Procesando pago PSE...', { icon: '🏦' });
-          pollTransaction(result.data.id);
+          // PSE está pendiente, hacer polling para obtener async_payment_url
+          // Wompi puede tardar unos segundos en generar la URL del banco
+          console.log('[WompiPayment] PSE PENDING, polling for bank URL...');
+          toast('Conectando con tu banco...', { icon: '🏦' });
+          pollForPseUrl(result.data.id);
         } else if (transactionStatus === 'APPROVED') {
-          // Ya aprobado (sandbox)
+          // Ya aprobado (sandbox con banco de prueba)
           setPaymentStep('success');
           setTimeout(() => onSuccess(result.data.id), 1500);
         } else {
           // Error o estado desconocido
-          throw new Error('No se pudo obtener la URL del banco. Por favor intenta de nuevo o usa otro método de pago.');
+          throw new Error('No se pudo conectar con el banco. Por favor intenta de nuevo o usa otro método de pago.');
         }
       } else {
         // Otros métodos - redirigir al checkout
