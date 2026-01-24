@@ -518,7 +518,10 @@ router.post('/wompi/tokenize', authenticate, async (req: AuthRequest, res: Respo
       card_holder: card_holder.toUpperCase(),
     });
 
-    res.json({ success: true, data: result });
+    // result ya tiene estructura { data: { id, status, ... } } de Wompi
+    // Devolvemos result.data directamente para que el frontend reciba { data: { id, ... } }
+    console.log('[Order Routes] Tokenization result:', result);
+    res.json({ success: true, data: result.data });
   } catch (error) {
     next(error);
   }
