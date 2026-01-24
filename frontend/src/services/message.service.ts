@@ -113,6 +113,11 @@ export const sendMessage = async (conversationId: string, content: string) => {
   return response.data;
 };
 
+export interface CreateConversationResponse {
+  success: boolean;
+  data: Conversation;
+}
+
 /**
  * Create or get existing conversation
  */
@@ -120,9 +125,12 @@ export const createOrGetConversation = async (data: {
   productId?: string;
   orderId?: string;
   initialMessage?: string;
-}) => {
-  const response = await api.post('/messages/conversations', data);
-  return response.data;
+}): Promise<CreateConversationResponse> => {
+  const response = await api.post<Conversation>('/messages/conversations', data);
+  return {
+    success: response.success,
+    data: response.data as Conversation,
+  };
 };
 
 /**
