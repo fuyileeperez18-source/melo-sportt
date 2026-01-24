@@ -412,12 +412,16 @@ export const wompiService = {
       
       const transaction = response.data.data;
 
-      console.log('[Wompi Service] Transaction created successfully:', {
+      console.log('[Wompi Service] Transaction created - FULL RESPONSE:', JSON.stringify(transaction, null, 2));
+      console.log('[Wompi Service] Transaction summary:', {
         transactionId: transaction?.id,
         status: transaction?.status,
         reference: transaction?.reference,
         paymentMethodType: transaction?.payment_method_type,
+        paymentMethod: transaction?.payment_method,
+        extra: transaction?.payment_method?.extra,
         hasAsyncPaymentUrl: !!transaction?.payment_method?.extra?.async_payment_url,
+        asyncPaymentUrl: transaction?.payment_method?.extra?.async_payment_url,
       });
 
       // Para PSE, la URL de redirección viene en payment_method.extra.async_payment_url
