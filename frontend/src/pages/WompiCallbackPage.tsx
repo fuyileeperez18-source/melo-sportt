@@ -67,22 +67,34 @@ export function WompiCallbackPage() {
             navigate('/checkout/success?external_reference=' + correctOrderNumber);
           }, 3000);
         } else if (transaction.status === 'DECLINED') {
+          // Payment declined - show message then redirect
           setStatus('error');
           setMessage('Tu pago fue rechazado. Por favor intenta de nuevo con otro método de pago.');
           toast.error('Pago rechazado');
+
+          // Redirect to success page to show error animation
+          setTimeout(() => {
+            navigate('/checkout/success?payment_id=' + transaction.id + '&collection_status=' + transaction.status.toLowerCase());
+          }, 5000);
         } else if (transaction.status === 'ERROR') {
+          // Error processing - show message then redirect
           setStatus('error');
           setMessage('Hubo un error procesando tu pago. Por favor intenta de nuevo.');
           toast.error('Error en el pago');
-        } else {
-          // Pending or other status
-          setStatus('loading');
-          setMessage('Tu pago está siendo procesado. Por favor espera...');
 
-          // Poll for status update
+          // Redirect to success page to show error animation
           setTimeout(() => {
-            window.location.reload();
+            navigate('/checkout/success?payment_id=' + transaction.id + '&collection_status=' + transaction.status.toLowerCase());
           }, 5000);
+        } else {
+          // Pending or other status - redirect immediately to show pending animation
+          setStatus('loading');
+          setMessage('Tu pago está siendo procesado. Redirigiendo a la página de confirmación...');
+
+          // Redirect to success page to show pending animation
+          setTimeout(() => {
+            navigate('/checkout/success?payment_id=' + transaction.id + '&collection_status=' + transaction.status.toLowerCase());
+          }, 3000);
         }
       } catch (error: any) {
         console.error('Payment verification error:', error);
