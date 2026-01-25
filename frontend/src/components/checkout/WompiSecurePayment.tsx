@@ -156,19 +156,6 @@ export function WompiSecurePayment({
 
   const isRetryable = status === 'failed' || status === 'cancelled'; // Determina si mostrar opciones de reintento
 
-  const environment = import.meta.env.VITE_WOMPI_PUBLIC_KEY?.startsWith('pub_prod_')
-    ? 'production'
-    : 'sandbox';  // No cambia, solo movido después de las funciones
-
-  const isSandbox = environment === 'sandbox';  // No cambia, solo movido después de las funciones
-
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('id');
-    url.searchParams.delete('reference');
-    window.history.replaceState({}, '', url.toString());
-  }, []); // Este useEffect se mantiene aquí. No es duplicado, sino necesario en esta posición.
-
   // Constantes e interfaces no necesitan cambios, solo se ajusta su posición si el orden lo requiere. Las constantes/funciones puras se definen antes de sus usos.
 
   // MONTE: prepareTransaction solo usa dependencias declaradas: [customerEmail, items, shippingAddress]
@@ -267,87 +254,7 @@ export function WompiSecurePayment({
     form.action = 'https://checkout.wompi.co/l/pay';
     form.style.display = 'none';
 
-  // Preparar transacción con el backend (FASE 1)
-  const prepareTransaction = useCallback(async () => {
-    setIsProcessing(true);
-    setError(null);
 
-    try {
-      const token = localStorage.getItem('melo_sportt_token') || localStorage.getItem('token');
-
-      if (!token) {
-        throw new Error('No se encontró token de autenticación');
-      }
-
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-      // 1. Llamar al backend para preparar transacción segura
-      const response = await fetch(`${API_URL}/wompi/prepare`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          items,
-          customer: {
-            email: customerEmail,
-            fullName: shippingAddress
-              ? `${shippingAddress.firstName} ${shippingAddress.lastName}`
-              : 'Cliente',
-            phone: shippingAddress?.phone,
-          },
-          shippingAddress: shippingAddress && {
-            addressLine1: shippingAddress.address,
-            addressLine2: shippingAddress.apartment,
-            city: shippingAddress.city,
-            region: shippingAddress.state,
-            country: shippingAddress.country,
-            name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-            phone: shippingAddress.phone,
-          },
-          redirectUrl: `${window.location.origin}/checkout/success`,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al preparar la transacción');
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || 'Error al preparar la transacción');
-      }
-
-      setPreparedTransaction(result.data);
-      console.log('✅ Transacción preparada:', {
-        reference: result.data.reference,
-        amountInCents: result.data.amountInCents,
-      });
-
-    } catch (err: any) {
-      console.error('Error preparing transaction:', err);
-      setError(err.message || 'Error al preparar el pago. Intenta de nuevo.');
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [customerEmail, items, shippingAddress]);
-
-  useEffect(() => {
-    prepareTransaction();
-  }, [prepareTransaction]);
-
-  // Abrir widget de Wompi con datos del backend
-  const openWompiWidget = () => {
-    if (!preparedTransaction || !acceptedTerms) return;
-
-    // Crear formulario dinámico para el widget de Wompi
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'https://checkout.wompi.co/l/pay';
-    form.style.display = 'none';
 
     // Campos requeridos (según docs de Wompi)
     const fields = {
@@ -686,7 +593,7 @@ export function WompiSecurePayment({
               No, Continuar
             </Button>
             <Button
-              variant="danger"
+              variant="outline"
               onClick={confirmCancel}
               className="flex-1"
             >
