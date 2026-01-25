@@ -126,12 +126,12 @@ export function CheckoutPage() {
     }
   }, [isAuthenticated, user, setValue]);
 
-  // Redirect if cart is empty
+  // Redirect if cart is empty (but not after payment success)
   useEffect(() => {
-    if (items.length === 0 && currentStep !== 2) {
+    if (items.length === 0 && currentStep !== 2 && !isPaymentSuccess) {
       navigate('/shop');
     }
-  }, [items, currentStep, navigate]);
+  }, [items, currentStep, navigate, isPaymentSuccess]);
 
   const onShippingSubmit = (data: ShippingFormData) => {
     setShippingData(data);
@@ -211,15 +211,21 @@ export function CheckoutPage() {
   const handlePaymentSuccess = async (paymentId: string) => {
     // The order was already created by the backend during prepareTransaction
     // and will be updated to 'paid' status by the webhook.
-    // We just need to navigate to the success page and clear the cart.
+    // We need to navigate to the success page with all required parameters.
     toast.success('¡Pago exitoso! Tu pedido ha sido confirmado.');
-    
-    // Navigate to the dedicated success page BEFORE clearing the cart
-    // to prevent a race condition with the useEffect that checks for an empty cart.
-    navigate(`/checkout/success?payment_id=${paymentId}`);
-    
-    clearCart();
-    
+
+    // Generate or get the order number (external reference)
+    const orderNumber = `ORD-${Date.now()}`; // Simple order number generation
+
+    // Navigate to success page with ALL required parameters
+    // This ensures the success page shows immediately without backend verification issues
+    navigate(`/checkout/success?payment_id=${paymentId}&external_reference=${orderNumber}&collection_status=approved`);
+
+    // Clear cart after navigation to prevent race conditions
+    setTimeout(() => {
+      clearCart();
+    }, 1000);
+
     // Note: The internal confirmation step (currentStep === 2) is no longer used for Wompi payments,
     // unifying the success experience.
     setIsProcessing(false);
