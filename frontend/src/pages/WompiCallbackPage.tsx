@@ -64,7 +64,7 @@ export function WompiCallbackPage() {
 
           // Redirect to success page after 3 seconds
           setTimeout(() => {
-            navigate('/checkout/success?external_reference=' + correctOrderNumber);
+            navigate('/checkout/success?external_reference=' + correctOrderNumber + '&payment_id=' + transactionId + '&collection_status=approved');
           }, 3000);
         } else if (transaction.status === 'DECLINED') {
           // Payment declined - show message then redirect
