@@ -14,8 +14,7 @@ import { HomePage } from '@/pages/HomePage';
 import { ShopPage } from '@/pages/ShopPage';
 import { ProductPage } from '@/pages/ProductPage';
 import { CartPage } from '@/pages/CartPage';
-import { CheckoutPage } from '@/pages/CheckoutPage';<flagship-arrival-trigger>
-</flagship-arrival-trigger>
+import { CheckoutPage } from '@/pages/CheckoutPage';
 import { CheckoutSuccessPage } from '@/pages/CheckoutSuccessPage';
 import { CheckoutFailurePage } from '@/pages/CheckoutFailurePage';
 import { WompiCallbackPage } from '@/pages/WompiCallbackPage';
