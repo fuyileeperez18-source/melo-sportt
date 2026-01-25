@@ -209,18 +209,16 @@ export function CheckoutPage() {
 
   const handlePaymentSuccess = async (paymentId: string) => {
     // The order was already created by the backend during prepareTransaction
-    // and will be updated to 'paid' status by the webhook
-    // We just need to show success to the user and clear the cart
-
-    // Extract reference from paymentId if it contains one, or use a placeholder
-    // The actual order_number is the reference used in Wompi (MST-timestamp-random)
-    const orderRef = paymentId.includes('MST-') ? paymentId : `Ref: ${paymentId}`;
-    setOrderNumber(orderRef);
-
-    setCurrentStep(2);
-    setUsedPaymentMethod('wompi');
+    // and will be updated to 'paid' status by the webhook.
+    // We just need to navigate to the success page and clear the cart.
     clearCart();
     toast.success('¡Pago exitoso! Tu pedido ha sido confirmado.');
+    
+    // Navigate to the dedicated success page
+    navigate(`/checkout/success?payment_id=${paymentId}`);
+    
+    // Note: The internal confirmation step (currentStep === 2) is no longer used for Wompi payments,
+    // unifying the success experience.
     setIsProcessing(false);
   };
 
