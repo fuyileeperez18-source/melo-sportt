@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, MessageSquare, Truck, Package, HeadphonesIcon } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, MessageSquare, Truck, Package, HeadphonesIcon, Shield } from 'lucide-react';
 
 export function ContactPage() {
   const [name, setName] = useState('');

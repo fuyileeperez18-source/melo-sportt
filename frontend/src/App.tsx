@@ -34,7 +34,8 @@ import { SellerCallback } from '@/pages/SellerCallback';
 import { DebugPage } from '@/pages/DebugPage';
 import { WishlistPage } from '@/pages/WishlistPage';
 import { AboutPage } from '@/pages/AboutPage';
-import { ContactPage } from '@/pages/ContactPage';<replace_all>false</replace_all>
+import { ContactPage } from '@/pages/ContactPage';
+
 
 // Account Pages
 import {
