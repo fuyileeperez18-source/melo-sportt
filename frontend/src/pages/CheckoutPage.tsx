@@ -87,6 +87,7 @@ export function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'wompi' | 'cash_on_delivery'>('wompi');
   const [usedPaymentMethod, setUsedPaymentMethod] = useState<'wompi' | 'cash_on_delivery' | null>(null);
+  const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
 
   // Ref to capture order data when payment starts (prevents stale data in callback)
   const orderDataRef = useRef<{
@@ -700,50 +701,6 @@ export function CheckoutPage() {
                   className="text-center py-8"
                 >
                   <div className="max-w-6xl mx-auto">
-
-                    {/* Barra de Progreso Mejorada */}
-                    <div className="mb-12 max-w-4xl mx-auto">
-                      <div className="flex items-center justify-center px-4">
-                        {/* Paso 1: Envío */}
-                        <div className="flex items-center">
-                          <div className="flex flex-col items-center">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-black">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 6 9 17l-5-5"></path>
-                              </svg>
-                            </div>
-                            <span className="mt-2 text-xs sm:text-sm font-medium text-white">Envío</span>
-                          </div>
-                          <div className="w-16 sm:w-24 h-0.5 mx-2 sm:mx-4 bg-white"></div>
-                        </div>
-
-                        {/* Paso 2: Pago */}
-                        <div className="flex items-center">
-                          <div className="flex flex-col items-center">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-black">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 6 9 17l-5-5"></path>
-                              </svg>
-                            </div>
-                            <span className="mt-2 text-xs sm:text-sm font-medium text-white">Pago</span>
-                          </div>
-                          <div className="w-16 sm:w-24 h-0.5 mx-2 sm:mx-4 bg-white"></div>
-                        </div>
-
-                        {/* Paso 3: Confirmación */}
-                        <div className="flex items-center">
-                          <div className="flex flex-col items-center">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-black animate-pulse">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 6 9 17l-5-5"></path>
-                              </svg>
-                            </div>
-                            <span className="mt-2 text-xs sm:text-sm font-medium text-white">Confirmación</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Contenido Principal */}
                     <div className="max-w-5xl mx-auto">
                       <div className="text-center py-8 sm:py-12 px-4">
@@ -786,15 +743,15 @@ export function CheckoutPage() {
                         </div>
 
                         {/* Caja de Información "¿Qué sigue?" */}
-                        <div className="p-6 sm:p-8 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl mb-8 max-w-2xl mx-auto border border-gray-700 shadow-xl">
+                        <div className="p-6 sm:p-8 bg-blue-950/50 rounded-2xl mb-8 max-w-2xl mx-auto border border-blue-900/50">
                           <h3 className="font-semibold text-white mb-6 text-center text-lg sm:text-xl">
                             ¿Qué sigue?
                           </h3>
                           <ul className="space-y-4 sm:space-y-5 text-left">
                             {/* Email */}
-                            <li className="flex items-start gap-3 sm:gap-4">
-                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                                <Mail className="h-5 w-5 text-green-400" />
+                            <li className="flex items-start gap-4">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center ring-1 ring-blue-800">
+                                <Mail className="h-5 w-5 text-white" />
                               </div>
                               <div className="flex-1">
                                 <p className="text-gray-300 text-sm sm:text-base">
@@ -805,9 +762,9 @@ export function CheckoutPage() {
                             </li>
 
                             {/* Actualizaciones */}
-                            <li className="flex items-start gap-3 sm:gap-4">
-                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                                <Package className="h-5 w-5 text-blue-400" />
+                            <li className="flex items-start gap-4">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center ring-1 ring-blue-800">
+                                <Package className="h-5 w-5 text-white" />
                               </div>
                               <div className="flex-1">
                                 <p className="text-gray-300 text-sm sm:text-base">
@@ -817,9 +774,9 @@ export function CheckoutPage() {
                             </li>
 
                             {/* Tiempo de Entrega */}
-                            <li className="flex items-start gap-3 sm:gap-4">
-                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                                <Truck className="h-5 w-5 text-yellow-400" />
+                            <li className="flex items-start gap-4">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center ring-1 ring-blue-800">
+                                <Truck className="h-5 w-5 text-white" />
                               </div>
                               <div className="flex-1">
                                 <p className="text-gray-300 text-sm sm:text-base">
@@ -836,24 +793,15 @@ export function CheckoutPage() {
                           <Button
                             variant="outline"
                             onClick={() => navigate('/account/orders')}
-                            className="w-full sm:w-auto relative inline-flex items-center justify-center gap-2 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black bg-transparent text-white border-2 border-white hover:bg-white hover:text-black h-12 px-8 text-base"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg font-medium bg-transparent text-white border-2 border-white hover:bg-white hover:text-black px-6 py-3"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"></path>
-                              <path d="m12 12 4 10 1.7-4.3L22 16Z"></path>
-                            </svg>
                             Ver Pedido
                           </Button>
 
                           <Button
                             onClick={() => navigate('/shop')}
-                            className="w-full sm:w-auto relative inline-flex items-center justify-center gap-2 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black bg-white text-black hover:bg-gray-100 active:bg-gray-200 shadow-lg shadow-white/20 h-12 px-8 text-base"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg font-medium bg-white text-black hover:bg-gray-100 px-6 py-3"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="8" cy="21" r="1"></circle>
-                              <circle cx="19" cy="21" r="1"></circle>
-                              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                            </svg>
                             Seguir Comprando
                           </Button>
                         </div>
