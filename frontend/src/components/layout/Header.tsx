@@ -29,16 +29,6 @@ const navigation = [
       { name: 'Ofertas', href: '/shop?filter=sale' },
     ],
   },
-  {
-    name: 'Colecciones',
-    href: '/collections',
-    children: [
-      { name: 'Verano 2025', href: '/collections/summer-2025' },
-      { name: 'Esenciales de Invierno', href: '/collections/winter-essentials' },
-      { name: 'Estilo Urbano', href: '/collections/street-style' },
-      { name: 'Minimalista', href: '/collections/minimalist' },
-    ],
-  },
   { name: 'Nosotros', href: '/about' },
   { name: 'Contacto', href: '/contact' },
 ];
