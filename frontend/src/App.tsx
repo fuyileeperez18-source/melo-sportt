@@ -12,10 +12,10 @@ import { AccountRouter } from '@/components/AccountRouter';
 // Pages
 import { HomePage } from '@/pages/HomePage';
 import { ShopPage } from '@/pages/ShopPage';
-import { CollectionsPage } from '@/pages/CollectionsPage';
 import { ProductPage } from '@/pages/ProductPage';
 import { CartPage } from '@/pages/CartPage';
-import { CheckoutPage } from '@/pages/CheckoutPage';
+import { CheckoutPage } from '@/pages/CheckoutPage';<flagship-arrival-trigger>
+</flagship-arrival-trigger>
 import { CheckoutSuccessPage } from '@/pages/CheckoutSuccessPage';
 import { CheckoutFailurePage } from '@/pages/CheckoutFailurePage';
 import { WompiCallbackPage } from '@/pages/WompiCallbackPage';
@@ -171,8 +171,6 @@ function App() {
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:slug" element={<ProductPage />} />
             <Route path="/cart" element={<CartPage />} />
-            <Route path="/collections" element={<CollectionsPage />} />
-            <Route path="/collections/:slug" element={<ShopPage />} />
             <Route path="/about" element={<div className="min-h-screen bg-black py-20 text-center text-white">About Page</div>} />
             <Route path="/contact" element={<div className="min-h-screen bg-black py-20 text-center text-white">Contact Page</div>} />
             {/* Checkout status pages */}
