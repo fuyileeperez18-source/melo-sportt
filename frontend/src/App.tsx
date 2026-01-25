@@ -173,6 +173,10 @@ function App() {
             <Route path="/collections/:slug" element={<ShopPage />} />
             <Route path="/about" element={<div className="min-h-screen bg-black py-20 text-center text-white">About Page</div>} />
             <Route path="/contact" element={<div className="min-h-screen bg-black py-20 text-center text-white">Contact Page</div>} />
+            {/* Checkout status pages */}
+            <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            <Route path="/checkout/failure" element={<CheckoutFailurePage />} />
+            <Route path="/checkout/pending" element={<CheckoutSuccessPage />} />
           </Route>
 
           {/* Auth routes */}
@@ -185,9 +189,6 @@ function App() {
 
           {/* Checkout (separate layout) */}
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-          <Route path="/checkout/failure" element={<CheckoutFailurePage />} />
-          <Route path="/checkout/pending" element={<CheckoutSuccessPage />} />
           <Route path="/checkout/wompi/callback" element={<WompiCallbackPage />} />
           <Route path="/seller/callback" element={<SellerCallback />} />
 
