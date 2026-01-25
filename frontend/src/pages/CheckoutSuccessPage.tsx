@@ -53,9 +53,9 @@ export function CheckoutSuccessPage() {
 
           if (response.ok) {
             const result = await response.json();
-            if (result.data.status === 'approved') {
+            if (result.data.status === 'APPROVED') {
               setPaymentStatus('success');
-            } else if (result.data.status === 'pending') {
+            } else if (result.data.status === 'PENDING' || result.data.status === 'IN_PROCESS') {
               setPaymentStatus('pending');
             } else {
               setPaymentStatus('error');
