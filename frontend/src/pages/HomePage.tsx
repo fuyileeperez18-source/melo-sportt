@@ -51,7 +51,7 @@ const defaultCategories: (Category & { products_count: number })[] = [
 ];
 
 const benefits = [
-  { icon: Truck, title: 'Envío Gratis', description: 'En compras mayores a $200.000' },
+  { icon: Truck, title: 'Envío Gratis', description: 'En compras mayores a $250.000' },
   { icon: Shield, title: 'Pago Seguro', description: 'Checkout 100% seguro' },
   { icon: RefreshCw, title: 'Devoluciones Fáciles', description: 'Política de 30 días' },
   { icon: Headphones, title: 'Soporte 24/7', description: 'Siempre listos para ayudarte' },
@@ -180,7 +180,7 @@ export function HomePage() {
         <div className="flex animate-marquee whitespace-nowrap">
           {[...Array(4)].map((_, i) => (
             <span key={i} className="mx-8 text-sm font-medium flex items-center gap-8">
-              <span>ENVÍO GRATIS EN COMPRAS MAYORES A $200.000</span>
+              <span>ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
               <Star className="h-4 w-4 fill-black" />
               <span>NUEVOS PRODUCTOS CADA SEMANA</span>
               <Star className="h-4 w-4 fill-black" />

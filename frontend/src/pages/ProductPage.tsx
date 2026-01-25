@@ -546,19 +546,19 @@ export function ProductPage() {
                 <div className="grid grid-cols-2 gap-4 p-6 bg-primary-900 rounded-xl mb-8">
                   <div className="flex items-center gap-3">
                     <Truck className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm text-gray-300">Envío gratis sobre $100</span>
+                    <span className="text-sm text-gray-300">Envío gratis sobre $250K</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm text-gray-300">Secure checkout</span>
+                    <span className="text-sm text-gray-300">Pago seguro</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <RefreshCw className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm text-gray-300">30-day returns</span>
+                    <span className="text-sm text-gray-300">30 días para devolución</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm text-gray-300">Quality guaranteed</span>
+                    <span className="text-sm text-gray-300">Calidad garantizada</span>
                   </div>
                 </div>
 

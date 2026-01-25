@@ -33,6 +33,8 @@ import { AdminManagement } from '@/pages/admin/AdminManagement';
 import { SellerCallback } from '@/pages/SellerCallback';
 import { DebugPage } from '@/pages/DebugPage';
 import { WishlistPage } from '@/pages/WishlistPage';
+import { AboutPage } from '@/pages/AboutPage';
+import { ContactPage } from '@/pages/ContactPage';<replace_all>false</replace_all>
 
 // Account Pages
 import {
@@ -170,8 +172,8 @@ function App() {
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:slug" element={<ProductPage />} />
             <Route path="/cart" element={<CartPage />} />
-            <Route path="/about" element={<div className="min-h-screen bg-black py-20 text-center text-white">About Page</div>} />
-            <Route path="/contact" element={<div className="min-h-screen bg-black py-20 text-center text-white">Contact Page</div>} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             {/* Checkout status pages */}
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
             <Route path="/checkout/failure" element={<CheckoutFailurePage />} />
