@@ -20,6 +20,11 @@ export function ContactPage() {
       <div className="max-w-7xl mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-16">
+          <img
+            src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1767113974/MELO_SPORTT_logo_1_dxnwcv.svg"
+            alt="Melo Sportt Logo"
+            className="h-20 mx-auto mb-6"
+          />
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-primary-400 bg-clip-text text-transparent">
             Contáctanos
           </h1>
