@@ -211,11 +211,13 @@ export function CheckoutPage() {
     // The order was already created by the backend during prepareTransaction
     // and will be updated to 'paid' status by the webhook.
     // We just need to navigate to the success page and clear the cart.
-    clearCart();
     toast.success('¡Pago exitoso! Tu pedido ha sido confirmado.');
     
-    // Navigate to the dedicated success page
+    // Navigate to the dedicated success page BEFORE clearing the cart
+    // to prevent a race condition with the useEffect that checks for an empty cart.
     navigate(`/checkout/success?payment_id=${paymentId}`);
+    
+    clearCart();
     
     // Note: The internal confirmation step (currentStep === 2) is no longer used for Wompi payments,
     // unifying the success experience.
