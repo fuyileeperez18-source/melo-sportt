@@ -175,15 +175,6 @@ export function CartDrawer() {
                     <span>Subtotal</span>
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
-                    <span>Envío</span>
-                    <span>{shipping === 0 ? 'Gratis' : formatCurrency(shipping)}</span>
-                  </div>
-                  {shipping > 0 && (
-                    <p className="text-xs text-gray-500">
-                      Agrega {formatCurrency(100 - subtotal)} más para envío gratis
-                    </p>
-                  )}
                 </div>
 
                 {/* Total */}
