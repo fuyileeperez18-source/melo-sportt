@@ -17,7 +17,7 @@ export function AboutPage() {
             Melo Sportt
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-            Tu destino para el merchandising oficial de fútbol más auténtico
+            Tu destino para la moda deportiva y ropa urbana de la mejor calidad
           </p>
         </div>
 
@@ -30,25 +30,24 @@ export function AboutPage() {
           <div className="grid md:grid-cols-2 gap-8 text-gray-300">
             <div className="space-y-4">
               <p className="text-lg leading-relaxed">
-                En Melo Sportt, somos apasionados del fútbol y entendemos la importancia de llevar
-                el escudo de tu equipo con orgullo. Nuestra misión es proporcionar a los aficionados
-                colombianos acceso a merchandising oficial de la mejor calidad, directamente de los
-                clubes más prestigiosos.
+                En Melo Sportt, somos apasionados de la moda deportiva y la ropa urbana. Nuestra misión es proporcionar
+                a nuestros clientes colombianos acceso a ropa de la mejor calidad, con diseños modernos y
+                tendencias actuales para todos los estilos.
               </p>
               <p className="text-lg leading-relaxed">
-                Nos especializamos en camisetas auténticas, gorras oficiales, ropa casual deportiva
-                y accesorios que permiten a los seguidores demostrar su lealtad a sus equipos favoritos
-                tanto dentro como fuera de la cancha.
+                Nos especializamos en ropa deportiva, urbana y casual. Ofrecemos una amplia variedad de
+                prendas como camisetas, sudaderas, pantalones, gorras y accesorios que se adaptan a tu estilo
+                de vida, ya sea para el día a día o para actividades deportivas.
               </p>
             </div>
             <div className="space-y-4">
               <p className="text-lg leading-relaxed">
-                Nuestra colección está cuidadosamente curada para asegurar que cada pieza cumpla con los
-                estándares de calidad que los verdaderos aficionados esperan. Trabajamos directamente
-                con fabricantes oficiales y clubes para garantizar la autenticidad de cada producto.
+                Nuestra colección está cuidadosamente seleccionada para asegurar que cada pieza cumpla con los
+                más altos estándares de calidad y moda. Trabajamos directamente con fabricantes reconocidos
+                para garantizar que cada prenda combine estilo, comodidad y durabilidad.
               </p>
               <p className="text-lg leading-relaxed font-medium text-white">
-                ¡Lleva tu pasión a otro nivel con Melo Sportt!
+                ¡Expresa tu estilo único con Melo Sportt!
               </p>
             </div>
           </div>
@@ -61,7 +60,7 @@ export function AboutPage() {
             { icon: Truck, title: 'Envío Gratis', description: 'En compras mayores a $250.000 en toda Colombia' },
             { icon: Shield, title: 'Pago Seguro', description: 'Checkout 100% seguro con múltiples métodos de pago' },
             { icon: RefreshCw, title: 'Devoluciones Fáciles', description: 'Política de 30 días para tu tranquilidad' },
-            { icon: Shield, title: 'Calidad Garantizada', description: 'Mercancía oficial auténtica y de primera calidad' }
+            { icon: Shield, title: 'Calidad Garantizada', description: 'Ropa de primera calidad con materiales duraderos' }
           ].map((feature, index) => {
             const Icon = feature.icon;
             return (
@@ -84,7 +83,7 @@ export function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Autenticidad</h3>
               <p className="text-gray-400">
-                Solo productos oficiales y auténticos de los clubes más grandes de Colombia y el mundo.
+                Seleccionamos cada prenda con cuidado para ofrecer ropa que refleje las últimas tendencias y estilos.
               </p>
             </div>
             <div className="text-center">
@@ -93,7 +92,7 @@ export function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Pasión</h3>
               <p className="text-gray-400">
-                Somos aficionados como tú, entendiendo lo que significa llevar los colores de tu equipo.
+                Comprendemos lo importante que es sentirse cómodo y a la moda en cualquier ocasión.
               </p>
             </div>
             <div className="text-center">
@@ -102,7 +101,7 @@ export function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Calidad</h3>
               <p className="text-gray-400">
-                Cada producto es seleccionado cuidadosamente para garantizar la mejor calidad y durabilidad.
+                Priorizamos materiales de alta calidad y acabados perfectos en cada prenda que ofrecemos.
               </p>
             </div>
           </div>

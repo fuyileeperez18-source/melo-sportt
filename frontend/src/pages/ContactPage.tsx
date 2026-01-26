@@ -47,8 +47,7 @@ export function ContactPage() {
                   <Phone className="w-5 h-5 text-primary-500 mt-1" />
                   <div>
                     <p className="font-semibold">Teléfonos</p>
-                    <p className="text-gray-400">+57 301 234 5678</p>
-                    <p className="text-gray-400">+57 304 567 8901</p>
+                    <p className="text-gray-400">+57 323 802 0198</p>
                   </div>
                 </div>
 
@@ -65,7 +64,7 @@ export function ContactPage() {
                   <MapPin className="w-5 h-5 text-primary-500 mt-1" />
                   <div>
                     <p className="font-semibold">Dirección</p>
-                    <p className="text-gray-400">Bogotá, Colombia</p>
+                    <p className="text-gray-400">Cartagena de Indias, Colombia</p>
                   </div>
                 </div>
 
