@@ -92,7 +92,7 @@ export function HomePage() {
                     alt={slide.title}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40" />
                 </div>
               </SwiperSlide>
             ))}
@@ -116,9 +116,9 @@ export function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
-                className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+                className="text-5xl md:text-7xl font-bold text-gray-50 mb-6 leading-tight drop-shadow-lg"
               >
-                Redefine Tu Estilo
+                Descubre Tu Estilo
               </motion.h1>
 
               <motion.p
@@ -127,8 +127,8 @@ export function HomePage() {
                 transition={{ delay: 0.6 }}
                 className="text-xl text-gray-300 mb-8 max-w-lg"
               >
-                Descubre piezas atemporales creadas con precisión y atención al detalle.
-                Eleva tu guardarropa con nuestra colección premium.
+                Explora nuestra colección de moda deportiva y ropa urbana de alta calidad.
+                Encuentra el estilo que mejor se adapta a tu personalidad.
               </motion.p>
 
               <motion.div
@@ -338,7 +338,7 @@ export function HomePage() {
                     alt="Colección Hombre"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
                   <div className="absolute inset-0 flex items-center p-8">
                     <div>
                       <span className="text-sm text-gray-300 uppercase tracking-wider">Nuevo</span>
@@ -369,7 +369,7 @@ export function HomePage() {
                     alt="Colección Mujer"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
                   <div className="absolute inset-0 flex items-center p-8">
                     <div>
                       <span className="text-sm text-gray-300 uppercase tracking-wider">Tendencia</span>
