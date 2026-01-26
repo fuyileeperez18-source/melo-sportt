@@ -117,18 +117,6 @@ export function AdminOrders() {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    try {
-      await orderService.updateStatus(orderId, newStatus);
-      toast.success(`Estado actualizado a ${statusConfig[newStatus as keyof typeof statusConfig]?.label || newStatus}`);
-      loadOrders(); // Recargar lista
-      setIsDetailOpen(false); // Cerrar modal
-    } catch (error: any) {
-      console.error('Error updating order status:', error);
-      toast.error('Error al actualizar estado');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">

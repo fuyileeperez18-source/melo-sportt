@@ -260,9 +260,8 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // Create order in PENDING status before processing payment
     // This ensures the order exists when the webhook arrives
     let orderId_created: string | null = null;
-    const totalInPesos = totalAmountInCents / 100;
-    // Ahora totalInPesos ya incluye shipping_cost y tax
-    // Ahora totalInPesos ya incluye shipping_cost y tax
+    // totalInPesos ya está definido arriba e incluye shipping_cost y tax
+    // totalInPesos ya está definido arriba e incluye shipping_cost y tax
     const orderItems = items.map(item => ({
       product_id: item.product_id,
       variant_id: item.variant_id,
