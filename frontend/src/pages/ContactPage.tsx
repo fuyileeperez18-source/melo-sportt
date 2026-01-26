@@ -48,6 +48,7 @@ export function ContactPage() {
                   <div>
                     <p className="font-semibold">Teléfonos</p>
                     <p className="text-gray-400">+57 323 802 0198</p>
+                    <p className="text-gray-400">+57 304 415 5473</p>
                   </div>
                 </div>
 

@@ -8,7 +8,7 @@ export function AboutPage() {
         <div className="text-center mb-16">
           <div className="relative w-32 h-32 mx-auto mb-8">
             <img
-              src="/melo-sportt-logo-white.png"
+              src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1767113974/MELO_SPORTT_logo_1_dxnwcv.svg"
               alt="Melo Sportt Logo"
               className="w-full h-full object-contain"
             />
