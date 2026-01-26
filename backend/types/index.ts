@@ -328,4 +328,8 @@ export interface DashboardMetrics {
   revenue_change: number;
   orders_change: number;
   marketplace_commissions: number;
+  monthly_revenue: number;
+  monthly_orders: number;
+  monthly_revenue_change: number;
+  month_name: string;
 }

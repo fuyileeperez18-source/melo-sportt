@@ -41,6 +41,21 @@ export function OrderDetailPage() {
     }
   }, [id]);
 
+  // Polling para actualizaciones de estado en tiempo real
+  useEffect(() => {
+    if (!id || !order) return;
+
+    const intervalId = setInterval(() => {
+      // Solo actualizar si el pedido no está en estado final (delivered, cancelled, refunded)
+      if (!['delivered', 'cancelled', 'refunded'].includes(order.status)) {
+        console.log('[OrderDetailPage] Polling para actualización de estado...');
+        loadOrder();
+      }
+    }, 30000); // Cada 30 segundos
+
+    return () => clearInterval(intervalId);
+  }, [id, order?.status]);
+
   async function loadOrder() {
     if (!id) return;
     setIsLoading(true);
@@ -224,6 +239,15 @@ export function OrderDetailPage() {
               <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getOrderStatusColor(order.status)}`}>
                 {getOrderStatusLabel(order.status)}
               </span>
+              <button
+                onClick={loadOrder}
+                disabled={isLoading}
+                className="ml-2 px-2 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                title="Actualizar estado"
+              >
+                <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                Actualizar
+              </button>
             </div>
             <p className="text-zinc-500 mt-1">
               {new Date(order.created_at).toLocaleDateString('es-CO', {

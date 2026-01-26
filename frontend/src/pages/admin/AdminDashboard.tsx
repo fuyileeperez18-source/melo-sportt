@@ -389,7 +389,7 @@ export function AdminDashboard() {
                 </div>
 
                 {/* Stats grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                   <StatCard
                     title="Ingresos Hoy"
                     value={metrics?.today_revenue || 0}
@@ -410,6 +410,25 @@ export function AdminDashboard() {
                     delay={0.1}
                   />
                   <StatCard
+                    title={`Ingresos ${metrics?.month_name || 'Mensuales'}`}
+                    value={metrics?.monthly_revenue || 0}
+                    change={metrics?.monthly_revenue_change}
+                    icon={DollarSign}
+                    iconColor="text-black"
+                    iconBg="bg-gray-100"
+                    format="currency"
+                    delay={0}
+                  />
+                  <StatCard
+                    title="Pedidos Mensuales"
+                    value={metrics?.monthly_orders || 0}
+                    change={metrics?.monthly_revenue_change}
+                    icon={ShoppingCart}
+                    iconColor="text-black"
+                    iconBg="bg-gray-100"
+                    delay={0.1}
+                  />
+                  <StatCard
                     title="Pedidos Pendientes"
                     value={metrics?.pending_orders || 0}
                     icon={Clock}
@@ -417,18 +436,10 @@ export function AdminDashboard() {
                     iconBg="bg-gray-100"
                     delay={0.2}
                   />
-                  <StatCard
-                    title="Stock Bajo"
-                    value={metrics?.low_stock_products || 0}
-                    icon={AlertTriangle}
-                    iconColor="text-black"
-                    iconBg="bg-gray-100"
-                    delay={0.3}
-                  />
                 </div>
 
                 {/* Mini stats row */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                   <MiniStat
                     title="Ingresos Totales"
                     value={formatCurrency(totalRevenue)}
@@ -445,6 +456,12 @@ export function AdminDashboard() {
                     title="Nuevos Clientes"
                     value={metrics?.new_customers_today || 0}
                     icon={Users}
+                    color="black"
+                  />
+                  <MiniStat
+                    title="Stock Bajo"
+                    value={metrics?.low_stock_products || 0}
+                    icon={AlertTriangle}
                     color="black"
                   />
                   <MiniStat

@@ -171,7 +171,12 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     }).parse(req.body);
 
     // Calculate total amount in cents (multiply by 100 to convert pesos to centavos)
-    const totalAmountInCents = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0) * 100;
+    // INCLUIR shipping_cost y tax en el cálculo
+    const subtotalInPesos = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+    const shippingCostInPesos = shipping_cost || 0;
+    const taxInPesos = tax || 0;
+    const totalInPesos = subtotalInPesos + shippingCostInPesos + taxInPesos;
+    const totalAmountInCents = totalInPesos * 100;
 
     console.log(`[Wompi Create Transaction] Calculated amount_in_cents: ${totalAmountInCents}`); // Log for debugging
     console.log(`[Wompi Create Transaction] Items received: ${JSON.stringify(items)}`); // Log items for debugging
@@ -256,6 +261,8 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     // This ensures the order exists when the webhook arrives
     let orderId_created: string | null = null;
     const totalInPesos = totalAmountInCents / 100;
+    // Ahora totalInPesos ya incluye shipping_cost y tax
+    // Ahora totalInPesos ya incluye shipping_cost y tax
     const orderItems = items.map(item => ({
       product_id: item.product_id,
       variant_id: item.variant_id,
@@ -268,7 +275,7 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
         const orderData = {
           user_id: req.user!.id,
           order_number: reference,
-          subtotal: subtotal || totalInPesos,
+          subtotal: subtotal || subtotalInPesos,
           discount: 0,
           shipping_cost: shipping_cost || 0,
           tax: tax || 0,

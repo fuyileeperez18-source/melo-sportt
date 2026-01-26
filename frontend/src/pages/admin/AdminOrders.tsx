@@ -105,6 +105,30 @@ export function AdminOrders() {
     setIsContactModalOpen(false);
   };
 
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await orderService.updateStatus(orderId, newStatus);
+      toast.success(`Estado actualizado a ${statusConfig[newStatus as keyof typeof statusConfig]?.label || newStatus}`);
+      loadOrders(); // Recargar lista
+      setIsDetailOpen(false); // Cerrar modal
+    } catch (error: any) {
+      console.error('Error updating order status:', error);
+      toast.error('Error al actualizar estado');
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await orderService.updateStatus(orderId, newStatus);
+      toast.success(`Estado actualizado a ${statusConfig[newStatus as keyof typeof statusConfig]?.label || newStatus}`);
+      loadOrders(); // Recargar lista
+      setIsDetailOpen(false); // Cerrar modal
+    } catch (error: any) {
+      console.error('Error updating order status:', error);
+      toast.error('Error al actualizar estado');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -341,6 +365,7 @@ export function AdminOrders() {
         onClose={() => setIsDetailOpen(false)}
         title={`Pedido #${selectedOrder?.order_number}`}
         size="lg"
+        className="max-h-[90vh] overflow-y-auto"  // Mejor scroll
       >
         {selectedOrder && (
           <div className="space-y-6">
@@ -552,20 +577,40 @@ export function AdminOrders() {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4">
               {selectedOrder.status === 'pending' && (
-                <Button className="flex-1">Procesar Pedido</Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => updateOrderStatus(selectedOrder.id, 'processing')}
+                >
+                  Procesar Pedido
+                </Button>
               )}
               {selectedOrder.status === 'processing' && (
-                <Button className="flex-1" leftIcon={<Truck className="h-4 w-4" />}>
+                <Button
+                  className="flex-1"
+                  leftIcon={<Truck className="h-4 w-4" />}
+                  onClick={() => updateOrderStatus(selectedOrder.id, 'shipped')}
+                >
                   Marcar como Enviado
                 </Button>
               )}
               {selectedOrder.status === 'shipped' && (
-                <Button className="flex-1" leftIcon={<Package className="h-4 w-4" />}>
+                <Button
+                  className="flex-1"
+                  leftIcon={<Package className="h-4 w-4" />}
+                  onClick={() => updateOrderStatus(selectedOrder.id, 'delivered')}
+                >
                   Marcar como Entregado
                 </Button>
               )}
               <Button variant="outline" className="flex-1">
                 Imprimir Factura
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsDetailOpen(false)}
+              >
+                Cerrar
               </Button>
             </div>
           </div>

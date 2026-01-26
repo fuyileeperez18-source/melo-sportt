@@ -15,6 +15,19 @@ export const analyticsService = {
     const tomorrowDate = new Date(todayDate.getTime() + 86400000);
     const tomorrow = tomorrowDate.toISOString().split('T')[0];
 
+    // Get current month start and end dates
+    const currentYear = todayDate.getFullYear();
+    const currentMonth = todayDate.getMonth() + 1; // JavaScript months are 0-indexed
+    const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const lastDayOfMonth = new Date(currentYear, currentMonth, 0);
+
+    // Get previous month start and end dates
+    const previousMonthDate = new Date(currentYear, currentMonth - 2, 1);
+    const previousMonthYear = previousMonthDate.getFullYear();
+    const previousMonth = previousMonthDate.getMonth() + 1;
+    const firstDayOfPreviousMonth = new Date(previousMonthYear, previousMonth - 1, 1);
+    const lastDayOfPreviousMonth = new Date(previousMonthYear, previousMonth, 0);
+
     // Get today's PAID orders and revenue (only count confirmed sales)
     const todayResult = await query(
       `SELECT COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue
@@ -50,11 +63,39 @@ export const analyticsService = {
       `SELECT COALESCE(SUM(application_fee), 0) as total FROM orders WHERE payment_status = 'paid'`
     );
 
+    // Get current month revenue and orders
+    const currentMonthResult = await query(
+      `SELECT COALESCE(SUM(total), 0) as revenue, COUNT(*) as order_count
+       FROM orders
+       WHERE payment_status = 'paid'
+         AND CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) >= $1
+         AND CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) <= $2`,
+      [firstDayOfMonth.toISOString().split('T')[0], lastDayOfMonth.toISOString().split('T')[0]]
+    );
+
+    // Get previous month revenue and orders
+    const previousMonthResult = await query(
+      `SELECT COALESCE(SUM(total), 0) as revenue, COUNT(*) as order_count
+       FROM orders
+       WHERE payment_status = 'paid'
+         AND CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) >= $1
+         AND CAST(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota' AS DATE) <= $2`,
+      [firstDayOfPreviousMonth.toISOString().split('T')[0], lastDayOfPreviousMonth.toISOString().split('T')[0]]
+    );
+
     const todayRevenue = parseFloat(todayResult.rows[0].revenue) || 0;
     const yesterdayRevenue = parseFloat(yesterdayResult.rows[0].revenue) || 0;
     const todayOrders = parseInt(todayResult.rows[0].order_count) || 0;
     const yesterdayOrders = parseInt(yesterdayResult.rows[0].order_count) || 0;
     const marketplaceCommissions = parseFloat(commissionsResult.rows[0].total) || 0;
+
+    const monthlyRevenue = parseFloat(currentMonthResult.rows[0].revenue) || 0;
+    const monthlyOrders = parseInt(currentMonthResult.rows[0].order_count) || 0;
+    const previousMonthRevenue = parseFloat(previousMonthResult.rows[0].revenue) || 0;
+
+    const monthlyRevenueChange = previousMonthRevenue > 0
+      ? ((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
+      : 0;
 
     const revenueChange = yesterdayRevenue > 0
       ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
@@ -63,6 +104,13 @@ export const analyticsService = {
     const ordersChange = yesterdayOrders > 0
       ? ((todayOrders - yesterdayOrders) / yesterdayOrders) * 100
       : 0;
+
+    // Get month name in Spanish
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const monthName = monthNames[currentMonth - 1];
 
     return {
       today_revenue: todayRevenue,
@@ -73,6 +121,10 @@ export const analyticsService = {
       revenue_change: revenueChange,
       orders_change: ordersChange,
       marketplace_commissions: marketplaceCommissions,
+      monthly_revenue: monthlyRevenue,
+      monthly_orders: monthlyOrders,
+      monthly_revenue_change: monthlyRevenueChange,
+      month_name: monthName,
     };
   },
 
