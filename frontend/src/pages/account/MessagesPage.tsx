@@ -132,13 +132,22 @@ export function MessagesPage() {
 
   // Join/leave conversation cuando se selecciona
   useEffect(() => {
+    console.log('MessagesPage useEffect - selectedConversation:', selectedConversation, 'isConnected:', isConnected);
     if (selectedConversation && isConnected) {
+      console.log('Joining conversation with ID:', selectedConversation.id);
       joinConversation(selectedConversation.id);
       loadMessages(selectedConversation.id);
 
       return () => {
+        console.log('Leaving conversation:', selectedConversation.id);
         leaveConversation(selectedConversation.id);
       };
+    } else {
+      console.log('Not joining conversation - missing:', {
+        selectedConversation: !!selectedConversation,
+        isConnected,
+        id: selectedConversation?.id
+      });
     }
   }, [selectedConversation, isConnected]);
 

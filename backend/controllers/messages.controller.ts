@@ -30,6 +30,8 @@ export const getConversations = async (req: Request, res: Response) => {
     const finalParams = [...queryParams, userId];
     // Calculate user parameter position (1-based)
     const userParamPosition = finalParams.length; // userId es el último elemento
+    // Create the parameter placeholder
+    const userParamPlaceholder = `$${userParamPosition}`;
 
     const conversationsResult = await pool.query(
       `SELECT
@@ -50,7 +52,7 @@ export const getConversations = async (req: Request, res: Response) => {
         o.order_number,
         (SELECT COUNT(*) FROM messages m
          WHERE m.conversation_id = c.id
-         AND m.sender_id != $${userParamPosition}
+         AND m.sender_id != ${userParamPlaceholder}
          AND m.is_read = false) as unread_count,
         (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages
       FROM conversations c

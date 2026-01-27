@@ -153,9 +153,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, [isAuthenticated, user?.id]);
 
   const joinConversation = useCallback((conversationId: string) => {
-    if (socket && isConnected) {
+    if (socket && isConnected && conversationId && conversationId !== 'undefined' && conversationId !== 'null') {
       console.log('Joining conversation:', conversationId);
       socket.emit('join-conversation', conversationId);
+    } else {
+      console.warn('Cannot join conversation: invalid conversationId or socket not connected', { conversationId, isConnected, socket: !!socket });
     }
   }, [socket, isConnected]);
 
