@@ -176,8 +176,29 @@ export function MessagesPage() {
 
   async function loadConversations() {
     try {
+      console.log('Calling messageService.getConversations...');
       const response = await messageService.getConversations(1, 50);
-      setConversations(response.data.conversations);
+      console.log('getConversations response:', response);
+      console.log('response.data:', response.data);
+      console.log('response.data structure:', JSON.stringify(response.data, null, 2));
+
+      // Debug: check what properties exist
+      if (response.data) {
+        console.log('response.data keys:', Object.keys(response.data));
+        if (response.data.conversations) {
+          console.log('Found conversations array, length:', response.data.conversations.length);
+          setConversations(response.data.conversations);
+        } else if (Array.isArray(response.data)) {
+          console.log('response.data is array directly');
+          setConversations(response.data);
+        } else {
+          console.error('Unexpected response structure:', response.data);
+          setConversations([]);
+        }
+      } else {
+        console.error('response.data is undefined');
+        setConversations([]);
+      }
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
