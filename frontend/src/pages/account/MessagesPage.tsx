@@ -172,6 +172,10 @@ export function MessagesPage() {
   }
 
   async function loadMessages(conversationId: string) {
+    if (!conversationId || conversationId === 'undefined' || conversationId === 'null') {
+      console.error('Invalid conversationId:', conversationId);
+      return;
+    }
     try {
       const response = await messageService.getMessages(conversationId, 1, 100);
       setMessages(response.data.messages);
