@@ -100,8 +100,15 @@ export const getConversations = async (req: Request, res: Response) => {
     );
 
     // Count total conversations
-    const countParams = whereClause ? [userId] : [];
-    const countQuery = `SELECT COUNT(*) FROM conversations c ${whereClause}`;
+    let countParams: any[] = [];
+    let countQuery = `SELECT COUNT(*) FROM conversations c`;
+
+    if (whereClause) {
+      // Cuando whereClause es 'WHERE c.user_id = $3', necesitamos $1
+      countQuery = `SELECT COUNT(*) FROM conversations c WHERE c.user_id = $1`;
+      countParams = [userId];
+    }
+
     const countResult = await pool.query(countQuery, countParams);
 
     const totalCount = parseInt(countResult.rows[0].count);
