@@ -54,23 +54,27 @@ export function MessagesPage() {
           initialMessage: `Consulta sobre pedido #${orderNumber}`
         });
 
-        if (response.data) {
+        if (response.data && response.data.conversation) {
            console.log('createOrGetConversation response:', response);
-           console.log('response.data structure:', response.data);
+           console.log('response.data.conversation:', response.data.conversation);
 
-           // Check if response.data has id property
-           if (!response.data.id) {
-             console.error('Response data missing id property:', response.data);
+           // Extract the conversation from response.data.conversation
+           const newConv = response.data.conversation;
+
+           if (!newConv.id) {
+             console.error('Conversation missing id property:', newConv);
+             toast.error('Error al crear conversación: falta ID');
+             return;
            }
 
            // Reload conversations to include the new one
            await loadConversations();
-           // Find it in the updated list (or use the response if complete)
-           // For safety re-find it in just-loaded list
-           const newConv = response.data; // Assuming response.data is the conversation
+           // Set the selected conversation with proper ID
            setSelectedConversation(newConv);
+           toast.success('Conversación creada exitosamente');
         } else {
-          console.error('createOrGetConversation response missing data:', response);
+          console.error('createOrGetConversation response missing conversation:', response);
+          toast.error('Error al crear conversación: respuesta inválida');
         }
       }
     } catch (error) {
