@@ -55,12 +55,22 @@ export function MessagesPage() {
         });
 
         if (response.data) {
+           console.log('createOrGetConversation response:', response);
+           console.log('response.data structure:', response.data);
+
+           // Check if response.data has id property
+           if (!response.data.id) {
+             console.error('Response data missing id property:', response.data);
+           }
+
            // Reload conversations to include the new one
            await loadConversations();
            // Find it in the updated list (or use the response if complete)
            // For safety re-find it in just-loaded list
            const newConv = response.data; // Assuming response.data is the conversation
            setSelectedConversation(newConv);
+        } else {
+          console.error('createOrGetConversation response missing data:', response);
         }
       }
     } catch (error) {
