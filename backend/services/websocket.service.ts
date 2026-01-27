@@ -94,7 +94,7 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
 
         // Verify user has access to conversation
         const result = await pool.query(
-          `SELECT customer_id FROM conversations WHERE id = $1`,
+          `SELECT user_id as customer_id FROM conversations WHERE id = $1`,
           [conversationId]
         );
 
@@ -137,7 +137,7 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
 
         // Verify conversation access
         const convResult = await pool.query(
-          `SELECT customer_id FROM conversations WHERE id = $1`,
+          `SELECT user_id as customer_id FROM conversations WHERE id = $1`,
           [conversationId]
         );
 

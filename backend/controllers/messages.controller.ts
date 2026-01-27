@@ -26,6 +26,11 @@ export const getConversations = async (req: Request, res: Response) => {
       queryParams.push(userId);
     }
 
+    // Create final parameters array
+    const finalParams = [...queryParams, userId];
+    // Calculate user parameter position (1-based)
+    const userParamPosition = finalParams.length; // userId es el último elemento
+
     const conversationsResult = await pool.query(
       `SELECT
         c.id,
@@ -45,7 +50,7 @@ export const getConversations = async (req: Request, res: Response) => {
         o.order_number,
         (SELECT COUNT(*) FROM messages m
          WHERE m.conversation_id = c.id
-         AND m.sender_id != $${queryParams.length + 1}
+         AND m.sender_id != $${userParamPosition}
          AND m.is_read = false) as unread_count,
         (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages
       FROM conversations c
@@ -55,7 +60,7 @@ export const getConversations = async (req: Request, res: Response) => {
       ${whereClause}
       ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
       LIMIT $1 OFFSET $2`,
-      [...queryParams, userId]
+      finalParams
     );
 
     // Get last message for each conversation
@@ -93,10 +98,9 @@ export const getConversations = async (req: Request, res: Response) => {
     );
 
     // Count total conversations
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM conversations c ${whereClause}`,
-      whereClause ? [userId] : []
-    );
+    const countParams = whereClause ? [userId] : [];
+    const countQuery = `SELECT COUNT(*) FROM conversations c ${whereClause}`;
+    const countResult = await pool.query(countQuery, countParams);
 
     const totalCount = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalCount / limitNum);
@@ -132,6 +136,15 @@ export const getMessages = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const userRole = (req as any).user.role;
     const { conversationId } = req.params;
+
+    // Validate conversationId
+    if (!conversationId || conversationId === 'undefined' || conversationId === 'null') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid conversation ID',
+      });
+    }
+
     const { page = 1, limit = 50 } = req.query;
 
     const pageNum = parseInt(page as string);
