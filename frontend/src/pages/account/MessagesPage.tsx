@@ -55,15 +55,20 @@ export function MessagesPage() {
           initialMessage: `Consulta sobre pedido #${orderNumber}`
         });
 
-        if (response.data) {
-           console.log('createOrGetConversation response:', response);
+        console.log('createOrGetConversation response:', response);
+        console.log('response structure:', JSON.stringify(response, null, 2));
+
+        if (response && response.data) {
            console.log('response.data:', response.data);
+           console.log('response.data type:', typeof response.data);
+           console.log('response.data keys:', Object.keys(response.data || {}));
 
            // Extract the conversation from response.data
            const newConv = response.data;
 
            if (!newConv.id) {
              console.error('Conversation missing id property:', newConv);
+             console.error('response.data structure:', response.data);
              toast.error('Error al crear conversación: falta ID');
              return;
            }
@@ -74,7 +79,7 @@ export function MessagesPage() {
            setSelectedConversation(newConv);
            toast.success('Conversación creada exitosamente');
         } else {
-          console.error('createOrGetConversation response missing data:', response);
+          console.error('createOrGetConversation response missing or invalid:', response);
           toast.error('Error al crear conversación: respuesta inválida');
         }
       }
@@ -180,24 +185,20 @@ export function MessagesPage() {
       console.log('Calling messageService.getConversations...');
       const response = await messageService.getConversations(1, 50);
       console.log('getConversations response:', response);
-      console.log('response.data:', response.data);
-      console.log('response.data structure:', JSON.stringify(response.data, null, 2));
+      console.log('response structure:', JSON.stringify(response, null, 2));
 
       // Debug: check what properties exist
-      if (response.data) {
+      if (response && response.data) {
         console.log('response.data keys:', Object.keys(response.data));
         if (response.data.conversations) {
           console.log('Found conversations array, length:', response.data.conversations.length);
           setConversations(response.data.conversations);
-        } else if (Array.isArray(response.data)) {
-          console.log('response.data is array directly');
-          setConversations(response.data);
         } else {
           console.error('Unexpected response structure:', response.data);
           setConversations([]);
         }
       } else {
-        console.error('response.data is undefined');
+        console.error('response or response.data is undefined');
         setConversations([]);
       }
     } catch (error) {
