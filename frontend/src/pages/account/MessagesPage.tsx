@@ -20,6 +20,8 @@ import toast from 'react-hot-toast';
 
 export function MessagesPage() {
   const { user } = useAuthStore();
+  const isCustomer = user?.role === 'customer';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const location = useLocation();
   const { isConnected, joinConversation, leaveConversation, onNewMessage, onMessageEdited, onMessageDeleted, sendTyping } = useSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -92,6 +94,12 @@ export function MessagesPage() {
 
   // Cargar conversaciones al montar
   useEffect(() => {
+    // Si el usuario es admin, redirigir a la página de admin
+    if (user?.role === 'admin' || user?.role === 'super_admin') {
+      window.location.href = '/admin/messages';
+      return;
+    }
+
     loadConversations();
   }, [user]);
 
@@ -193,18 +201,66 @@ export function MessagesPage() {
         if (response.data.conversations) {
           console.log('Found conversations array, length:', response.data.conversations.length);
           setConversations(response.data.conversations);
+
+          // Para clientes: si no hay conversaciones, crear conversación general MELO SPORTT
+          if (user?.role === 'customer' && response.data.conversations.length === 0) {
+            await createGeneralSupportConversation();
+          }
+          // Para clientes: seleccionar la primera conversación automáticamente
+          else if (user?.role === 'customer' && response.data.conversations.length > 0) {
+            // Clientes solo deben tener una conversación, seleccionar la primera
+            setSelectedConversation(response.data.conversations[0]);
+          }
         } else {
           console.error('Unexpected response structure:', response.data);
           setConversations([]);
+          // Para clientes sin conversaciones: crear conversación general
+          if (user?.role === 'customer') {
+            await createGeneralSupportConversation();
+          }
         }
       } else {
         console.error('response or response.data is undefined');
         setConversations([]);
+        // Para clientes: crear conversación general
+        if (user?.role === 'customer') {
+          await createGeneralSupportConversation();
+        }
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
+      // Para clientes: intentar crear conversación general si hay error
+      if (user?.role === 'customer') {
+        await createGeneralSupportConversation();
+      }
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  // Crear conversación general de soporte MELO SPORTT para clientes
+  async function createGeneralSupportConversation() {
+    try {
+      console.log('Creando conversación general de soporte MELO SPORTT...');
+      const response = await messageService.createOrGetConversation({
+        productId: undefined,
+        orderId: undefined,
+        initialMessage: 'Bienvenido al soporte MELO SPORTT. ¿En qué puedo ayudarte hoy?'
+      });
+
+      if (response && response.data) {
+        console.log('Conversación general creada:', response.data);
+        // Cargar conversaciones nuevamente para incluir la nueva
+        await loadConversations();
+        // Seleccionar automáticamente
+        setSelectedConversation(response.data);
+      } else {
+        console.error('Error al crear conversación general:', response);
+        toast.error('Error al crear conversación de soporte');
+      }
+    } catch (error) {
+      console.error('Error en createGeneralSupportConversation:', error);
+      toast.error('No se pudo crear la conversación de soporte');
     }
   }
 
@@ -299,6 +355,12 @@ export function MessagesPage() {
     }
   }
 
+  // Para clientes: obtener el nombre de la conversación (MELO SPORTT por defecto)
+  const getConversationName = (conversation: Conversation | null) => {
+    if (!conversation) return 'MELO SPORTT';
+    return conversation.productName || conversation.orderNumber ? `Consulta ${conversation.orderNumber ? `pedido #${conversation.orderNumber}` : 'producto'}` : 'MELO SPORTT';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -310,93 +372,582 @@ export function MessagesPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="flex h-screen">
-        {/* Sidebar - Lista de conversaciones */}
-        <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-96 border-r border-zinc-800`}>
-          {/* Header */}
-          <div className="p-4 border-b border-zinc-800">
-            <div className="flex items-center gap-4 mb-4">
-              <Link
-                to="/account"
-                className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-zinc-800 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div>
-                <h1 className="text-xl font-bold">Mis Mensajes</h1>
-                <p className="text-sm text-zinc-500">
+        {/* Para clientes: mostrar solo chat sin lista lateral */}
+      {isCustomer ? (
+        // Solo mostrar área de chat para clientes
+        <div className="flex flex-col flex-1">
+          {/* Área de chat - siempre visible para clientes */}
+          {selectedConversation ? (
+            <div className="flex flex-col flex-1">
+              {/* Header del chat para clientes */}
+              <div className="p-4 border-b border-zinc-800 flex items-center gap-4">
+                <Link
+                  to="/account"
+                  className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div className="flex-1">
+                  <h2 className="font-bold">Soporte MELO SPORTT</h2>
+                  <p className="text-sm text-zinc-500">Estamos aquí para ayudarte</p>
+                </div>
+                <div className="text-sm text-zinc-500">
                   {isConnected ? (
                     <span className="text-green-400">● En línea</span>
                   ) : (
                     <span className="text-red-400">● Desconectado</span>
                   )}
+                </div>
+              </div>
+
+              {/* Mensajes */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* ... contenido de mensajes existente ... */}
+                {messages.length > 0 ? (
+                  messages.map((message) => {
+                    const isOwnMessage = message.senderId === user?.id;
+                    const isEditing = editingMessageId === message.id;
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col`}>
+                          {!isOwnMessage && (
+                            <span className="text-xs text-zinc-500 mb-1 px-2">
+                              {message.sender.fullName}
+                            </span>
+                          )}
+                          <div
+                            className={`rounded-2xl px-4 py-2 ${
+                              isOwnMessage
+                                ? 'bg-white text-black'
+                                : 'bg-zinc-800 text-white'
+                            }`}
+                          >
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-sm"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEditMessage(message.id)}
+                                    className="p-1 bg-green-600 rounded hover:bg-green-700"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditing}
+                                    className="p-1 bg-red-600 rounded hover:bg-red-700"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm">{message.content}</p>
+                                {message.updatedAt && message.updatedAt !== message.createdAt && (
+                                  <p className="text-xs opacity-50 mt-1">(editado)</p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 px-2">
+                            <span className="text-xs text-zinc-500">
+                              {formatTime(message.createdAt)}
+                            </span>
+                            {isOwnMessage && !isEditing && (
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => startEditing(message)}
+                                  className="p-1 hover:bg-zinc-800 rounded"
+                                  title="Editar"
+                                >
+                                  <Edit2 className="w-3 h-3 text-zinc-500" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(message.id)}
+                                  className="p-1 hover:bg-zinc-800 rounded"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-3 h-3 text-zinc-500" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-4 text-zinc-700" />
+                    <h3 className="text-lg font-semibold mb-2">No hay mensajes aún</h3>
+                    <p className="text-zinc-500">
+                      ¡Envía tu primer mensaje al soporte MELO SPORTT!
+                    </p>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input de mensaje */}
+              <div className="p-4 border-t border-zinc-800">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={handleTyping}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Escribe tu mensaje aquí..."
+                    disabled={!isConnected || isSending}
+                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || !isConnected || isSending}
+                    className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSending ? (
+                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : isLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <MessageSquare className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+                <h3 className="text-lg font-semibold mb-2">Cargando soporte...</h3>
+                <p className="text-zinc-500">
+                  Preparando chat con el equipo de MELO SPORTT
                 </p>
               </div>
             </div>
-          </div>
-
-          {/* Lista de conversaciones */}
-          <div className="flex-1 overflow-y-auto">
-            {conversations.length > 0 ? (
-              conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-4 border-b border-zinc-800 hover:bg-zinc-900 transition-colors text-left ${
-                    selectedConversation?.id === conv.id ? 'bg-zinc-900' : ''
-                  }`}
+          )}
+        </div>
+      ) : (
+        // Para no clientes (admins, etc.) mantener interfaz original
+        <>
+          {/* Sidebar - Lista de conversaciones */}
+          <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-96 border-r border-zinc-800`}>
+            {/* Header */}
+            <div className="p-4 border-b border-zinc-800">
+              <div className="flex items-center gap-4 mb-4">
+                <Link
+                  to="/account"
+                  className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-zinc-800 transition-colors"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                      <User className="w-6 h-6 text-zinc-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="font-semibold truncate">
-                          {conv.productName || conv.orderNumber || 'Conversación'}
-                        </p>
-                        {conv.lastMessageAt && (
-                          <span className="text-xs text-zinc-500">
-                            {formatDate(conv.lastMessageAt)}
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div>
+                  <h1 className="text-xl font-bold">Mis Mensajes</h1>
+                  <p className="text-sm text-zinc-500">
+                    {isConnected ? (
+                      <span className="text-green-400">● En línea</span>
+                    ) : (
+                      <span className="text-red-400">● Desconectado</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de conversaciones */}
+            <div className="flex-1 overflow-y-auto">
+              {conversations.length > 0 ? (
+                conversations.map((conv) => (
+                  <button
+                    key={conv.id}
+                    onClick={() => setSelectedConversation(conv)}
+                    className={`w-full p-4 border-b border-zinc-800 hover:bg-zinc-900 transition-colors text-left ${
+                      selectedConversation?.id === conv.id ? 'bg-zinc-900' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                        <User className="w-6 h-6 text-zinc-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold truncate">
+                            {conv.productName || conv.orderNumber || 'Conversación'}
+                          </p>
+                          {conv.lastMessageAt && (
+                            <span className="text-xs text-zinc-500">
+                              {formatDate(conv.lastMessageAt)}
+                            </span>
+                          )}
+                        </div>
+                        {conv.productName && (
+                          <div className="flex items-center gap-1 text-xs text-zinc-500 mb-1">
+                            <Package className="w-3 h-3" />
+                            <span>Producto</span>
+                          </div>
+                        )}
+                        {conv.orderNumber && (
+                          <div className="flex items-center gap-1 text-xs text-zinc-500 mb-1">
+                            <ShoppingBag className="w-3 h-3" />
+                            <span>Orden #{conv.orderNumber}</span>
+                          </div>
+                        )}
+                        {conv.lastMessage && (
+                          <p className="text-sm text-zinc-400 truncate">
+                            {conv.lastMessage.content}
+                          </p>
+                        )}
+                        {conv.unreadCount > 0 && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                            {conv.unreadCount}
                           </span>
                         )}
                       </div>
-                      {conv.productName && (
-                        <div className="flex items-center gap-1 text-xs text-zinc-500 mb-1">
-                          <Package className="w-3 h-3" />
-                          <span>Producto</span>
-                        </div>
-                      )}
-                      {conv.orderNumber && (
-                        <div className="flex items-center gap-1 text-xs text-zinc-500 mb-1">
-                          <ShoppingBag className="w-3 h-3" />
-                          <span>Orden #{conv.orderNumber}</span>
-                        </div>
-                      )}
-                      {conv.lastMessage && (
-                        <p className="text-sm text-zinc-400 truncate">
-                          {conv.lastMessage.content}
-                        </p>
-                      )}
-                      {conv.unreadCount > 0 && (
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
-                          {conv.unreadCount}
-                        </span>
-                      )}
                     </div>
+                  </button>
+                ))
+              ) : (
+                <div className="p-8 text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+                  <h3 className="text-lg font-semibold mb-2">No hay conversaciones</h3>
+                  <p className="text-zinc-500 text-sm">
+                    Inicia una conversación desde un producto u orden
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Área de chat para no-clientes (admins, etc.) */}
+          <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col flex-1`}>
+            {selectedConversation ? (
+              <>
+                {/* Header del chat */}
+                <div className="p-4 border-b border-zinc-800 flex items-center gap-4">
+                  <button
+                    onClick={() => setSelectedConversation(null)}
+                    className="md:hidden w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div className="flex-1">
+                    <h2 className="font-bold">
+                      {selectedConversation.productName || selectedConversation.orderNumber || 'Conversación'}
+                    </h2>
+                    {selectedConversation.productName && (
+                      <p className="text-sm text-zinc-500 flex items-center gap-1">
+                        <Package className="w-3 h-3" />
+                        Consulta sobre producto
+                      </p>
+                    )}
+                    {selectedConversation.orderNumber && (
+                      <p className="text-sm text-zinc-500 flex items-center gap-1">
+                        <ShoppingBag className="w-3 h-3" />
+                        Orden #{selectedConversation.orderNumber}
+                      </p>
+                    )}
                   </div>
-                </button>
-              ))
+                </div>
+
+                {/* Mensajes */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.map((message) => {
+                    const isOwnMessage = message.senderId === user?.id;
+                    const isEditing = editingMessageId === message.id;
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col`}>
+                          {!isOwnMessage && (
+                            <span className="text-xs text-zinc-500 mb-1 px-2">
+                              {message.sender.fullName}
+                            </span>
+                          )}
+                          <div
+                            className={`rounded-2xl px-4 py-2 ${
+                              isOwnMessage
+                                ? 'bg-white text-black'
+                                : 'bg-zinc-800 text-white'
+                            }`}
+                          >
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-sm"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEditMessage(message.id)}
+                                    className="p-1 bg-green-600 rounded hover:bg-green-700"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditing}
+                                    className="p-1 bg-red-600 rounded hover:bg-red-700"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm">{message.content}</p>
+                                {message.updatedAt && message.updatedAt !== message.createdAt && (
+                                  <p className="text-xs opacity-50 mt-1">(editado)</p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 px-2">
+                            <span className="text-xs text-zinc-500">
+                              {formatTime(message.createdAt)}
+                            </span>
+                            {isOwnMessage && !isEditing && (
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => startEditing(message)}
+                                  className="p-1 hover:bg-zinc-800 rounded"
+                                  title="Editar"
+                                >
+                                  <Edit2 className="w-3 h-3 text-zinc-500" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(message.id)}
+                                  className="p-1 hover:bg-zinc-800 rounded"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-3 h-3 text-zinc-500" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input de mensaje */}
+                <div className="p-4 border-t border-zinc-800">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={handleTyping}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      placeholder="Escribe un mensaje..."
+                      disabled={!isConnected || isSending}
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim() || !isConnected || isSending}
+                      className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSending ? (
+                        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
             ) : (
-              <div className="p-8 text-center">
-                <MessageSquare className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
-                <h3 className="text-lg font-semibold mb-2">No hay conversaciones</h3>
-                <p className="text-zinc-500 text-sm">
-                  Inicia una conversación desde un producto u orden
-                </p>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+                  <h3 className="text-lg font-semibold mb-2">Selecciona una conversación</h3>
+                  <p className="text-zinc-500">
+                    Elige una conversación de la lista para comenzar a chatear
+                  </p>
+                </div>
               </div>
             )}
           </div>
-        </div>
+        </>
+      )}
+
+          {/* Área de chat para no-clientes (admins, etc.) */}
+          <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col flex-1`}>
+            {selectedConversation ? (
+              <>
+                {/* Header del chat */}
+                <div className="p-4 border-b border-zinc-800 flex items-center gap-4">
+                  <button
+                    onClick={() => setSelectedConversation(null)}
+                    className="md:hidden w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div className="flex-1">
+                    <h2 className="font-bold">
+                      {selectedConversation.productName || selectedConversation.orderNumber || 'Conversación'}
+                    </h2>
+                    {selectedConversation.productName && (
+                      <p className="text-sm text-zinc-500 flex items-center gap-1">
+                        <Package className="w-3 h-3" />
+                        Consulta sobre producto
+                      </p>
+                    )}
+                    {selectedConversation.orderNumber && (
+                      <p className="text-sm text-zinc-500 flex items-center gap-1">
+                        <ShoppingBag className="w-3 h-3" />
+                        Orden #{selectedConversation.orderNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mensajes */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.map((message) => {
+                    const isOwnMessage = message.senderId === user?.id;
+                    const isEditing = editingMessageId === message.id;
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col`}>
+                          {!isOwnMessage && (
+                            <span className="text-xs text-zinc-500 mb-1 px-2">
+                              {message.sender.fullName}
+                            </span>
+                          )}
+                          <div
+                            className={`rounded-2xl px-4 py-2 ${
+                              isOwnMessage
+                                ? 'bg-white text-black'
+                                : 'bg-zinc-800 text-white'
+                            }`}
+                          >
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-sm"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEditMessage(message.id)}
+                                    className="p-1 bg-green-600 rounded hover:bg-green-700"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditing}
+                                    className="p-1 bg-red-600 rounded hover:bg-red-700"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm">{message.content}</p>
+                                {message.updatedAt && message.updatedAt !== message.createdAt && (
+                                  <p className="text-xs opacity-50 mt-1">(editado)</p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 px-2">
+                            <span className="text-xs text-zinc-500">
+                              {formatTime(message.createdAt)}
+                            </span>
+                            {isOwnMessage && !isEditing && (
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => startEditing(message)}
+                                  className="p-1 hover:bg-zinc-800 rounded"
+                                  title="Editar"
+                                >
+                                  <Edit2 className="w-3 h-3 text-zinc-500" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(message.id)}
+                                  className="p-1 hover:bg-zinc-800 rounded"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-3 h-3 text-zinc-500" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input de mensaje */}
+                <div className="p-4 border-t border-zinc-800">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={handleTyping}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      placeholder="Escribe un mensaje..."
+                      disabled={!isConnected || isSending}
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim() || !isConnected || isSending}
+                      className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSending ? (
+                        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+                  <h3 className="text-lg font-semibold mb-2">Selecciona una conversación</h3>
+                  <p className="text-zinc-500">
+                    Elige una conversación de la lista para comenzar a chatear
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
         {/* Área de chat */}
         <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col flex-1`}>
