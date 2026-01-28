@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useSocket } from '@/contexts/SocketContext';
 import messageService, { type Conversation, type Message } from '@/services/message.service';
+import toast from 'react-hot-toast';
 
 export function MessagesPage() {
   const { user } = useAuthStore();
@@ -54,12 +55,12 @@ export function MessagesPage() {
           initialMessage: `Consulta sobre pedido #${orderNumber}`
         });
 
-        if (response.data && response.data.conversation) {
+        if (response.data) {
            console.log('createOrGetConversation response:', response);
-           console.log('response.data.conversation:', response.data.conversation);
+           console.log('response.data:', response.data);
 
-           // Extract the conversation from response.data.conversation
-           const newConv = response.data.conversation;
+           // Extract the conversation from response.data
+           const newConv = response.data;
 
            if (!newConv.id) {
              console.error('Conversation missing id property:', newConv);
@@ -73,7 +74,7 @@ export function MessagesPage() {
            setSelectedConversation(newConv);
            toast.success('Conversación creada exitosamente');
         } else {
-          console.error('createOrGetConversation response missing conversation:', response);
+          console.error('createOrGetConversation response missing data:', response);
           toast.error('Error al crear conversación: respuesta inválida');
         }
       }
