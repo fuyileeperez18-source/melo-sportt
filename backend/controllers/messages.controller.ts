@@ -54,50 +54,73 @@ export const getConversations = async (req: Request, res: Response) => {
          WHERE m.conversation_id = c.id
          AND m.sender_id != ${userParamPlaceholder}
          AND m.is_read = false) as unread_count,
-        (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages
+        (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages,
+        lm_id, lm_conversation_id, lm_sender_id, lm_content, lm_is_read, lm_read_at, lm_attachment_url, lm_attachment_type, lm_attachment_name, lm_attachment_size, lm_created_at, lm_updated_at, lm_sender_name, lm_sender_avatar
       FROM conversations c
       INNER JOIN users u ON c.user_id = u.id
       LEFT JOIN products p ON c.product_id = p.id
       LEFT JOIN orders o ON c.order_id = o.id
+      LEFT JOIN LATERAL (
+        SELECT
+          m.id as lm_id,
+          m.conversation_id as lm_conversation_id,
+          m.sender_id as lm_sender_id,
+          m.content as lm_content,
+          m.is_read as lm_is_read,
+          m.read_at as lm_read_at,
+          m.attachment_url as lm_attachment_url,
+          m.attachment_type as lm_attachment_type,
+          m.attachment_name as lm_attachment_name,
+          m.attachment_size as lm_attachment_size,
+          m.created_at as lm_created_at,
+          m.updated_at as lm_updated_at,
+          u2.full_name as lm_sender_name,
+          u2.avatar_url as lm_sender_avatar
+        FROM messages m
+        INNER JOIN users u2 ON m.sender_id = u2.id
+        WHERE m.conversation_id = c.id
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      ) lm ON true
       ${whereClause}
       ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
       LIMIT $1 OFFSET $2`,
       finalParams
     );
 
-    // Get last message for each conversation
-    const conversations = await Promise.all(
-      conversationsResult.rows.map(async (conv) => {
-        const lastMessageResult = await pool.query(
-          `SELECT m.*, u.id as sender_id, u.full_name as sender_name, u.avatar_url as sender_avatar
-           FROM messages m
-           INNER JOIN users u ON m.sender_id = u.id
-           WHERE m.conversation_id = $1
-           ORDER BY m.created_at DESC
-           LIMIT 1`,
-          [conv.id]
-        );
-
-        return {
-          id: conv.id,
-          customerId: conv.customer_id,
-          customerName: conv.customer_name,
-          customerEmail: conv.customer_email,
-          customerAvatar: conv.customer_avatar,
-          orderId: conv.order_id,
-          orderNumber: conv.order_number,
-          productId: conv.product_id,
-          productName: conv.product_name,
-          status: conv.status,
-          lastMessageAt: conv.last_message_at,
-          lastMessage: lastMessageResult.rows[0] || null,
-          unreadCount: parseInt(conv.unread_count),
-          totalMessages: parseInt(conv.total_messages),
-          createdAt: conv.created_at,
-          updatedAt: conv.updated_at,
-        };
-      })
-    );
+    const conversations = conversationsResult.rows.map((conv) => ({
+      id: conv.id,
+      customerId: conv.customer_id,
+      customerName: conv.customer_name,
+      customerEmail: conv.customer_email,
+      customerAvatar: conv.customer_avatar,
+      orderId: conv.order_id,
+      orderNumber: conv.order_number,
+      productId: conv.product_id,
+      productName: conv.product_name,
+      status: conv.status,
+      lastMessageAt: conv.last_message_at,
+      lastMessage: conv.lm_id ? {
+        id: conv.lm_id,
+        conversation_id: conv.lm_conversation_id,
+        sender_id: conv.lm_sender_id,
+        content: conv.lm_content,
+        is_read: conv.lm_is_read,
+        read_at: conv.lm_read_at,
+        attachment_url: conv.lm_attachment_url,
+        attachment_type: conv.lm_attachment_type,
+        attachment_name: conv.lm_attachment_name,
+        attachment_size: conv.lm_attachment_size,
+        created_at: conv.lm_created_at,
+        updated_at: conv.lm_updated_at,
+        sender_name: conv.lm_sender_name,
+        sender_avatar: conv.lm_sender_avatar,
+      } : null,
+      unreadCount: parseInt(conv.unread_count || '0'),
+      totalMessages: parseInt(conv.total_messages || '0'),
+      createdAt: conv.created_at,
+      updatedAt: conv.updated_at,
+    }));
 
     // Count total conversations
     let countParams: any[] = [];
