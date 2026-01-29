@@ -18,6 +18,8 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
 
   const allowedOrigins = [
     ...corsOrigins,
+    'https://www.melosportt.com',
+    'https://melosportt.com',
     /^https:\/\/.*\.vercel\.app$/,
   ];
 

@@ -25,6 +25,9 @@ const allowedOrigins = env.ALLOWED_ORIGINS
   ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : [env.FRONTEND_URL];
 
+// Add custom domains manually to ensure they are always allowed
+allowedOrigins.push('https://www.melosportt.com', 'https://melosportt.com');
+
 // Add Vercel preview deployments automatically
 const vercelPreviewPattern = /^https:\/\/melo-sportt(?:-.*)?\.vercel\.app$/;
 

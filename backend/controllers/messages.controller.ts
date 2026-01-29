@@ -67,18 +67,9 @@ export const getConversations = async (req: Request, res: Response) => {
       havingClause = 'HAVING unread_count > 0';
     }
 
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
-      // Customer only sees their conversations
-      whereClause = 'WHERE c.user_id = $3';
-      queryParams.push(userId);
-    }
-
-    // Create final parameters array
-    const finalParams = [...queryParams, userId];
-    // Calculate user parameter position (1-based)
-    const userParamPosition = finalParams.length; // userId es el último elemento
-    // Create the parameter placeholder
-    const userParamPlaceholder = `$${userParamPosition}`;
+    const userIdForSubqueryParamIndex = paramIndex;
+    queryParams.push(userId);
+    paramIndex++;
 
     const conversationsResult = await pool.query(
       `SELECT
@@ -99,7 +90,7 @@ export const getConversations = async (req: Request, res: Response) => {
         o.order_number,
         (SELECT COUNT(*) FROM messages m
          WHERE m.conversation_id = c.id
-         AND m.sender_id != $3
+         AND m.sender_id != $${userIdForSubqueryParamIndex}
          AND m.is_read = false) as unread_count,
         (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages,
         lm_id, lm_conversation_id, lm_sender_id, lm_content, lm_is_read, lm_read_at, lm_attachment_url, lm_attachment_type, lm_attachment_name, lm_attachment_size, lm_created_at, lm_updated_at, lm_sender_name, lm_sender_avatar
@@ -133,7 +124,7 @@ export const getConversations = async (req: Request, res: Response) => {
       ${havingClause}
       ORDER BY ${sortBy.replace('-', ' ')} NULLS LAST
       LIMIT $1 OFFSET $2`,
-      [...queryParams, userId]
+      queryParams
     );
 
     const conversations = conversationsResult.rows.map((conv) => ({
