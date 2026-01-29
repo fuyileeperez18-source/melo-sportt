@@ -76,9 +76,12 @@ export const getConversations = async (page = 1, limit = 20): Promise<any> => {
     page: String(page),
     limit: String(limit),
   };
-  const response = await api.get('/messages/conversations', params);
-  // Backend devuelve directamente {conversations, pagination} o con wrapper
-  return response.data || response || { conversations: [], pagination: {} };
+  const apiResponse = await api.get('/messages/conversations', params);
+  const data = apiResponse.data;
+  return {
+    conversations: data?.data?.conversations || data?.conversations || [],
+    pagination: data?.data?.pagination || data?.pagination || {}
+  };
 };
 
 /**
@@ -93,9 +96,12 @@ export const getMessages = async (
     page: String(page),
     limit: String(limit),
   };
-  const response = await api.get(`/messages/conversations/${conversationId}/messages`, params);
-  // Backend devuelve directamente {messages, pagination} o con wrapper como getConversations
-  return response.data || response || { data: { messages: [], pagination: {} } };
+  const apiResponse = await api.get(`/messages/conversations/${conversationId}/messages`, params);
+  const data = apiResponse.data;
+  return {
+    messages: data?.data?.messages || data?.messages || [],
+    pagination: data?.data?.pagination || data?.pagination || {}
+  };
 };
 
 /**
