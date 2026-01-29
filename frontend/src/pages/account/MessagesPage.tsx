@@ -1,28 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, MessageSquare, Send, Trash2, Edit2, Check, X, User, Package, Clock } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { OrderList } from '@/types/order';
+import type { OrderList, Order } from '@/types/order';
 import orderService from '@/services/order.service';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  ArrowLeft,
-  MessageSquare,
-  Send,
-  Trash2,
-  Edit2,
-  Check,
-  X,
-  User,
-  Package,
-  ShoppingBag,
-  Clock,
-} from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useSocket } from '@/contexts/SocketContext';
 import messageService, { type Conversation, type Message } from '@/services/message.service';
-import { orderService } from '@/lib/services';
 import { Modal } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 
@@ -203,7 +189,7 @@ export function MessagesPage() {
   async function loadConversations() {
     try {
       console.log('Calling messageService.getConversations...');
-      const response = await messageService.getConversations(1, 50);
+      const response = await messageService.getConversations({ page: 1, limit: 50 });
       console.log('getConversations response:', response);
       console.log('response structure:', JSON.stringify(response, null, 2));
 
@@ -237,8 +223,9 @@ export function MessagesPage() {
 
   // Fetch user orders for modal
   async function fetchUserOrders() {
+    const [userOrders, setUserOrders] = useState<OrderList[]>([]);
     try {
-      const orders = await orderService.getByUser(user!.id);
+      const orders = await orderService.getUserOrders(user!.id);
       setUserOrders(orders);
       if (orders.length === 0) {
         toast.error('Crea un pedido primero para poder chatear.');
@@ -251,7 +238,7 @@ export function MessagesPage() {
   }
 
   // Create conversation for specific order
-  async function createOrderConversation(orderId) {
+  async function createOrderConversation(orderId: string) {
     try {
       const response = await messageService.createOrGetConversation({
         orderId,
@@ -391,7 +378,6 @@ export function MessagesPage() {
               <Package className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
               <p className="text-zinc-400 mb-6">No tienes pedidos aún.</p>
               <Button
-                asChild
                 className="w-full"
                 onClick={() => setShowOrderModal(false)}
               >

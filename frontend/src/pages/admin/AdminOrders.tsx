@@ -189,7 +189,7 @@ export function AdminOrders() {
             >
               Filtros
             </Button>
-            <IconButton onClick={() => loadOrders(page)} disabled={isLoading}>
+            <IconButton onClick={() => loadOrders(currentPage)} disabled={isLoading}>
               <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
             </IconButton>
           </div>

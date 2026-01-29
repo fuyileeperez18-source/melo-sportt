@@ -107,7 +107,7 @@ export function ChatWidget() {
   // Order selection functions
   const fetchUserOrders = async () => {
     try {
-      const orders = await orderService.getByUser(user!.id);
+      const orders = await orderService.getUserOrders(user!.id);
       setUserOrders(orders);
       if (orders.length === 0) {
         toast.error('Crea un pedido primero para poder chatear.');
