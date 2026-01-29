@@ -202,7 +202,7 @@ export function MessagesPage() {
         setConversations(convs);
 
         // Para clientes: crear general solo si no existe (orderId/productId null)
-        const hasGeneral = convs.some(c => !c.orderId && !c.productId);
+        const hasGeneral = convs.some((c: Conversation) => !c.orderId && !c.productId);
         if (user?.role === 'customer' && !hasGeneral) {
           await createGeneralSupportConversation();
         } else if (user?.role === 'customer' && convs.length > 0) {
