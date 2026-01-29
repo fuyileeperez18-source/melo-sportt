@@ -128,9 +128,12 @@ export function AdminMessages() {
     try {
       const response = await messageService.getConversations(1, 50);
       console.log('AdminMessages loadConversations FULL response:', response);
-      const conversationsData = response.conversations || response.data?.conversations || response.data || (Array.isArray(response) ? response : []) || [];\n      console.log('Parsed length:', conversationsData.length);
+      const conversationsData = response.conversations || response.data?.conversations || response.data || (Array.isArray(response) ? response : []) || [];
+      console.log('Parsed length:', conversationsData.length);
       console.log('Parsed conversations length:', conversationsData.length);
-      setConversations(conversationsData);\n      console.log('Set convs:', conversationsData.length);\n      toast(`Cargadas ${conversationsData.length} conversaciones`);
+      setConversations(conversationsData);
+      console.log('Set convs:', conversationsData.length);
+      toast(`Cargadas ${conversationsData.length} conversaciones`);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');
@@ -238,7 +241,7 @@ export function AdminMessages() {
       let matchesSearch =
         conv.customerEmail.toLowerCase().includes(searchLower) ||
         (conv.productName?.toLowerCase().includes(searchLower) ?? false) ||
-        conv.orderNumber?.toLowerCase().includes(searchLower) ?? false;
+        (conv.orderNumber?.toLowerCase().includes(searchLower) ?? false);
 
       // Customer name: fuzzy or exact
       if (fuzzyCustomerToggle) {
@@ -252,13 +255,15 @@ export function AdminMessages() {
       const matchesUnread = !filterUnread || conv.unreadCount > 0;
 
       // Status filter
-      const convStatus = (conv.status || '').toLowerCase();\n      const matchesStatus = statusFilter === 'all' || convStatus.includes(statusFilter.toLowerCase());
+      const convStatus = (conv.status || '').toLowerCase();
+      const matchesStatus = statusFilter === 'all' || convStatus.includes(statusFilter.toLowerCase());
 
       // Exact order match override
       const matchesOrder = !searchQuery || (!exactOrderToggle || (conv.orderNumber?.toLowerCase() === searchLower.replace(/^#/, '')));
 
       // Date range on lastMessageAt
-      const lastMsgDate = conv.lastMessageAt ? new Date(conv.lastMessageAt) : null;\n      const isValidDate = lastMsgDate && !isNaN(lastMsgDate.getTime());
+      const lastMsgDate = conv.lastMessageAt ? new Date(conv.lastMessageAt) : null;
+      const isValidDate = lastMsgDate && !isNaN(lastMsgDate.getTime());
       const matchesDateFrom = !dateFrom || (!isValidDate ? false : lastMsgDate >= new Date(dateFrom));
       const matchesDateTo = !dateTo || (!isValidDate ? false : lastMsgDate <= new Date(dateTo + 'T23:59:59.999Z'));
 

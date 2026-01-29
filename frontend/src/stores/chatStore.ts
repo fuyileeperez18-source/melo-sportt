@@ -100,7 +100,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isLoading: true });
     try {
       const response = await messageService.getConversations(1, 20);
-      const conversations = response.conversations || response.data?.conversations || [];
+      const rawConversations = response.conversations || response.data?.conversations || [];
+      const conversations: Conversation[] = rawConversations.map((conv: any): Conversation => ({
+        id: conv.id,
+        user_id: conv.customerId,
+        channel: 'website' as const,
+        status: conv.status || 'pending' as const,
+        unread_count: conv.unreadCount || 0,
+        created_at: conv.createdAt || new Date().toISOString(),
+        updated_at: conv.updatedAt || new Date().toISOString(),
+      }));
       console.log('ChatStore convs loaded:', conversations.length);
       set({ conversations });
     } catch (error) {
@@ -115,14 +124,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await messageService.getMessages(conversationId, 1, 50);
       const rawMessages = response.messages || response.data?.messages || [];
-      const messages = rawMessages.map((m: any) => ({
+      const messages: ChatMessage[] = rawMessages.map((m: any) => ({
         id: m.id,
-        conversation_id: m.conversationId,
-        sender_type: m.sender.role === 'customer' ? 'user' : 'agent',
+        conversation_id: m.conversationId || m.conversation_id || '',
+        sender_type: m.sender.role === 'customer' ? 'user' as const : 'agent' as const,
         content: m.content,
-        message_type: 'text',
+        message_type: 'text' as const,
         is_read: m.isRead,
-        created_at: m.createdAt,
+        created_at: m.createdAt || m.created_at || new Date().toISOString(),
       }));
       console.log('ChatStore msgs loaded:', messages.length);
       set({ messages });
@@ -189,11 +198,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         const newConv = convResponse.data;
         set({
-          activeConversation: newConv,
+          activeConversation: {
+            id: newConv.id,
+            user_id: newConv.customerId,
+            channel: 'website' as const,
+            status: newConv.status || 'active' as const,
+            unread_count: newConv.unreadCount || 0,
+            created_at: newConv.createdAt || new Date().toISOString(),
+            updated_at: newConv.updatedAt || new Date().toISOString(),
+          },
           agentActiveConversationId: newConv.id,
           messages: [],
-          conversations: [...get().conversations, newConv].sort((a, b) =>
-            new Date(b.lastMessageAt || b.createdAt).getTime() - new Date(a.lastMessageAt || a.createdAt).getTime()
+          conversations: [...get().conversations, {
+            id: newConv.id,
+            user_id: newConv.customerId,
+            channel: 'website' as const,
+            status: newConv.status || 'active' as const,
+            unread_count: newConv.unreadCount || 0,
+            created_at: newConv.createdAt || newConv.created_at || new Date().toISOString(),
+            updated_at: newConv.updatedAt || newConv.updated_at || new Date().toISOString(),
+          }].sort((a, b) =>
+            new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
           )
         });
         await get().fetchMessages(newConv.id);

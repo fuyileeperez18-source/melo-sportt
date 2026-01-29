@@ -71,16 +71,20 @@ export interface GetMessagesResponse {
 /**
  * Get all conversations for the current user
  */
-export const getConversations = async (page = 1, limit = 20): Promise<any> => {
+export const getConversations = async (page = 1, limit = 20): Promise<{ conversations: Conversation[]; pagination: any; data?: any }> => {
   const params: Record<string, string> = {
     page: String(page),
     limit: String(limit),
   };
   const apiResponse = await api.get('/messages/conversations', params);
-  const data = apiResponse.data;\n  console.log('Service convs raw:', Object.keys(data || {}));
+  const data = apiResponse.data as any;
+  console.log('Service convs raw:', Object.keys(data || {}));
+  const conversations = data?.data?.conversations || data?.conversations || (Array.isArray(data) ? data : []) || [];
+  const pagination = data?.data?.pagination || data?.pagination || {};
   return {
-    conversations: data?.data?.conversations || data?.conversations || (Array.isArray(data) ? data : []) || [],
-    pagination: data?.data?.pagination || data?.pagination || {}
+    conversations,
+    pagination,
+    data: { conversations, pagination }
   };
 };
 
@@ -91,16 +95,21 @@ export const getMessages = async (
   conversationId: string,
   page = 1,
   limit = 50
-): Promise<any> => {
+): Promise<{ messages: Message[]; pagination: any; data?: any; success?: boolean }> => {
   const params: Record<string, string> = {
     page: String(page),
     limit: String(limit),
   };
   const apiResponse = await api.get(`/messages/conversations/${conversationId}/messages`, params);
-  const data = apiResponse.data;\n  console.log('Service convs raw:', Object.keys(data || {}));
+  const data = apiResponse.data as any;
+  console.log('Service convs raw:', Object.keys(data || {}));
+  const messages = data?.data?.messages || data?.messages || [];
+  const pagination = data?.data?.pagination || data?.pagination || {};
   return {
-    messages: data?.data?.messages || data?.messages || [],
-    pagination: data?.data?.pagination || data?.pagination || {}
+    messages,
+    pagination,
+    data: { messages, pagination },
+    success: data?.success ?? true
   };
 };
 
