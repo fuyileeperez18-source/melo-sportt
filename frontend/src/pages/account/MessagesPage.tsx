@@ -223,8 +223,7 @@ export function MessagesPage() {
       console.error('Error loading conversations:', error);
       // Para clientes: intentar crear conversación general si hay error
       if (user?.role === 'customer') {
-        await // createGeneralSupportConversation removed as per plan();
-      }
+        }
     } finally {
       setIsLoading(false);
     }

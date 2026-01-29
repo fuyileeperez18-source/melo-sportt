@@ -194,7 +194,7 @@ export const orderService = {
     return result.rows[0] as Order;
   },
 
-  async getAll(filters?: OrderFilters): Promise<{ data: Order[]; count: number }> {
+  async getAll(filters?: import('../types/order').OrderFilters): Promise<{ data: Order[]; count: number }> {
     let sql = `
       SELECT o.*,
         json_build_object(

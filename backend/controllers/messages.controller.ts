@@ -22,12 +22,12 @@ export const getConversations = async (req: Request, res: Response) => {
     const sortByDirection = (req.query.sortBy as string)?.split('-')[1] || 'desc';
     const sortBy = `${sortByField} ${sortByDirection.toUpperCase()}`;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt((req.query.page || '1') as string);
+    const limitNum = parseInt((req.query.limit || '50') as string);
     const offset = (pageNum - 1) * limitNum;
 
     let whereConditions: string[] = [];
-    let queryParams: any[] = [limitNum, offset];
+    let queryParams: (string | number)[] = [limitNum, offset];
     let paramIndex = 3; // After limit, offset
 
     if (userRole !== 'admin' && userRole !== 'super_admin') {
@@ -280,8 +280,8 @@ export const getMessages = async (req: Request, res: Response) => {
 
     const { page = 1, limit = 50 } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt((req.query.page || '1') as string);
+    const limitNum = parseInt((req.query.limit || '50') as string);
     const offset = (pageNum - 1) * limitNum;
 
     // Verify conversation access
