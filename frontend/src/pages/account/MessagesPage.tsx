@@ -32,6 +32,7 @@ export function MessagesPage() {
   const [isSending, setIsSending] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const isCreatingGeneralRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Handle location state for initiating chat about an order
@@ -221,6 +222,8 @@ export function MessagesPage() {
 
   // Crear conversación general de soporte MELO SPORTT para clientes
   async function createGeneralSupportConversation() {
+    if (isCreatingGeneralRef.current) return;
+    isCreatingGeneralRef.current = true;
     try {
       console.log('Creando conversación general de soporte MELO SPORTT...');
       const response = await messageService.createOrGetConversation({
@@ -241,6 +244,8 @@ export function MessagesPage() {
     } catch (error) {
       console.error('Error en createGeneralSupportConversation:', error);
       toast.error('No se pudo crear la conversación de soporte');
+    } finally {
+      isCreatingGeneralRef.current = false;
     }
   }
 
