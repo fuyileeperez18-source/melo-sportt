@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { ChatMessage, Conversation, QuickReply } from '@/types';
-import { chatService } from '@/lib/services';
+import messageService, { Conversation as PersistentConversation, Message as PersistentMessage } from '@/services/message.service';
 
 interface ChatState {
   // State
@@ -12,6 +12,7 @@ interface ChatState {
   isLoading: boolean;
   isTyping: boolean;
   unreadCount: number;
+  agentActiveConversationId: null,
 
   // Actions
   toggleChat: () => void;
@@ -21,8 +22,9 @@ interface ChatState {
   maximizeChat: () => void;
 
   setActiveConversation: (conversation: Conversation | null) => void;
-  fetchConversations: (userId?: string) => Promise<void>;
+  fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId: string) => Promise<void>;
+  agentActiveConversationId: string | null;
   sendMessage: (content: string, type?: ChatMessage['message_type']) => Promise<void>;
   handleQuickReply: (reply: QuickReply) => Promise<void>;
   startNewConversation: () => void;
@@ -97,10 +99,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setActiveConversation: (conversation) => set({ activeConversation: conversation }),
 
-  fetchConversations: async (userId) => {
+  fetchConversations: async () => {
     set({ isLoading: true });
     try {
-      const conversations = await chatService.getConversations(userId);
+      const response = await messageService.getConversations(1, 20);
+      const conversations = response.conversations || response.data?.conversations || [];
+      console.log('ChatStore convs loaded:', conversations.length);
       set({ conversations });
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -112,7 +116,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
   fetchMessages: async (conversationId) => {
     set({ isLoading: true });
     try {
-      const messages = await chatService.getMessages(conversationId);
+      const response = await messageService.getMessages(conversationId, 1, 50);
+      const rawMessages = response.messages || response.data?.messages || [];
+      const messages = rawMessages.map((m: PersistentMessage): ChatMessage => ({
+        id: m.id,
+        conversation_id: m.conversationId,
+        sender_type: m.sender.role === 'customer' ? 'user' : 'support',
+        content: m.content,
+        message_type: 'text' as const,
+        is_read: m.isRead,
+        created_at: m.createdAt,
+      }));
+      console.log('ChatStore msgs loaded:', messages.length);
       set({ messages });
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -123,6 +138,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   sendMessage: async (content, type = 'text') => {
     const { activeConversation } = get();
+
+    if (!get().activeConversation) return;
+
+    // Send to backend first
+    try {
+      await messageService.sendMessage(get().activeConversation.id, content);
+    } catch (error) {
+      console.error('Send failed:', error);
+      toast.error('Error enviando mensaje');
+      return;
+    }
 
     // Create user message locally
     const userMessage: ChatMessage = {
@@ -137,8 +163,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set((state) => ({ messages: [...state.messages, userMessage] }));
 
-    // Process message with bot
-    await get().processUserMessage(content);
+    // Bot response solo si NO es modo agente
+    const { agentActiveConversationId, activeConversation } = get();
+    if (agentActiveConversationId !== activeConversation?.id) {
+      await get().processUserMessage(content);
+    }
   },
 
   handleQuickReply: async (reply) => {
@@ -158,6 +187,45 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     // Get bot response based on payload
+    if (reply.payload === 'agent') {
+      // Escalación a agente: crear conv persistente
+      set({ isTyping: true });
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Delay
+
+      try {
+        const convResponse = await messageService.createOrGetConversation({
+          initialMessage: '¡Transferiendo a agente humano! Un momento...'
+        });
+        const newConv = convResponse.data;
+        set({
+          activeConversation: newConv,
+          agentActiveConversationId: newConv.id,
+          messages: [],
+          conversations: [...get().conversations, newConv].sort((a, b) =>
+            new Date(b.lastMessageAt || b.createdAt).getTime() - new Date(a.lastMessageAt || a.createdAt).getTime()
+          )
+        });
+        await get().fetchMessages(newConv.id);
+      } catch (error) {
+        console.error('Escalación failed:', error);
+        const fallbackMsg = botResponses.default;
+        // Add fallback bot msg
+        set((state) => ({
+          messages: [...state.messages, {
+            id: Date.now().toString(),
+            conversation_id: get().activeConversation?.id || 'local',
+            sender_type: 'bot',
+            content: fallbackMsg,
+            message_type: 'text',
+            is_read: true,
+            created_at: new Date().toISOString(),
+          }],
+          isTyping: false,
+        }));
+      }
+      return;
+    }
+
     const responseKey = reply.payload as keyof typeof botResponses;
     const response = botResponses[responseKey] || botResponses.default;
 

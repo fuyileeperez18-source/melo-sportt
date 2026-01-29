@@ -15,6 +15,8 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { useChatStore, quickReplies } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
+import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
 export function ChatWidget() {
@@ -23,6 +25,8 @@ export function ChatWidget() {
     isMinimized,
     messages,
     isTyping,
+    conversations,
+    activeConversation,
     toggleChat,
     closeChat,
     minimizeChat,
@@ -32,7 +36,11 @@ export function ChatWidget() {
     startNewConversation,
     editMessage,
     deleteMessage,
+    fetchConversations,
+    fetchMessages,
   } = useChatStore();
+
+  const { user } = useAuthStore();
 
   const [inputValue, setInputValue] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -45,6 +53,26 @@ export function ChatWidget() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  // Load conversations on open if empty
+  useEffect(() => {
+    if (isOpen && conversations.length === 0 && user?.id) {
+      fetchConversations();
+    }
+  }, [isOpen, conversations.length]);
+
+  // Poll messages if active conv
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isOpen && activeConversation) {
+      interval = setInterval(() => {
+        fetchMessages(activeConversation.id);
+      }, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isOpen, activeConversation]);
 
   // Focus input when opening
   useEffect(() => {

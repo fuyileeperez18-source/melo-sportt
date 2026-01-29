@@ -44,6 +44,12 @@ export function AdminMessages() {
     loadConversations();
   }, []);
 
+  // Polling cada 30s
+  useEffect(() => {
+    const interval = setInterval(loadConversations, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Escuchar nuevos mensajes en tiempo real
   useEffect(() => {
     if (!isConnected) return;
@@ -114,7 +120,8 @@ export function AdminMessages() {
 
   async function loadConversations() {
     try {
-      const response = await messageService.getConversations();
+      const response = await messageService.getConversations(1, 50);
+      console.log('AdminMessages loadConversations response:', response);
       // Verify response.data existence and structure
       const conversationsData = response?.data?.conversations || (Array.isArray(response?.data) ? response.data : []);
       setConversations(conversationsData);
