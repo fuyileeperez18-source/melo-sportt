@@ -106,7 +106,7 @@ export function Header() {
           <div className="flex items-center justify-between h-20">
             {/* Mobile menu button */}
             <IconButton
-              className="lg:hidden"
+              className="lg:hidden text-white hover:bg-white/10"
               onClick={toggleMobileMenu}
               aria-label="Toggle menu"
             >
