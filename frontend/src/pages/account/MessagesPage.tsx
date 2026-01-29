@@ -200,7 +200,7 @@ export function MessagesPage() {
       const convs = response.conversations || response.data?.conversations || [];
         console.log('Conversations loaded:', convs.length);
         // Ordenar por más reciente primero
-        const sortedConvs = [...convs].sort((a, b) =&gt;
+        const sortedConvs = [...convs].sort((a, b) =>
           new Date(b.lastMessageAt || b.createdAt || '1970').getTime() -
           new Date(a.lastMessageAt || a.createdAt || '1970').getTime()
         );
