@@ -200,8 +200,9 @@ export function MessagesPage() {
         console.log('Conversations loaded:', convs.length);
         setConversations(convs);
 
-        // Para clientes: si no hay conversaciones, crear general
-        if (user?.role === 'customer' && convs.length === 0) {
+        // Para clientes: crear general solo si no existe (orderId/productId null)
+        const hasGeneral = convs.some(c => !c.orderId && !c.productId);
+        if (user?.role === 'customer' && !hasGeneral) {
           await createGeneralSupportConversation();
         } else if (user?.role === 'customer' && convs.length > 0) {
           // Seleccionar primera
@@ -227,8 +228,8 @@ export function MessagesPage() {
         initialMessage: 'Bienvenido al soporte MELO SPORTT. ¿En qué puedo ayudarte hoy?'
       });
 
-      const newConv = response.data;
-      if (newConv && newConv.id) {
+      const newConv = response.data?.conversation || response.data;
+      if (newConv?.id) {
         console.log('Conversación general creada:', newConv);
         await loadConversations();
         setSelectedConversation(newConv);

@@ -125,11 +125,11 @@ export const createOrGetConversation = async (data: {
   initialMessage?: string;
 }): Promise<any> => {
   const response = await api.post('/messages/conversations', data);
-  // Backend devuelve {success, data: {conversation, isNew}}
-  const convData = response.data?.conversation || response.data;
+  // Backend devuelve {success: true, data: {conversation: {...}, isNew: boolean}}
+  const backendData = response.data;
   return {
-    success: response.success !== false,
-    data: convData,
+    success: backendData?.success ?? true,
+    data: backendData?.data?.conversation ?? backendData?.conversation ?? backendData ?? {},
   };
 };
 
