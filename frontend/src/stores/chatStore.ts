@@ -115,7 +115,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await messageService.getMessages(conversationId, 1, 50);
       const rawMessages = response.messages || response.data?.messages || [];
-      const messages = rawMessages.map((m) => ({
+      const messages = rawMessages.map((m: any) => ({
         id: m.id,
         conversation_id: m.conversationId,
         sender_type: m.sender.role === 'customer' ? 'user' : 'agent',
