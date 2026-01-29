@@ -70,7 +70,7 @@ export function AdminOrders() {
       const response = await orderService.getAll({
         limit: itemsPerPage,
         offset: (page - 1) * itemsPerPage,
-        search: searchQuery,
+        search: (searchQuery as any),
         status: statusFilter === 'all' ? undefined : statusFilter
       });
       setOrders(response.data || []);

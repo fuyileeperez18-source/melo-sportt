@@ -20,10 +20,9 @@ import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 // import { motion } from 'framer-motion'; // duplicate removed
-import orderService from '@/services/order.service';
+import orderService from '@/services/order.service';\nimport messageService from '@/services/message.service';
 import { ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { Order } from '@/types';
 
 export function ChatWidget() {
   const {
@@ -108,7 +107,7 @@ export function ChatWidget() {
   const fetchUserOrders = async () => {
     try {
       const orders = await orderService.getUserOrders(user!.id);
-      setUserOrders(orders);
+      setUserOrders(orders as any[]);
       if (orders.length === 0) {
         toast.error('Crea un pedido primero para poder chatear.');
         setShowOrderModal(false);
@@ -121,7 +120,7 @@ export function ChatWidget() {
 
   const createOrderConversation = async (orderId: string) => {
     try {
-      // Use direct service call if store doesn't support\n  const storeConv = await messageService.createOrGetConversation({ orderId, initialMessage: '' });\n  setShowOrderModal(false);
+      const conv = await messageService.createOrGetConversation({ orderId, initialMessage: '' });\n      fetchConversations();\n      setShowOrderModal(false);
       // Assume store handles createOrGetConversation with orderId
       setShowOrderModal(false);
       toast.success('Conversación creada para el pedido');

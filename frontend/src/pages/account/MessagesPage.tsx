@@ -23,7 +23,7 @@ export function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
