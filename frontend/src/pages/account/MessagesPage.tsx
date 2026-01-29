@@ -1,4 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/Button';
+import { ShoppingBag } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import type { OrderList } from '@/types/order';
+import orderService from '@/services/order.service';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -401,7 +407,6 @@ export function MessagesPage() {
                   onClick={() => createOrderConversation(order.id)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                >
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center flex-shrink-0">
