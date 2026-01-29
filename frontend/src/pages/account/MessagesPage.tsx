@@ -196,37 +196,17 @@ export function MessagesPage() {
       console.log('response structure:', JSON.stringify(response, null, 2));
 
       // Debug: check what properties exist
-      if (response && response.data) {
-        console.log('response.data keys:', Object.keys(response.data));
-        if (response.data.conversations) {
-          console.log('Found conversations array, length:', response.data.conversations.length);
-          setConversations(response.data.conversations);
+      const convs = response.conversations || response.data?.conversations || [];
+        console.log('Conversations loaded:', convs.length);
+        setConversations(convs);
 
-          // Para clientes: si no hay conversaciones, crear conversación general MELO SPORTT
-          if (user?.role === 'customer' && response.data.conversations.length === 0) {
-            await createGeneralSupportConversation();
-          }
-          // Para clientes: seleccionar la primera conversación automáticamente
-          else if (user?.role === 'customer' && response.data.conversations.length > 0) {
-            // Clientes solo deben tener una conversación, seleccionar la primera
-            setSelectedConversation(response.data.conversations[0]);
-          }
-        } else {
-          console.error('Unexpected response structure:', response.data);
-          setConversations([]);
-          // Para clientes sin conversaciones: crear conversación general
-          if (user?.role === 'customer') {
-            await createGeneralSupportConversation();
-          }
-        }
-      } else {
-        console.error('response or response.data is undefined');
-        setConversations([]);
-        // Para clientes: crear conversación general
-        if (user?.role === 'customer') {
+        // Para clientes: si no hay conversaciones, crear general
+        if (user?.role === 'customer' && convs.length === 0) {
           await createGeneralSupportConversation();
+        } else if (user?.role === 'customer' && convs.length > 0) {
+          // Seleccionar primera
+          setSelectedConversation(convs[0]);
         }
-      }
     } catch (error) {
       console.error('Error loading conversations:', error);
       // Para clientes: intentar crear conversación general si hay error
@@ -243,20 +223,19 @@ export function MessagesPage() {
     try {
       console.log('Creando conversación general de soporte MELO SPORTT...');
       const response = await messageService.createOrGetConversation({
-        productId: undefined,
-        orderId: undefined,
+        // General support: sin product ni order
         initialMessage: 'Bienvenido al soporte MELO SPORTT. ¿En qué puedo ayudarte hoy?'
       });
 
-      if (response && response.data) {
-        console.log('Conversación general creada:', response.data);
-        // Cargar conversaciones nuevamente para incluir la nueva
+      const newConv = response.data;
+      if (newConv && newConv.id) {
+        console.log('Conversación general creada:', newConv);
         await loadConversations();
-        // Seleccionar automáticamente
-        setSelectedConversation(response.data);
+        setSelectedConversation(newConv);
+        toast.success('Chat de soporte creado');
       } else {
         console.error('Error al crear conversación general:', response);
-        toast.error('Error al crear conversación de soporte');
+        toast.error('Error al crear chat de soporte');
       }
     } catch (error) {
       console.error('Error en createGeneralSupportConversation:', error);

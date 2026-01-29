@@ -71,16 +71,14 @@ export interface GetMessagesResponse {
 /**
  * Get all conversations for the current user
  */
-export const getConversations = async (page = 1, limit = 20): Promise<GetConversationsResponse> => {
+export const getConversations = async (page = 1, limit = 20): Promise<any> => {
   const params: Record<string, string> = {
     page: String(page),
     limit: String(limit),
   };
-  const response = await api.get<GetConversationsResponse>('/messages/conversations', params);
-  if (!response || !response.data) {
-    throw new Error('Invalid response from server');
-  }
-  return response.data;
+  const response = await api.get('/messages/conversations', params);
+  // Backend devuelve directamente {conversations, pagination} o con wrapper
+  return response.data || response || { conversations: [], pagination: {} };
 };
 
 /**
@@ -125,11 +123,13 @@ export const createOrGetConversation = async (data: {
   productId?: string;
   orderId?: string;
   initialMessage?: string;
-}): Promise<CreateConversationResponse> => {
-  const response = await api.post<Conversation>('/messages/conversations', data);
+}): Promise<any> => {
+  const response = await api.post('/messages/conversations', data);
+  // Backend devuelve {success, data: {conversation, isNew}}
+  const convData = response.data?.conversation || response.data;
   return {
-    success: response.success,
-    data: response.data as Conversation,
+    success: response.success !== false,
+    data: convData,
   };
 };
 

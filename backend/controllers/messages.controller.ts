@@ -377,11 +377,9 @@ export const createOrGetConversation = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const { productId, orderId, initialMessage } = req.body;
 
+// Permitir conversaciones de soporte general sin productId ni orderId
     if (!productId && !orderId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Either productId or orderId is required',
-      });
+      // Se creará con product_id=null, order_id=null para soporte general
     }
 
     // Check if conversation already exists
