@@ -128,9 +128,9 @@ export function AdminMessages() {
     try {
       const response = await messageService.getConversations(1, 50);
       console.log('AdminMessages loadConversations FULL response:', response);
-      const conversationsData = response.conversations || response.data || (Array.isArray(response) ? response : []) || [];\n      console.log('AdminMessages parsed convs:', conversationsData.length, conversationsData[0]);
+      const conversationsData = response.conversations || response.data?.conversations || response.data || (Array.isArray(response) ? response : []) || [];\n      console.log('Parsed length:', conversationsData.length);
       console.log('Parsed conversations length:', conversationsData.length);
-      setConversations(conversationsData);\n      console.log('AdminMessages set convs length:', conversationsData.length);\n      toast(`Cargadas ${conversationsData.length} conversaciones`);\n      toast.success(`Cargadas ${conversationsData.length} conversaciones`);
+      setConversations(conversationsData);\n      console.log('Set convs:', conversationsData.length);\n      toast(`Cargadas ${conversationsData.length} conversaciones`);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');

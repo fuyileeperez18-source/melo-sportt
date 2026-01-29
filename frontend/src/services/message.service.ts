@@ -77,7 +77,7 @@ export const getConversations = async (page = 1, limit = 20): Promise<any> => {
     limit: String(limit),
   };
   const apiResponse = await api.get('/messages/conversations', params);
-  const data = apiResponse.data;\n  console.log('message.service getConversations RAW data keys:', Object.keys(data || {}), 'length if array:', Array.isArray(data) ? data.length : 'N/A');
+  const data = apiResponse.data;\n  console.log('Service convs raw:', Object.keys(data || {}));
   return {
     conversations: data?.data?.conversations || data?.conversations || (Array.isArray(data) ? data : []) || [],
     pagination: data?.data?.pagination || data?.pagination || {}
@@ -97,7 +97,7 @@ export const getMessages = async (
     limit: String(limit),
   };
   const apiResponse = await api.get(`/messages/conversations/${conversationId}/messages`, params);
-  const data = apiResponse.data;\n  console.log('message.service getConversations RAW data keys:', Object.keys(data || {}), 'length if array:', Array.isArray(data) ? data.length : 'N/A');
+  const data = apiResponse.data;\n  console.log('Service convs raw:', Object.keys(data || {}));
   return {
     messages: data?.data?.messages || data?.messages || [],
     pagination: data?.data?.pagination || data?.pagination || {}
