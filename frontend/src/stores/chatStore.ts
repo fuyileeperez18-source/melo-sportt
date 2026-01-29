@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ChatMessage, ChatConversation as Conversation, QuickReply } from '@/types';
+import type { ChatMessage, Conversation, QuickReply } from '@/types';
 import type { Conversation as PersistentConversation, Message as PersistentMessage } from '@/services/message.service';
 import messageService from '@/services/message.service';
 
