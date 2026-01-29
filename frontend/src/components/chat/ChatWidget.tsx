@@ -18,11 +18,12 @@ import { useChatStore, quickReplies } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { orderService } from '@/lib/services';
-import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { motion } from 'framer-motion';
+import { orderService } from '@/services/order.service';
 import { ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import type { Order } from '@/types';
 
 export function ChatWidget() {
   const {
