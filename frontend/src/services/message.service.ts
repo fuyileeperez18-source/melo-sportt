@@ -79,7 +79,7 @@ export const getConversations = async (page = 1, limit = 20): Promise<any> => {
   const apiResponse = await api.get('/messages/conversations', params);
   const data = apiResponse.data;
   return {
-    conversations: data?.data?.conversations || data?.conversations || [],
+    conversations: data?.data?.conversations || data?.conversations || (Array.isArray(data) ? data : []) || [],
     pagination: data?.data?.pagination || data?.pagination || {}
   };
 };

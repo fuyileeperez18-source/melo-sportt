@@ -128,9 +128,9 @@ export function AdminMessages() {
     try {
       const response = await messageService.getConversations(1, 50);
       console.log('AdminMessages loadConversations response:', response);
-      const conversationsData = response.conversations || [];
+      const conversationsData = response.conversations || response.data || (Array.isArray(response) ? response : []) || [];\n      console.log('AdminMessages parsed convs:', conversationsData.length, conversationsData[0]);
       console.log('Parsed conversations length:', conversationsData.length);
-      setConversations(conversationsData);
+      setConversations(conversationsData);\n      toast.success(`Cargadas ${conversationsData.length} conversaciones`);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');
@@ -252,15 +252,15 @@ export function AdminMessages() {
       const matchesUnread = !filterUnread || conv.unreadCount > 0;
 
       // Status filter
-      const matchesStatus = statusFilter === 'all' || conv.status.toLowerCase().includes(statusFilter.toLowerCase());
+      const convStatus = (conv.status || '').toLowerCase();\n      const matchesStatus = statusFilter === 'all' || convStatus.includes(statusFilter.toLowerCase());
 
       // Exact order match override
       const matchesOrder = !searchQuery || (!exactOrderToggle || (conv.orderNumber?.toLowerCase() === searchLower.replace(/^#/, '')));
 
       // Date range on lastMessageAt
-      const lastMsgDate = conv.lastMessageAt ? new Date(conv.lastMessageAt) : null;
-      const matchesDateFrom = !dateFrom || (lastMsgDate && lastMsgDate >= new Date(dateFrom));
-      const matchesDateTo = !dateTo || (lastMsgDate && lastMsgDate <= new Date(dateTo + 'T23:59:59.999Z'));
+      const lastMsgDate = conv.lastMessageAt ? new Date(conv.lastMessageAt) : null;\n      const isValidDate = lastMsgDate && !isNaN(lastMsgDate.getTime());
+      const matchesDateFrom = !dateFrom || (!isValidDate ? false : lastMsgDate >= new Date(dateFrom));
+      const matchesDateTo = !dateTo || (!isValidDate ? false : lastMsgDate <= new Date(dateTo + 'T23:59:59.999Z'));
 
       return matchesSearch && matchesUnread && matchesStatus && matchesOrder && matchesDateFrom && matchesDateTo;
     })
@@ -464,7 +464,7 @@ export function AdminMessages() {
       </div>
 
       {/* Chat Layout o Empty State */}
-      {conversations.length === 0 ? (
+            {conversations.length === 0 ? (\n        <div>DEBUG: Raw convs: {conversations.length} | Filtered: {filteredConversations.length}</div>\n      ) : filteredConversations.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
           <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Inbox className="w-10 h-10 text-gray-400" />
