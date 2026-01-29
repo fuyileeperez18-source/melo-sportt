@@ -199,7 +199,12 @@ export function MessagesPage() {
       // Debug: check what properties exist
       const convs = response.conversations || response.data?.conversations || [];
         console.log('Conversations loaded:', convs.length);
-        setConversations(convs);
+        // Ordenar por más reciente primero
+        const sortedConvs = [...convs].sort((a, b) =&gt;
+          new Date(b.lastMessageAt || b.createdAt || '1970').getTime() -
+          new Date(a.lastMessageAt || a.createdAt || '1970').getTime()
+        );
+        setConversations(sortedConvs);
 
         // Para clientes: crear general solo si no existe (orderId/productId null)
         const hasGeneral = convs.some((c: Conversation) => !c.orderId && !c.productId);
@@ -255,11 +260,16 @@ export function MessagesPage() {
       return;
     }
     try {
+      console.log('loadMessages getMessages for conv:', conversationId);
       const response = await messageService.getMessages(conversationId, 1, 100);
-      setMessages(response.data.messages);
+      console.log('loadMessages response:', response);
+      const messagesData = response?.data?.messages || response?.messages || [];
+      setMessages(messagesData);
 
-      // Marcar como leído
-      await messageService.markMessagesAsRead(conversationId);
+      // Marcar como leído solo si respuesta OK
+      if (response && (response.success !== false)) {
+        messageService.markMessagesAsRead(conversationId).catch(console.error);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
     }

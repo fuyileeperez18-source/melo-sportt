@@ -88,16 +88,14 @@ export const getMessages = async (
   conversationId: string,
   page = 1,
   limit = 50
-): Promise<GetMessagesResponse> => {
+): Promise<any> => {
   const params: Record<string, string> = {
     page: String(page),
     limit: String(limit),
   };
-  const response = await api.get<GetMessagesResponse>(`/messages/conversations/${conversationId}/messages`, params);
-  if (!response || !response.data) {
-    throw new Error('Invalid response from server');
-  }
-  return response.data;
+  const response = await api.get(`/messages/conversations/${conversationId}/messages`, params);
+  // Backend devuelve directamente {messages, pagination} o con wrapper como getConversations
+  return response.data || response || { data: { messages: [], pagination: {} } };
 };
 
 /**
