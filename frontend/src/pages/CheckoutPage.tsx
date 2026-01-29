@@ -318,8 +318,9 @@ export function CheckoutPage() {
                           placeholder="tu@correo.com"
                           leftIcon={<Mail className="h-4 w-4 sm:h-5 sm:w-5" />}
                           error={errors.email?.message}
-                        {...register('email')}
-                      />
+                          {...register('email')}
+                        />
+                      </div>
                     </div>
 
                     {/* Name - Optimizado para móviles */}
