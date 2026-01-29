@@ -1,10 +1,8 @@
 import { create } from 'zustand';
 import type { ChatMessage, Conversation, QuickReply } from '@/types';
-import type { Conversation as PersistentConversation, Message as PersistentMessage } from '@/services/message.service';
 import messageService from '@/services/message.service';
 
 interface ChatState {
-  // State
   isOpen: boolean;
   isMinimized: boolean;
   conversations: Conversation[];
@@ -15,7 +13,6 @@ interface ChatState {
   unreadCount: number;
   agentActiveConversationId: string | null;
 
-  // Actions
   toggleChat: () => void;
   openChat: () => void;
   closeChat: () => void;
@@ -31,7 +28,6 @@ interface ChatState {
   editMessage: (messageId: string, newContent: string) => void;
   deleteMessage: (messageId: string) => void;
 
-  // Bot functions
   processUserMessage: (message: string) => Promise<void>;
   getBotResponse: (message: string) => Promise<string>;
   setTyping: (typing: boolean) => void;
@@ -119,12 +115,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await messageService.getMessages(conversationId, 1, 50);
       const rawMessages = response.messages || response.data?.messages || [];
-      const messages = rawMessages.map((m: PersistentMessage): ChatMessage => ({
+      const messages = rawMessages.map((m) => ({
         id: m.id,
         conversation_id: m.conversationId,
         sender_type: m.sender.role === 'customer' ? 'user' : 'agent',
         content: m.content,
-        message_type: 'text' as const,
+        message_type: 'text',
         is_read: m.isRead,
         created_at: m.createdAt,
       }));
@@ -183,11 +179,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ],
     }));
 
-    // Get bot response based on payload
     if (reply.payload === 'agent') {
-      // Escalación a agente: crear conv persistente
       set({ isTyping: true });
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       try {
         const convResponse = await messageService.createOrGetConversation({
@@ -206,7 +200,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } catch (error) {
         console.error('Escalación failed:', error);
         const fallbackMsg = botResponses.default;
-        // Add fallback bot msg
         set((state) => ({
           messages: [...state.messages, {
             id: Date.now().toString(),
@@ -249,7 +242,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   processUserMessage: async (message) => {
     set({ isTyping: true });
 
-    // Simulate typing delay
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     const response = await get().getBotResponse(message);
@@ -273,7 +265,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   getBotResponse: async (message) => {
     const lowerMessage = message.toLowerCase();
 
-    // Simple keyword matching
     if (lowerMessage.includes('hola') || lowerMessage.includes('hi') || lowerMessage.includes('buenos')) {
       return botResponses.greeting;
     }
