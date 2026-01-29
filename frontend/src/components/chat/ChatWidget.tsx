@@ -18,6 +18,11 @@ import { useChatStore, quickReplies } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { orderService } from '@/lib/services';
+import { Modal } from '@/components/ui/Modal';
+import { ShoppingBag } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 export function ChatWidget() {
   const {
@@ -43,6 +48,9 @@ export function ChatWidget() {
   const { user } = useAuthStore();
 
   const [inputValue, setInputValue] = useState('');
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [userOrders, setUserOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [showMenuForMessage, setShowMenuForMessage] = useState<string | null>(null);
@@ -95,6 +103,32 @@ export function ChatWidget() {
     }
   };
 
+  // Order selection functions
+  const fetchUserOrders = async () => {
+    try {
+      const orders = await orderService.getByUser(user.id);
+      setUserOrders(orders);
+      if (orders.length === 0) {
+        toast.error('Crea un pedido primero para poder chatear.');
+        setShowOrderModal(false);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Error al cargar tus pedidos');
+    }
+  };
+
+  const createOrderConversation = async (orderId) => {
+    try {
+      const storeConv = await startNewConversation({ orderId });
+      // Assume store handles createOrGetConversation with orderId
+      setShowOrderModal(false);
+      toast.success('Conversación creada para el pedido');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   const handleStartEdit = (messageId: string, content: string) => {
     setEditingMessageId(messageId);
     setEditingContent(content);
@@ -131,6 +165,60 @@ export function ChatWidget() {
   };
 
   const allMessages = messages.length === 0 ? [welcomeMessage] : messages;
+
+  // Order Modal (before chat for customers)
+  if (showOrderModal) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full max-h-[70vh] overflow-y-auto">
+          <h2 className="text-xl font-bold text-zinc-100 mb-4 text-center">Selecciona un pedido para chatear</h2>
+          {userOrders.length === 0 ? (
+            <div className="text-center py-8">
+              <ShoppingBag className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+              <p className="text-zinc-400 mb-6">No tienes pedidos activos.</p>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setShowOrderModal(false)}
+              >
+                Ir a pedidos
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3 mb-6">
+                {userOrders.map((order) => (
+                  <button
+                    key={order.id}
+                    className="w-full p-4 bg-zinc-800 hover:bg-zinc-700 rounded-xl border border-zinc-700 transition-all flex items-center gap-3"
+                    onClick={() => createOrderConversation(order.id)}
+                  >
+                    <div className="w-10 h-10 bg-zinc-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ShoppingBag className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-zinc-100">#{order.order_number}</p>
+                      <p className="text-sm text-zinc-400 capitalize">{order.status}</p>
+                    </div>
+                    <span className="text-sm font-medium text-zinc-200">{formatCurrency(order.total)}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowOrderModal(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -189,7 +277,14 @@ export function ChatWidget() {
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={startNewConversation}
+                  onClick={() => {
+                    if (user?.role === 'customer') {
+                      setShowOrderModal(true);
+                      fetchUserOrders();
+                    } else {
+                      startNewConversation();
+                    }
+                  }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Nueva conversación"
                 >

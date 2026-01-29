@@ -11,14 +11,60 @@ export const getConversations = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userRole = (req as any).user.role;
-    const { page = 1, limit = 20 } = req.query;
+    const pageStr = (req.query.page as string) || '1';
+    const limitStr = (req.query.limit as string) || '20';
+    const search = (req.query.search as string) || '';
+    const status = (req.query.status as string) || '';
+    const dateFrom = (req.query.dateFrom as string) || '';
+    const dateTo = (req.query.dateTo as string) || '';
+    const unreadOnlyStr = (req.query.unreadOnly as string) || 'false';
+    const sortByRaw = (req.query.sortBy as string) || 'last_message_at-desc';
+    const sortBy = sortByRaw.replace(/-/g, ' ');
 
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
 
-    let whereClause = '';
+    let whereConditions: string[] = [];
     let queryParams: any[] = [limitNum, offset];
+    let paramIndex = 3; // After limit, offset
+
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      whereConditions.push('c.user_id = $' + paramIndex);
+      queryParams.push(userId);
+      paramIndex++;
+    }
+
+    if (search) {
+      whereConditions.push(`(u.full_name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex+1} OR COALESCE(o.order_number, '') ILIKE $${paramIndex+2})`);
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      paramIndex += 3;
+    }
+
+    if (status) {
+      whereConditions.push(`c.status = $${paramIndex}`);
+      queryParams.push(status);
+      paramIndex++;
+    }
+
+    if (dateFrom) {
+      whereConditions.push(`c.last_message_at >= $${paramIndex}`);
+      queryParams.push(dateFrom);
+      paramIndex++;
+    }
+
+    if (dateTo) {
+      whereConditions.push(`c.last_message_at <= $${paramIndex}`);
+      queryParams.push(dateTo);
+      paramIndex++;
+    }
+
+    let whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+
+    let havingClause = '';
+    if (unreadOnly === 'true') {
+      havingClause = 'HAVING unread_count > 0';
+    }
 
     if (userRole !== 'admin' && userRole !== 'super_admin') {
       // Customer only sees their conversations
@@ -52,7 +98,7 @@ export const getConversations = async (req: Request, res: Response) => {
         o.order_number,
         (SELECT COUNT(*) FROM messages m
          WHERE m.conversation_id = c.id
-         AND m.sender_id != ${userParamPlaceholder}
+         AND m.sender_id != $3
          AND m.is_read = false) as unread_count,
         (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages,
         lm_id, lm_conversation_id, lm_sender_id, lm_content, lm_is_read, lm_read_at, lm_attachment_url, lm_attachment_type, lm_attachment_name, lm_attachment_size, lm_created_at, lm_updated_at, lm_sender_name, lm_sender_avatar
@@ -83,9 +129,10 @@ export const getConversations = async (req: Request, res: Response) => {
         LIMIT 1
       ) lm ON true
       ${whereClause}
-      ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
+      ${havingClause}
+      ORDER BY ${sortBy.replace('-', ' ')} NULLS LAST
       LIMIT $1 OFFSET $2`,
-      finalParams
+      [...queryParams, userId]
     );
 
     const conversations = conversationsResult.rows.map((conv) => ({
@@ -122,14 +169,67 @@ export const getConversations = async (req: Request, res: Response) => {
       updatedAt: conv.updated_at,
     }));
 
-    // Count total conversations
+    // Count total conversations - mirror WHERE and HAVING
+    let countWhereConditions: string[] = [];
     let countParams: any[] = [];
-    let countQuery = `SELECT COUNT(*) FROM conversations c`;
+    let countParamIndex = 1;
 
-    if (whereClause) {
-      // Cuando whereClause es 'WHERE c.user_id = $3', necesitamos $1
-      countQuery = `SELECT COUNT(*) FROM conversations c WHERE c.user_id = $1`;
-      countParams = [userId];
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      countWhereConditions.push('c.user_id = $' + countParamIndex);
+      countParams.push(userId);
+      countParamIndex++;
+    }
+
+    if (search) {
+      countWhereConditions.push(`(u.full_name ILIKE $${countParamIndex} OR u.email ILIKE $${countParamIndex+1} OR COALESCE(o.order_number, '') ILIKE $${countParamIndex+2})`);
+      countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      countParamIndex += 3;
+    }
+
+    if (status) {
+      countWhereConditions.push(`c.status = $${countParamIndex}`);
+      countParams.push(status);
+      countParamIndex++;
+    }
+
+    if (dateFrom) {
+      countWhereConditions.push(`c.last_message_at >= $${countParamIndex}`);
+      countParams.push(dateFrom);
+      countParamIndex++;
+    }
+
+    if (dateTo) {
+      countWhereConditions.push(`c.last_message_at <= $${countParamIndex}`);
+      countParams.push(dateTo);
+      countParamIndex++;
+    }
+
+    let countWhereClause = countWhereConditions.length > 0 ? 'WHERE ' + countWhereConditions.join(' AND ') : '';
+
+    const countQuery = `SELECT COUNT(*) FROM conversations c INNER JOIN users u ON c.user_id = u.id LEFT JOIN orders o ON c.order_id = o.id ${countWhereClause}`;
+    if (unreadOnly === 'true') {
+      // Special count for unread only
+      const unreadCountQuery = `
+        SELECT COUNT(*)
+        FROM (
+          SELECT 1 FROM conversations c
+          INNER JOIN users u ON c.user_id = u.id
+          LEFT JOIN orders o ON c.order_id = o.id
+          INNER JOIN LATERAL (
+            SELECT 1 FROM messages m
+            WHERE m.conversation_id = c.id
+            AND m.sender_id != $${countParams.length + 1}
+            AND m.is_read = false
+            LIMIT 1
+          ) unread ON true
+          ${countWhereClause}
+        ) sub`;
+      countParams.push(userId);
+      const unreadResult = await pool.query(unreadCountQuery, countParams);
+      const totalCount = parseInt(unreadResult.rows[0].count);
+    } else {
+      const countResult = await pool.query(countQuery, countParams);
+      const totalCount = parseInt(countResult.rows[0].count);
     }
 
     const countResult = await pool.query(countQuery, countParams);

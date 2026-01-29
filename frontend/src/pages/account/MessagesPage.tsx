@@ -16,6 +16,8 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useSocket } from '@/contexts/SocketContext';
 import messageService, { type Conversation, type Message } from '@/services/message.service';
+import { orderService } from '@/lib/services';
+import { Modal } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 
 export function MessagesPage() {
@@ -28,6 +30,9 @@ export function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [userOrders, setUserOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -206,12 +211,12 @@ export function MessagesPage() {
         );
         setConversations(sortedConvs);
 
-        // Para clientes: crear general solo si no existe (orderId/productId null)
-        const hasGeneral = convs.some((c: Conversation) => !c.orderId && !c.productId);
-        if (user?.role === 'customer' && !hasGeneral) {
-          await createGeneralSupportConversation();
+        // Para clientes: mostrar modal selección order si no hay conv con order
+        const hasOrderConv = convs.some((c: Conversation) => c.orderId);
+        if (user?.role === 'customer' && (!hasOrderConv || convs.length === 0)) {
+          setShowOrderModal(true);
+          fetchUserOrders();
         } else if (user?.role === 'customer' && convs.length > 0) {
-          // Seleccionar primera
           setSelectedConversation(convs[0]);
         }
     } catch (error) {
@@ -225,32 +230,38 @@ export function MessagesPage() {
     }
   }
 
-  // Crear conversación general de soporte MELO SPORTT para clientes
-  async function createGeneralSupportConversation() {
-    if (isCreatingGeneralRef.current) return;
-    isCreatingGeneralRef.current = true;
+  // Fetch user orders for modal
+  async function fetchUserOrders() {
     try {
-      console.log('Creando conversación general de soporte MELO SPORTT...');
-      const response = await messageService.createOrGetConversation({
-        // General support: sin product ni order
-        initialMessage: 'Bienvenido al soporte MELO SPORTT. ¿En qué puedo ayudarte hoy?'
-      });
-
-      const newConv = response.data?.conversation || response.data;
-      if (newConv?.id) {
-        console.log('Conversación general creada:', newConv);
-        await loadConversations();
-        setSelectedConversation(newConv);
-        toast.success('Chat de soporte creado');
-      } else {
-        console.error('Error al crear conversación general:', response);
-        toast.error('Error al crear chat de soporte');
+      const orders = await orderService.getByUser(user.id);
+      setUserOrders(orders);
+      if (orders.length === 0) {
+        toast.error('Crea un pedido primero para poder chatear.');
+        setShowOrderModal(false);
       }
     } catch (error) {
-      console.error('Error en createGeneralSupportConversation:', error);
-      toast.error('No se pudo crear la conversación de soporte');
-    } finally {
-      isCreatingGeneralRef.current = false;
+      console.error('Error fetching orders:', error);
+      toast.error('Error al cargar tus pedidos');
+    }
+  }
+
+  // Create conversation for specific order
+  async function createOrderConversation(orderId) {
+    try {
+      const response = await messageService.createOrGetConversation({
+        orderId,
+        initialMessage: `Consulta sobre mi pedido`
+      });
+      const newConv = response.data?.conversation || response.data;
+      if (newConv?.id) {
+        await loadConversations();
+        setSelectedConversation(newConv);
+        setShowOrderModal(false);
+        toast.success('Conversación creada');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast.error('Error al crear conversación');
     }
   }
 
@@ -360,6 +371,59 @@ export function MessagesPage() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Order selection modal
+  if (showOrderModal) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8 max-w-md w-full max-h-[80vh] overflow-y-auto">
+          <h2 className="text-2xl font-bold text-zinc-100 mb-6 text-center">Selecciona un pedido</h2>
+          {userOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+              <p className="text-zinc-400 mb-6">No tienes pedidos aún.</p>
+              <Button
+                asChild
+                className="w-full"
+                onClick={() => setShowOrderModal(false)}
+              >
+                <Link to="/account/orders">Ver pedidos / Crear nuevo</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {userOrders.map((order) => (
+                <motion.button
+                  key={order.id}
+                  className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl hover:bg-zinc-700 transition-all text-left"
+                  onClick={() => createOrderConversation(order.id)}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ShoppingBag className="w-6 h-6 text-zinc-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-zinc-100">Pedido #{order.order_number}</p>
+                      <p className="text-sm text-zinc-400">{order.status}</p>
+                      <p className="text-xs text-zinc-500 mt-1">{formatCurrency(order.total)}</p>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                onClick={() => setShowOrderModal(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

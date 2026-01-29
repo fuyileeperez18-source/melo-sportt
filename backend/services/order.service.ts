@@ -217,6 +217,12 @@ export const orderService = {
       paramIndex++;
     }
 
+    if (filters?.search) {
+      sql += ` AND (o.order_number ILIKE $${paramIndex} OR u.full_name ILIKE $${paramIndex+1} OR u.email ILIKE $${paramIndex+2})`;
+      params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+      paramIndex += 3;
+    }
+
     if (filters?.startDate) {
       sql += ` AND o.created_at >= $${paramIndex}`;
       params.push(filters.startDate);
@@ -229,11 +235,35 @@ export const orderService = {
       paramIndex++;
     }
 
-    // Get count
-    const countResult = await query(
-      `SELECT COUNT(*) FROM orders o WHERE 1=1 ${filters?.status ? 'AND o.status = $1' : ''}`,
-      filters?.status ? [filters.status] : []
-    );
+    // Get count - mirror filters
+    let countSql = `SELECT COUNT(*) FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1`;
+    let countParams: unknown[] = [];
+    let countParamIndex = 1;
+
+    if (filters?.status) {
+      countSql += ` AND o.status = $${countParamIndex}`;
+      countParams.push(filters.status);
+      countParamIndex++;
+    }
+
+    if (filters?.search) {
+      countSql += ` AND (o.order_number ILIKE $${countParamIndex} OR u.full_name ILIKE $${countParamIndex+1} OR u.email ILIKE $${countParamIndex+2})`;
+      countParams.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+      countParamIndex += 3;
+    }
+
+    if (filters?.startDate) {
+      countSql += ` AND o.created_at >= $${countParamIndex}`;
+      countParams.push(filters.startDate);
+      countParamIndex++;
+    }
+
+    if (filters?.endDate) {
+      countSql += ` AND o.created_at <= $${countParamIndex}`;
+      countParams.push(filters.endDate);
+    }
+
+    const countResult = await query(countSql, countParams);
     const count = parseInt(countResult.rows[0].count);
 
     sql += ' ORDER BY o.created_at DESC';

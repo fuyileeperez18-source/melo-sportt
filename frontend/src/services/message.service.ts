@@ -71,12 +71,27 @@ export interface GetMessagesResponse {
 /**
  * Get all conversations for the current user
  */
-export const getConversations = async (page = 1, limit = 20): Promise<{ conversations: Conversation[]; pagination: any; data?: any }> => {
-  const params: Record<string, string> = {
-    page: String(page),
-    limit: String(limit),
+export const getConversations = async (params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  unreadOnly?: boolean;
+  sortBy?: string;
+} = {}): Promise<{ conversations: Conversation[]; pagination: any; data?: any }> => {
+  const queryParams: Record<string, string> = {
+    page: String(params.page || 1),
+    limit: String(params.limit || 20),
+    ...(params.search && { search: params.search }),
+    ...(params.status && { status: params.status }),
+    ...(params.dateFrom && { dateFrom: params.dateFrom }),
+    ...(params.dateTo && { dateTo: params.dateTo }),
+    ...(params.unreadOnly && { unreadOnly: 'true' }),
+    ...(params.sortBy && { sortBy: params.sortBy }),
   };
-  const apiResponse = await api.get('/messages/conversations', params);
+  const apiResponse = await api.get('/messages/conversations', queryParams);
   const data = apiResponse.data as any;
   console.log('Service convs raw:', Object.keys(data || {}));
   const conversations = data?.data?.conversations || data?.conversations || (Array.isArray(data) ? data : []) || [];

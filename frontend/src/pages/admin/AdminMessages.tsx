@@ -32,6 +32,8 @@ export function AdminMessages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -40,21 +42,24 @@ export function AdminMessages() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [exactOrderToggle, setExactOrderToggle] = useState(false);
-  const [fuzzyCustomerToggle, setFuzzyCustomerToggle] = useState(true);
-  const [sortBy, setSortBy] = useState('lastMessageAt-desc');
+  const [sortBy, setSortBy] = useState('last_message_at-desc');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Cargar conversaciones
   useEffect(() => {
-    loadConversations();
-  }, []);
+    loadConversations(currentPage);
+  }, [currentPage]);
 
-  // Polling cada 30s
   useEffect(() => {
-    const interval = setInterval(loadConversations, 30000);
+    setCurrentPage(1);
+    loadConversations(1);
+  }, [searchQuery, statusFilter, dateFrom, dateTo, filterUnread, sortBy]);
+
+  // Polling cada 30s - respects filters/page
+  useEffect(() => {
+    const interval = setInterval(() => loadConversations(currentPage), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentPage, searchQuery, statusFilter, dateFrom, dateTo, filterUnread, sortBy]);
 
   // Escuchar nuevos mensajes en tiempo real
   useEffect(() => {
@@ -124,16 +129,25 @@ export function AdminMessages() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  async function loadConversations() {
+  async function loadConversations(page = 1) {
     try {
-      const response = await messageService.getConversations(1, 50);
+      const response = await messageService.getConversations({
+        page,
+        limit: 50,
+        search: searchQuery,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        dateFrom,
+        dateTo,
+        unreadOnly: filterUnread,
+        sortBy
+      });
       console.log('AdminMessages loadConversations FULL response:', response);
-      const conversationsData = response.conversations || response.data?.conversations || response.data || (Array.isArray(response) ? response : []) || [];
-      console.log('Parsed length:', conversationsData.length);
-      console.log('Parsed conversations length:', conversationsData.length);
+      const conversationsData = response.conversations || response.data?.conversations || [];
+      const paginationData = response.pagination || {};
       setConversations(conversationsData);
-      console.log('Set convs:', conversationsData.length);
-      toast(`Cargadas ${conversationsData.length} conversaciones`);
+      setPagination(paginationData);
+      console.log('Set convs:', conversationsData.length, 'Pagination:', paginationData);
+      toast(`Página ${page}: ${conversationsData.length} conversaciones (${paginationData.totalCount || 0} total)`);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');
@@ -234,59 +248,8 @@ export function AdminMessages() {
     }
   }
 
-  // Filtrar conversaciones
-  const filteredConversations = conversations
-    .filter(conv => {
-      const searchLower = searchQuery.toLowerCase();
-      let matchesSearch =
-        conv.customerEmail.toLowerCase().includes(searchLower) ||
-        (conv.productName?.toLowerCase().includes(searchLower) ?? false) ||
-        (conv.orderNumber?.toLowerCase().includes(searchLower) ?? false);
-
-      // Customer name: fuzzy or exact
-      if (fuzzyCustomerToggle) {
-        // Fuzzy: match any word
-        const customerWords = conv.customerName.toLowerCase().split(/\\s+/);
-        matchesSearch = matchesSearch || customerWords.some(word => word.includes(searchLower));
-      } else {
-        matchesSearch = matchesSearch || conv.customerName.toLowerCase().includes(searchLower);
-      }
-
-      const matchesUnread = !filterUnread || conv.unreadCount > 0;
-
-      // Status filter
-      const convStatus = (conv.status || '').toLowerCase();
-      const matchesStatus = statusFilter === 'all' || convStatus.includes(statusFilter.toLowerCase());
-
-      // Exact order match override
-      const matchesOrder = !searchQuery || (!exactOrderToggle || (conv.orderNumber?.toLowerCase() === searchLower.replace(/^#/, '')));
-
-      // Date range on lastMessageAt
-      const lastMsgDate = conv.lastMessageAt ? new Date(conv.lastMessageAt) : null;
-      const isValidDate = lastMsgDate && !isNaN(lastMsgDate.getTime());
-      const matchesDateFrom = !dateFrom || (!isValidDate ? false : lastMsgDate >= new Date(dateFrom));
-      const matchesDateTo = !dateTo || (!isValidDate ? false : lastMsgDate <= new Date(dateTo + 'T23:59:59.999Z'));
-
-      return matchesSearch && matchesUnread && matchesStatus && matchesOrder && matchesDateFrom && matchesDateTo;
-    })
-    // Sort
-    .sort((a, b) => {
-      let aVal, bVal;
-      switch (sortBy) {
-        case 'lastMessageAt-asc':
-          aVal = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
-          bVal = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
-          return aVal - bVal;
-        case 'createdAt-desc':
-          aVal = new Date(a.createdAt).getTime();
-          bVal = new Date(b.createdAt).getTime();
-          return bVal - aVal;
-        default: // lastMessageAt-desc
-          aVal = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
-          bVal = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
-          return bVal - aVal;
-      }
-    });
+  // No client-side filter/sort - server-side
+  const filteredConversations = conversations;
 
   // Calcular estadísticas
   const stats = {
@@ -367,7 +330,7 @@ export function AdminMessages() {
       )}
 
       {/* Search & Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+      <div className="bg-zinc-900 rounded-xl border border-zinc-700 p-4 shadow-lg text-zinc-100">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -376,7 +339,7 @@ export function AdminMessages() {
               placeholder="Buscar por cliente, email, producto u orden..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+              className="w-full h-11 pl-10 pr-4 bg-zinc-800 border border-zinc-600 rounded-lg text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-colors"
             />
           </div>
           {stats.unread > 0 && (
@@ -391,12 +354,12 @@ export function AdminMessages() {
         </div>
 
         {/* Filtros avanzados */}
-        <div className="flex flex-wrap gap-2 mt-3 p-2 bg-gray-50 rounded-lg">
+        <div className="flex flex-wrap gap-2 mt-3 p-2 bg-zinc-800 rounded-lg">
           {/* Status */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 px-3 border border-gray-200 rounded-lg bg-white text-sm min-w-[100px]"
+            className="h-10 px-3 border border-zinc-600 rounded-lg bg-zinc-900 text-zinc-100 text-sm min-w-[100px]"
           >
             <option value="all">Todos status</option>
             <option value="active">Activo</option>
@@ -409,13 +372,13 @@ export function AdminMessages() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-10 px-3 border border-gray-200 rounded-lg bg-white text-sm min-w-[130px]"
+            className="h-10 px-3 border border-zinc-600 rounded-lg bg-zinc-900 text-zinc-100 text-sm min-w-[130px]"
           />
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-10 px-3 border border-gray-200 rounded-lg bg-white text-sm min-w-[130px]"
+            className="h-10 px-3 border border-zinc-600 rounded-lg bg-zinc-900 text-zinc-100 text-sm min-w-[130px]"
           />
 
           {/* Toggles */}
@@ -424,7 +387,7 @@ export function AdminMessages() {
               type="checkbox"
               checked={exactOrderToggle}
               onChange={(e) => setExactOrderToggle(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300"
+              className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 checked:bg-zinc-400 checked:border-zinc-400"
             />
             Orden exacta
           </label>
@@ -433,7 +396,7 @@ export function AdminMessages() {
               type="checkbox"
               checked={fuzzyCustomerToggle}
               onChange={(e) => setFuzzyCustomerToggle(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300"
+              className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 checked:bg-zinc-400 checked:border-zinc-400"
             />
             Fuzzy cliente
           </label>
@@ -442,7 +405,7 @@ export function AdminMessages() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="h-10 px-3 border border-gray-200 rounded-lg bg-white text-sm min-w-[140px]"
+            className="h-10 px-3 border border-zinc-600 rounded-lg bg-zinc-900 text-zinc-100 text-sm min-w-[140px]"
           >
             <option value="lastMessageAt-desc">Últ. msg reciente</option>
             <option value="lastMessageAt-asc">Últ. msg antiguo</option>

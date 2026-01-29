@@ -51,6 +51,7 @@ export function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,11 +64,17 @@ export function AdminOrders() {
     loadOrders();
   }, []);
 
-  const loadOrders = async () => {
+  const loadOrders = async (page = 1) => {
     setIsLoading(true);
     try {
-      const response = await orderService.getAll({ limit: 100 });
+      const response = await orderService.getAll({
+        limit: itemsPerPage,
+        offset: (page - 1) * itemsPerPage,
+        search: searchQuery,
+        status: statusFilter === 'all' ? undefined : statusFilter
+      });
       setOrders(response.data || []);
+      setTotalCount(response.count || 0);
     } catch (error) {
       console.error('Error loading orders:', error);
       toast.error('Error al cargar los pedidos');
@@ -76,19 +83,8 @@ export function AdminOrders() {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.user_id?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  const paginatedOrders = filteredOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const paginatedOrders = orders;
 
   const openOrderDetail = (order: Order) => {
     setSelectedOrder(order);
