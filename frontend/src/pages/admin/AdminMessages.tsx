@@ -127,10 +127,10 @@ export function AdminMessages() {
   async function loadConversations() {
     try {
       const response = await messageService.getConversations(1, 50);
-      console.log('AdminMessages loadConversations FULL response:', JSON.stringify(response, null, 2));
+      console.log('AdminMessages loadConversations FULL response:', response);
       const conversationsData = response.conversations || response.data || (Array.isArray(response) ? response : []) || [];\n      console.log('AdminMessages parsed convs:', conversationsData.length, conversationsData[0]);
       console.log('Parsed conversations length:', conversationsData.length);
-      setConversations(conversationsData);\n      console.log('AdminMessages AFTER setConversations - state should be', conversationsData.length);\n      toast(`🔥 CARGADAS ${conversationsData.length} CONVS (raw:${conversations.length} → new:${conversationsData.length})`);\n      toast.success(`Cargadas ${conversationsData.length} conversaciones`);
+      setConversations(conversationsData);\n      console.log('AdminMessages set convs length:', conversationsData.length);\n      toast(`Cargadas ${conversationsData.length} conversaciones`);\n      toast.success(`Cargadas ${conversationsData.length} conversaciones`);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');
@@ -464,7 +464,7 @@ export function AdminMessages() {
       </div>
 
       {/* Chat Layout o Empty State */}
-            {conversations.length === 0 ? (\n        <div>DEBUG: Raw convs: {conversations.length} | Filtered: {filteredConversations.length}</div>\n      ) : filteredConversations.length === 0 ? (
+      {conversations.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
           <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Inbox className="w-10 h-10 text-gray-400" />
