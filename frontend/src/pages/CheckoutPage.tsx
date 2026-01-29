@@ -246,15 +246,15 @@ export function CheckoutPage() {
           </div>
         </div>
 
-        {/* Progress steps */}
-        <div className="mb-12">
-          <div className="flex items-center justify-center">
+        {/* Progress steps - Optimizado para móviles */}
+        <div className="mb-8 sm:mb-10 md:mb-12">
+          <div className="flex items-center justify-center overflow-x-auto pb-2 sm:pb-0">
             {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className="flex items-center">
+              <div key={step.id} className="flex items-center flex-shrink-0">
+                <div className="flex flex-col sm:flex-row items-center">
                   <motion.div
                     className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center',
+                      'w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0',
                       index <= currentStep
                         ? 'bg-white text-black'
                         : 'bg-primary-800 text-gray-400'
@@ -264,14 +264,14 @@ export function CheckoutPage() {
                     }}
                   >
                     {index < currentStep ? (
-                      <Check className="h-5 w-5" />
+                      <Check className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                     ) : (
-                      <step.icon className="h-5 w-5" />
+                      <step.icon className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                     )}
                   </motion.div>
                   <span
                     className={cn(
-                      'ml-3 text-sm font-medium hidden sm:block',
+                      'mt-1 sm:mt-0 sm:ml-2 md:ml-3 text-xs sm:text-sm font-medium text-center sm:text-left truncate max-w-[60px] sm:max-w-none',
                       index <= currentStep ? 'text-white' : 'text-gray-400'
                     )}
                   >
@@ -281,7 +281,7 @@ export function CheckoutPage() {
                 {index < steps.length - 1 && (
                   <div
                     className={cn(
-                      'w-16 sm:w-24 h-0.5 mx-4',
+                      'w-8 sm:w-12 md:w-16 lg:w-24 h-0.5 mx-2 sm:mx-3 md:mx-4',
                       index < currentStep ? 'bg-white' : 'bg-primary-800'
                     )}
                   />
@@ -291,11 +291,11 @@ export function CheckoutPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-12">
-          {/* Main content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
+          {/* Main content - Optimizado para móviles */}
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-              {/* Step 1: Shipping */}
+              {/* Step 1: Shipping - Simplificado para móviles */}
               {currentStep === 0 && (
                 <motion.div
                   key="shipping"
@@ -303,30 +303,31 @@ export function CheckoutPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <h2 className="text-2xl font-bold text-white mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">
                     Información de Envío
                   </h2>
 
-                  <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-6">
-                    {/* Contact */}
+                  <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-4 sm:space-y-6">
+                    {/* Contact - Optimizado para móviles */}
                     <div>
-                      <h3 className="text-lg font-medium text-white mb-4">Contacto</h3>
-                      <Input
-                        label="Correo Electrónico"
-                        type="email"
-                        placeholder="tu@correo.com"
-                        leftIcon={<Mail className="h-5 w-5" />}
-                        error={errors.email?.message}
+                      <h3 className="text-base sm:text-lg font-medium text-white mb-3 sm:mb-4">Contacto</h3>
+                      <div className="space-y-3 sm:space-y-4">
+                        <Input
+                          label="Correo Electrónico"
+                          type="email"
+                          placeholder="tu@correo.com"
+                          leftIcon={<Mail className="h-4 w-4 sm:h-5 sm:w-5" />}
+                          error={errors.email?.message}
                         {...register('email')}
                       />
                     </div>
 
-                    {/* Name */}
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    {/* Name - Optimizado para móviles */}
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4">
                       <Input
                         label="Nombre"
                         placeholder="Juan"
-                        leftIcon={<User className="h-5 w-5" />}
+                        leftIcon={<User className="h-4 w-4 sm:h-5 sm:w-5" />}
                         error={errors.firstName?.message}
                         {...register('firstName')}
                       />
@@ -338,39 +339,39 @@ export function CheckoutPage() {
                       />
                     </div>
 
-                    {/* Phone */}
+                    {/* Phone - Simplificado */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                         Teléfono
                       </label>
                       <Input
                         placeholder="+57 300 123 4567"
-                        leftIcon={<Phone className="h-5 w-5" />}
+                        leftIcon={<Phone className="h-4 w-4 sm:h-5 sm:w-5" />}
                         error={errors.phone?.message}
                         {...register('phone')}
                       />
                     </div>
 
-                    {/* Address */}
+                    {/* Address - Mejor distribución móvil */}
                     <div>
-                      <h3 className="text-lg font-medium text-white mb-4 mt-8">
+                      <h3 className="text-base sm:text-lg font-medium text-white mb-3 sm:mb-4 mt-6 sm:mt-8">
                         Dirección de Envío
                       </h3>
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         <Input
                           label="Dirección"
                           placeholder="Calle 123 #45-67"
-                          leftIcon={<MapPin className="h-5 w-5" />}
+                          leftIcon={<MapPin className="h-4 w-4 sm:h-5 sm:w-5" />}
                           error={errors.address?.message}
                           {...register('address')}
                         />
                         <Input
-                          label="Apartamento, casa, etc. (opcional)"
+                          label="Apartamento (opcional)"
                           placeholder="Apto 401"
-                          leftIcon={<Building className="h-5 w-5" />}
+                          leftIcon={<Building className="h-4 w-4 sm:h-5 sm:w-5" />}
                           {...register('apartment')}
                         />
-                        <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4">
                           <Input
                             label="Ciudad"
                             placeholder="Bogotá"

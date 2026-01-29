@@ -72,15 +72,19 @@ export function HomePage() {
 
   return (
     <div className="overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative h-screen">
-        {/* Background Swiper - sin parallax */}
+      {/* Hero Section - Optimizado para móviles */}
+      <section className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] lg:h-screen">
+        {/* Background Swiper optimizado */}
         <div className="absolute inset-0">
           <Swiper
             modules={[Autoplay, EffectFade, Pagination]}
             effect="fade"
             autoplay={{ delay: 5000, disableOnInteraction: false }}
-            pagination={{ clickable: true }}
+            pagination={{
+              clickable: true,
+              dynamicBullets: true,
+              dynamicMainBullets: 3,
+            }}
             loop
             className="h-full"
           >
@@ -91,6 +95,7 @@ export function HomePage() {
                     src={slide.image}
                     alt={slide.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40" />
                 </div>
@@ -99,15 +104,15 @@ export function HomePage() {
           </Swiper>
         </div>
 
-        {/* Hero content - sin fade out al scroll */}
+        {/* Hero content optimizado para móviles */}
         <div className="absolute inset-0 flex items-center">
-          <div className="container mx-auto px-6">
-            <div className="max-w-2xl">
+          <div className="container mx-auto px-4 sm:px-5 md:px-6">
+            <div className="max-w-full sm:max-w-lg md:max-w-2xl">
               <motion.span
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-block px-4 py-1 bg-white/10 backdrop-blur text-white text-sm font-medium rounded-full mb-6"
+                className="inline-block px-3 py-1 sm:px-4 sm:py-1 bg-white/10 backdrop-blur text-white text-xs sm:text-sm font-medium rounded-full mb-4 sm:mb-6"
               >
                 Nueva Colección 2025
               </motion.span>
@@ -116,7 +121,7 @@ export function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
-                className="text-5xl md:text-7xl font-bold text-gray-50 mb-6 leading-tight drop-shadow-lg"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-50 mb-4 sm:mb-6 leading-tight drop-shadow-lg"
               >
                 Descubre Tu Estilo
               </motion.h1>
@@ -125,28 +130,27 @@ export function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="text-xl text-gray-300 mb-8 max-w-lg"
+                className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 max-w-full sm:max-w-lg"
               >
                 Explora nuestra colección de moda deportiva y ropa urbana de alta calidad.
-                Encuentra el estilo que mejor se adapta a tu personalidad.
               </motion.p>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="flex flex-wrap gap-4"
+                className="flex flex-wrap gap-3 sm:gap-4"
               >
                 <motion.button
                   onClick={() => navigate('/shop')}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-black font-bold rounded-full overflow-hidden border-4 border-white shadow-[0_0_40px_rgba(255,255,255,0.8),0_10px_60px_rgba(255,255,255,0.6),0_0_0_4px_rgba(0,0,0,0.8)] transition-all duration-300 hover:shadow-[0_0_60px_rgba(255,255,255,0.9),0_15px_80px_rgba(255,255,255,0.7),0_0_0_4px_rgba(0,0,0,0.9)] backdrop-blur-sm"
+                  className="group relative inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 bg-white text-black font-bold rounded-full overflow-hidden border-2 sm:border-4 border-white shadow-md sm:shadow-[0_0_40px_rgba(255,255,255,0.8),0_10px_60px_rgba(255,255,255,0.6),0_0_0_2px_sm:4px_rgba(0,0,0,0.8)] transition-all duration-300 hover:shadow-lg sm:hover:shadow-[0_0_60px_rgba(255,255,255,0.9),0_15px_80px_rgba(255,255,255,0.7),0_0_0_2px_sm:4px_rgba(0,0,0,0.9)] backdrop-blur-sm w-full sm:w-auto"
                 >
-                  <span className="relative z-10 flex items-center gap-2 text-xl">
-                    <ShoppingBag className="h-6 w-6" />
-                    Comprar Ahora
-                    <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
+                  <span className="relative z-10 flex items-center gap-1 sm:gap-2 text-base sm:text-lg md:text-xl w-full sm:w-auto justify-center">
+                    <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+                    <span className="truncate">Comprar Ahora</span>
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 transition-transform group-hover:translate-x-1 flex-shrink-0" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-white to-gray-50 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
                 </motion.button>
@@ -158,58 +162,58 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator optimizado para móviles */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 hidden xs:block"
         >
           <motion.div
-            animate={{ y: [0, 10, 0] }}
+            animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center"
+            className="w-5 h-8 sm:w-6 sm:h-10 border border-white/40 sm:border-2 border-white/50 rounded-full flex justify-center"
           >
-            <motion.div className="w-1.5 h-3 bg-white rounded-full mt-2" />
+            <motion.div className="w-1.5 h-2.5 sm:w-1.5 sm:h-3 bg-white rounded-full mt-1.5 sm:mt-2" />
           </motion.div>
         </motion.div>
       </section>
 
-      {/* Marquee Banner */}
-      <section className="py-4 bg-white text-black overflow-hidden">
+      {/* Marquee Banner optimizado para móviles */}
+      <section className="py-3 sm:py-4 bg-white text-black overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...Array(4)].map((_, i) => (
-            <span key={i} className="mx-8 text-sm font-medium flex items-center gap-8">
-              <span>ENVÍO GRATIS EN COMPRAS MAYORES A $250.000</span>
-              <Star className="h-4 w-4 fill-black" />
-              <span>NUEVOS PRODUCTOS CADA SEMANA</span>
-              <Star className="h-4 w-4 fill-black" />
-              <span>30 DÍAS DE DEVOLUCIÓN</span>
-              <Star className="h-4 w-4 fill-black" />
-              <span>PAGO SEGURO</span>
-              <Star className="h-4 w-4 fill-black" />
+            <span key={i} className="mx-4 sm:mx-6 md:mx-8 text-xs sm:text-sm font-medium flex items-center gap-4 sm:gap-6 md:gap-8">
+              <span className="truncate">ENVÍO GRATIS +$250K</span>
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-black flex-shrink-0" />
+              <span className="truncate">NUEVOS PRODUCTOS</span>
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-black flex-shrink-0" />
+              <span className="truncate">30 DÍAS DEVOLUCIÓN</span>
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-black flex-shrink-0" />
+              <span className="truncate">PAGO SEGURO</span>
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-black flex-shrink-0" />
             </span>
           ))}
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-24 bg-black">
-        <div className="container mx-auto px-6">
+      {/* Categories Section - Optimizada para móviles */}
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-black">
+        <div className="container mx-auto px-4 sm:px-5 md:px-6">
           <AnimatedSection animation="fadeUp">
-            <div className="text-center mb-16">
-              <span className="text-sm text-gray-400 uppercase tracking-wider">Explora por</span>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mt-2">Categorías</h2>
+            <div className="text-center mb-8 sm:mb-12 md:mb-16">
+              <span className="text-xs sm:text-sm text-gray-400 uppercase tracking-wider">Explora por</span>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mt-1 sm:mt-2">Categorías</h2>
             </div>
           </AnimatedSection>
 
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <StaggerContainer className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-full sm:max-w-4xl md:max-w-6xl mx-auto">
             {categories.map((category) => (
               <StaggerItem key={category.id}>
                 <Link to={`/shop?category=${category.slug}`} className="group">
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-primary-900"
+                    className="relative aspect-[3/4] sm:aspect-[4/5] overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl bg-primary-900"
                   >
                     {category.image_url && category.image_url.trim() !== '' ? (
                       <img
@@ -233,13 +237,13 @@ export function HomePage() {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <h3 className="text-2xl font-bold text-white mb-1">{formatCategoryName(category.name)}</h3>
-                      <p className="text-gray-300 text-sm">
+                    <div className="absolute bottom-3 sm:bottom-4 md:bottom-5 lg:bottom-6 left-3 sm:left-4 md:left-5 lg:left-6 right-3 sm:right-4 md:right-5 lg:right-6">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-0.5 sm:mb-1 truncate">{formatCategoryName(category.name)}</h3>
+                      <p className="text-gray-300 text-xs sm:text-sm">
                         {loadingCategories ? (
-                          <span className="inline-block w-8 h-4 bg-white/20 animate-pulse rounded" />
+                          <span className="inline-block w-6 h-3 sm:w-8 sm:h-4 bg-white/20 animate-pulse rounded" />
                         ) : (
-                          `${category.products_count} Productos`
+                          <span className="truncate">{category.products_count} Productos</span>
                         )}
                       </p>
                     </div>
@@ -249,43 +253,43 @@ export function HomePage() {
             ))}
           </StaggerContainer>
 
-          {/* More categories message */}
+          {/* More categories message - Optimizado para móviles */}
           <AnimatedSection animation="fadeUp">
-            <div className="mt-12 text-center">
-              <p className="text-gray-400 text-lg mb-6">¡Tenemos más categorías disponibles para ti!!</p>
+            <div className="mt-8 sm:mt-10 md:mt-12 text-center">
+              <p className="text-gray-400 text-sm sm:text-base md:text-lg mb-4 sm:mb-5 md:mb-6">¡Tenemos más categorías disponibles para ti!</p>
               <motion.button
                 onClick={() => navigate('/shop')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-300"
+                className="inline-flex items-center gap-1 sm:gap-2 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-white text-black font-semibold rounded-full border border-white sm:border-2 shadow-md sm:shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base w-full sm:w-auto"
               >
-                Ver más categorías
-                <ArrowRight className="h-5 w-5" />
+                <span className="truncate">Ver más categorías</span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 flex-shrink-0" />
               </motion.button>
             </div>
           </AnimatedSection>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-24 bg-primary-950">
-        <div className="container mx-auto px-6">
+      {/* Featured Products - Optimizado para móviles */}
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-primary-950">
+        <div className="container mx-auto px-4 sm:px-5 md:px-6">
           <AnimatedSection animation="fadeUp">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8 sm:mb-12 md:mb-16">
               <div>
-                <span className="text-sm text-gray-400 uppercase tracking-wider">Nuestra Selección</span>
-                <h2 className="text-4xl md:text-5xl font-bold text-white mt-2">Productos Destacados</h2>
+                <span className="text-xs sm:text-sm text-gray-400 uppercase tracking-wider">Nuestra Selección</span>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mt-1 sm:mt-2">Productos Destacados</h2>
               </div>
               <Link
                 to="/shop"
-                className="mt-4 md:mt-0 inline-flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
+                className="mt-3 sm:mt-0 inline-flex items-center gap-1 sm:gap-2 text-white hover:text-gray-300 transition-colors text-sm sm:text-base"
               >
-                Ver Todo <ArrowRight className="h-4 w-4" />
+                <span className="truncate">Ver Todo</span> <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
             </div>
           </AnimatedSection>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
             {loadingFeatured ? (
               // Loading skeleton
               Array.from({ length: 4 }).map((_, index) => (

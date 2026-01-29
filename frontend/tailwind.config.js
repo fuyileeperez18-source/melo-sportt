@@ -5,6 +5,34 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    // Breakpoints extendidos para mejor responsividad
+    screens: {
+      'xs': '375px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+      '3xl': '1920px',
+    },
+    // Contenedores fluidos responsivos
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1rem',
+        sm: '1.5rem',
+        md: '2rem',
+        lg: '2.5rem',
+        xl: '3rem',
+      },
+      screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1536px',
+      },
+    },
     extend: {
       colors: {
         // Black & White Theme
@@ -108,6 +136,33 @@ export default {
       },
       backdropBlur: {
         xs: '2px',
+      },
+      // Utilidades responsivas adicionales
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+        '144': '36rem',
+      },
+      fontSize: {
+        'xxs': '0.625rem', // 10px
+        '2xs': '0.6875rem', // 11px
+      },
+      lineHeight: {
+        'tight': '1.1',
+        'relaxed': '1.75',
+      },
+      // Grid responsivo mejorado
+      gridTemplateColumns: {
+        '16': 'repeat(16, minmax(0, 1fr))',
+        '24': 'repeat(24, minmax(0, 1fr))',
+      },
+      // Aspect ratios comunes
+      aspectRatio: {
+        'square': '1 / 1',
+        'video': '16 / 9',
+        'portrait': '3 / 4',
+        'landscape': '4 / 3',
       },
     },
   },

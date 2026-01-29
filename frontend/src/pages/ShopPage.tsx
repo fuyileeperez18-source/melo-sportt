@@ -230,24 +230,24 @@ export function ShopPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Hero */}
-      <section className="relative py-20 overflow-hidden">
+      {/* Hero optimizado para móviles */}
+      <section className="relative py-12 sm:py-16 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary-900 to-black" />
-        <div className="relative container mx-auto px-6 text-center">
+        <div className="relative container mx-auto px-4 sm:px-5 md:px-6 text-center">
           <AnimatedSection animation="fadeUp">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">Tienda</h1>
-            <p className="text-gray-400 text-lg">Descubre nuestra colección completa</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-4">Tienda</h1>
+            <p className="text-gray-400 text-sm sm:text-base md:text-lg">Descubre nuestra colección completa</p>
           </AnimatedSection>
         </div>
       </section>
 
-      {/* Filters & Products */}
-      <section className="py-12">
-        <div className="container mx-auto px-6">
-          {/* Top bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+      {/* Filters & Products optimizado para móviles */}
+      <section className="py-6 sm:py-8 md:py-10 lg:py-12">
+        <div className="container mx-auto px-4 sm:px-5 md:px-6">
+          {/* Top bar optimizado para móviles */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             {/* Search */}
-            <div className="w-full lg:w-80">
+            <div className="w-full lg:w-72 xl:w-80">
               <SearchInput
                 placeholder="Buscar productos..."
                 value={searchQuery}
@@ -256,76 +256,83 @@ export function ShopPage() {
               />
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-4">
-              {/* Mobile filter button */}
+            {/* Actions - Reorganizado para móviles */}
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+              {/* Mobile filter button - Mejorado */}
               <Button
                 variant="outline"
-                className="lg:hidden"
-                leftIcon={<Filter className="h-4 w-4" />}
+                className="lg:hidden text-xs sm:text-sm px-3 sm:px-4 py-2 h-9 sm:h-11"
+                leftIcon={<Filter className="h-3 w-3 sm:h-4 sm:w-4" />}
                 onClick={() => setIsFilterOpen(true)}
               >
-                Filtros {activeFilterCount > 0 && `(${activeFilterCount})`}
+                <span className="truncate">Filtros</span> {activeFilterCount > 0 && <span className="ml-1">({activeFilterCount})</span>}
               </Button>
 
-              {/* Sort dropdown */}
+              {/* Sort dropdown optimizado */}
               <div className="relative">
                 <select
                   value={selectedSort}
                   onChange={(e) => setSelectedSort(e.target.value)}
-                  className="h-11 pl-4 pr-10 bg-primary-900 border border-primary-700 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:border-white/30"
+                  className="h-9 sm:h-11 pl-3 sm:pl-4 pr-8 sm:pr-10 bg-primary-900 border border-primary-700 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:border-white/30 text-xs sm:text-sm w-full sm:w-auto"
                 >
                   {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                    <option key={option.value} value={option.value} className="text-sm">
+                      <span className="truncate">{option.label}</span>
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none" />
               </div>
 
-              {/* Grid toggle */}
+              {/* Grid toggle optimizado */}
               <div className="hidden md:flex items-center gap-1 bg-primary-900 rounded-lg p-1">
                 <IconButton
                   onClick={() => setGridView(3)}
-                  className={cn(gridView === 3 && 'bg-white text-black')}
+                  className={cn(gridView === 3 && 'bg-white text-black', 'h-8 w-8 sm:h-9 sm:w-9')}
+                  size="sm"
                 >
-                  <Grid3X3 className="h-4 w-4" />
+                  <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </IconButton>
                 <IconButton
                   onClick={() => setGridView(4)}
-                  className={cn(gridView === 4 && 'bg-white text-black')}
+                  className={cn(gridView === 4 && 'bg-white text-black', 'h-8 w-8 sm:h-9 sm:w-9')}
+                  size="sm"
                 >
-                  <LayoutGrid className="h-4 w-4" />
+                  <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4" />
                 </IconButton>
               </div>
 
-              {/* Results count */}
-              <span className="text-gray-400 text-sm hidden sm:inline">
-                {totalProducts} productos
-              </span>
+              {/* Results count mejorado */}
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-xs sm:text-sm hidden xs:inline truncate">
+                  {totalProducts} productos
+                </span>
+                <span className="text-gray-400 text-xs sm:text-sm xs:hidden">
+                  {totalProducts}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-8">
-            {/* Sidebar filters (desktop) */}
-            <aside className="hidden lg:block w-72 flex-shrink-0">
-              <div className="sticky top-28 space-y-0 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4">
-                {/* Gender */}
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
+            {/* Sidebar filters (desktop) optimizado */}
+            <aside className="hidden lg:block w-64 lg:w-72 flex-shrink-0">
+              <div className="sticky top-24 sm:top-28 space-y-0 max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-8rem)] overflow-y-auto pr-3 sm:pr-4">
+                {/* Gender - Optimizado para móviles */}
                 <FilterSection title="Género">
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {genderOptions.map((option) => (
                       <button
                         key={option.value}
                         onClick={() => setSelectedGender(option.value)}
                         className={cn(
-                          'block w-full text-left px-3 py-2 rounded-lg transition-colors',
+                          'block w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors text-sm',
                           selectedGender === option.value
                             ? 'bg-white text-black'
                             : 'text-gray-400 hover:text-white hover:bg-primary-800'
                         )}
                       >
-                        {option.label}
+                        <span className="truncate">{option.label}</span>
                       </button>
                     ))}
                   </div>

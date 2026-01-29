@@ -47,15 +47,15 @@ export function StatCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-300 group"
+      className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-300 group w-full"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-xl ${iconBg} group-hover:scale-110 transition-transform duration-300`}>
-          <Icon className={`w-6 h-6 ${iconColor}`} />
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl ${iconBg} group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${iconColor}`} />
         </div>
         {change !== undefined && (
           <div
-            className={`flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-full ${
+            className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full ${
               isPositive
                 ? 'bg-green-100 text-green-700'
                 : isNegative
@@ -64,12 +64,12 @@ export function StatCard({
             }`}
           >
             {isPositive && (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
             )}
             {isNegative && (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             )}
@@ -77,9 +77,11 @@ export function StatCard({
           </div>
         )}
       </div>
-      <div>
-        <p className="text-sm text-gray-600 font-medium">{title}</p>
-        <p className="text-3xl font-bold text-black mt-1">{formatValue(value)}</p>
+      <div className="min-w-0">
+        <p className="text-xs sm:text-sm text-gray-600 font-medium truncate">{title}</p>
+        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-black mt-1 truncate text-ellipsis overflow-hidden">
+          {formatValue(value)}
+        </p>
       </div>
     </motion.div>
   );
@@ -108,16 +110,16 @@ export function MiniStat({ title, value, icon: Icon, color }: MiniStatProps) {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className={`flex items-center gap-4 p-4 rounded-xl ${colors.bg} cursor-pointer transition-all duration-200 border border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white`}
+      className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl ${colors.bg} cursor-pointer transition-all duration-200 border border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white w-full`}
     >
-      <div className={`p-2.5 rounded-lg bg-gray-100`}>
-        <Icon className={`w-5 h-5 ${colors.icon}`} />
+      <div className={`p-1.5 sm:p-2.5 rounded-md sm:rounded-lg bg-gray-100 flex-shrink-0`}>
+        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-600 truncate font-medium">{title}</p>
-        <p className="text-xl font-bold text-black">{value}</p>
+        <p className="text-xs sm:text-sm text-gray-600 truncate font-medium">{title}</p>
+        <p className="text-base sm:text-lg md:text-xl font-bold text-black truncate text-ellipsis overflow-hidden">{value}</p>
       </div>
-      <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
+      <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${colors.dot} flex-shrink-0`} />
     </motion.div>
   );
 }
