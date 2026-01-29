@@ -2,6 +2,38 @@
 // MELO SPORTT - TYPE DEFINITIONS
 // ============================================
 
+// Chat Types
+export type SenderType = 'user' | 'bot' | 'agent';
+
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_type: SenderType;
+  content: string;
+  message_type: 'text' | 'quick_reply';
+  is_read: boolean;
+  created_at: string;
+  metadata?: {
+    edited?: boolean;
+    editedAt?: string;
+  };
+}
+
+export interface ChatConversation {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  lastMessageAt?: string;
+  unreadCount: number;
+}
+
+export interface QuickReply {
+  id: string;
+  text: string;
+  payload: string;
+}
+
 // User Types
 export type UserRole = 'customer' | 'admin' | 'super_admin' | 'developer';
 export type UserGender = 'masculino' | 'femenino' | 'otro' | 'prefiero_no_decir';

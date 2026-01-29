@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { ChatMessage, Conversation, QuickReply } from '@/types';
-import messageService, { Conversation as PersistentConversation, Message as PersistentMessage } from '@/services/message.service';
+import type { ChatMessage, ChatConversation as Conversation, QuickReply } from '@/types';
+import type { Conversation as PersistentConversation, Message as PersistentMessage } from '@/services/message.service';
+import messageService from '@/services/message.service';
 
 interface ChatState {
   // State
@@ -12,7 +13,7 @@ interface ChatState {
   isLoading: boolean;
   isTyping: boolean;
   unreadCount: number;
-  agentActiveConversationId: null,
+  agentActiveConversationId: string | null;
 
   // Actions
   toggleChat: () => void;
@@ -24,7 +25,6 @@ interface ChatState {
   setActiveConversation: (conversation: Conversation | null) => void;
   fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId: string) => Promise<void>;
-  agentActiveConversationId: string | null;
   sendMessage: (content: string, type?: ChatMessage['message_type']) => Promise<void>;
   handleQuickReply: (reply: QuickReply) => Promise<void>;
   startNewConversation: () => void;
@@ -66,6 +66,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading: false,
   isTyping: false,
   unreadCount: 0,
+  agentActiveConversationId: null,
 
   toggleChat: () => set((state) => ({ isOpen: !state.isOpen, isMinimized: false })),
   openChat: () => set({ isOpen: true, isMinimized: false }),
@@ -121,7 +122,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const messages = rawMessages.map((m: PersistentMessage): ChatMessage => ({
         id: m.id,
         conversation_id: m.conversationId,
-        sender_type: m.sender.role === 'customer' ? 'user' : 'support',
+        sender_type: m.sender.role === 'customer' ? 'user' : 'agent',
         content: m.content,
         message_type: 'text' as const,
         is_read: m.isRead,
@@ -137,21 +138,33 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (content, type = 'text') => {
-    const { activeConversation } = get();
-
-    if (!get().activeConversation) return;
+    const state = get();
+    if (!state.activeConversation) return;
 
     // Send to backend first
     try {
-      await messageService.sendMessage(get().activeConversation.id, content);
+      await messageService.sendMessage(state.activeConversation.id, content);
     } catch (error) {
       console.error('Send failed:', error);
-      toast.error('Error enviando mensaje');
       return;
     }
 
     // Create user message locally
     const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      conversation_id: state.activeConversation.id,
+      sender_type: 'user',
+      content,
+      message_type: type,
+      is_read: true,
+      created_at: new Date().toISOString(),
+    };
+    set((s) => ({ messages: [...s.messages, userMessage] }));
+
+    // Bot response solo si NO es modo agente
+    if (state.agentActiveConversationId !== state.activeConversation.id) {
+      await get().processUserMessage(content);
+    }
       id: Date.now().toString(),
       conversation_id: activeConversation?.id || 'local',
       sender_type: 'user',
@@ -164,8 +177,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => ({ messages: [...state.messages, userMessage] }));
 
     // Bot response solo si NO es modo agente
-    const { agentActiveConversationId, activeConversation } = get();
-    if (agentActiveConversationId !== activeConversation?.id) {
+    if (state.agentActiveConversationId !== state.activeConversation?.id) {
       await get().processUserMessage(content);
     }
   },
