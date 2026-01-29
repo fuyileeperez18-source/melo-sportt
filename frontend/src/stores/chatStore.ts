@@ -165,21 +165,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (state.agentActiveConversationId !== state.activeConversation.id) {
       await get().processUserMessage(content);
     }
-      id: Date.now().toString(),
-      conversation_id: activeConversation?.id || 'local',
-      sender_type: 'user',
-      content,
-      message_type: type,
-      is_read: true,
-      created_at: new Date().toISOString(),
-    };
-
-    set((state) => ({ messages: [...state.messages, userMessage] }));
-
-    // Bot response solo si NO es modo agente
-    if (state.agentActiveConversationId !== state.activeConversation?.id) {
-      await get().processUserMessage(content);
-    }
   },
 
   handleQuickReply: async (reply) => {
