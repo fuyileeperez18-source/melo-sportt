@@ -400,6 +400,8 @@ export function MessagesPage() {
                   className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl hover:bg-zinc-700 transition-all text-left"
                   onClick={() => createOrderConversation(order.id)}
                   whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center flex-shrink-0">

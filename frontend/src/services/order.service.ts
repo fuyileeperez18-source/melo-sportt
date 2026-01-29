@@ -1,5 +1,7 @@
 import api from '../lib/api';
 
+import type { OrderList } from '@/types/order';
+
 export interface OrderList {
   id: string;
   order_number: string;
@@ -11,7 +13,7 @@ export interface OrderList {
 
 export const getUserOrders = async (userId: string): Promise<OrderList[]> => {
   const response = await api.get(`/api/orders/user/${userId}`);
-  return response.data.data || response.data || [];
+  return response.data as OrderList[];
 };
 
 export default {

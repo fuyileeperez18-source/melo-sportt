@@ -99,7 +99,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   fetchConversations: async () => {
     set({ isLoading: true });
     try {
-      const response = await messageService.getConversations(1, 20);
+      const response = await messageService.getConversations({ page: 1, limit: 20 });
       const rawConversations = response.conversations || response.data?.conversations || [];
       const conversations: Conversation[] = rawConversations.map((conv: any): Conversation => ({
         id: conv.id,

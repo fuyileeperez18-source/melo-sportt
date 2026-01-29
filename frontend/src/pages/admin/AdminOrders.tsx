@@ -70,7 +70,7 @@ export function AdminOrders() {
       const response = await orderService.getAll({
         limit: itemsPerPage,
         offset: (page - 1) * itemsPerPage,
-        search: searchQuery,
+        search: searchQuery as any,
         status: statusFilter === 'all' ? undefined : statusFilter
       });
       setOrders(response.data || []);
@@ -189,7 +189,7 @@ export function AdminOrders() {
             >
               Filtros
             </Button>
-            <IconButton onClick={loadOrders} disabled={isLoading}>
+            <IconButton onClick={() => loadOrders(page)} disabled={isLoading}>
               <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
             </IconButton>
           </div>
@@ -232,7 +232,7 @@ export function AdminOrders() {
 
       {/* Results Count */}
       <div className="flex items-center justify-between text-sm text-gray-600">
-        <p>{filteredOrders.length} pedido{filteredOrders.length !== 1 ? 's' : ''} encontrado{filteredOrders.length !== 1 ? 's' : ''}</p>
+        <p>{paginatedOrders.length} pedido{paginatedOrders.length !== 1 ? 's' : ''} encontrado{paginatedOrders.length !== 1 ? 's' : ''}</p>
         {searchQuery && (
           <button
             onClick={() => {

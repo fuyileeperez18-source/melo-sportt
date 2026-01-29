@@ -381,25 +381,6 @@ export function AdminMessages() {
             className="h-10 px-3 border border-zinc-600 rounded-lg bg-zinc-900 text-zinc-100 text-sm min-w-[130px]"
           />
 
-          {/* Toggles */}
-          <label className="flex items-center gap-1 text-xs text-gray-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={exactOrderToggle}
-              onChange={(e) => setExactOrderToggle(e.target.checked)}
-              className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 checked:bg-zinc-400 checked:border-zinc-400"
-            />
-            Orden exacta
-          </label>
-          <label className="flex items-center gap-1 text-xs text-gray-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={fuzzyCustomerToggle}
-              onChange={(e) => setFuzzyCustomerToggle(e.target.checked)}
-              className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 checked:bg-zinc-400 checked:border-zinc-400"
-            />
-            Fuzzy cliente
-          </label>
 
           {/* Sort */}
           <select
@@ -420,8 +401,6 @@ export function AdminMessages() {
               setStatusFilter('all');
               setDateFrom('');
               setDateTo('');
-              setExactOrderToggle(false);
-              setFuzzyCustomerToggle(true);
               setSortBy('lastMessageAt-desc');
             }}
             className="h-10 px-4 text-xs"
