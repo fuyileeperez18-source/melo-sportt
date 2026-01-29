@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { ShoppingBag, ArrowLeft, MessageSquare, Send, Trash2, Edit2, Check, X, User, Package, Clock } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { OrderList, Order } from '@/types/order';
+import type { OrderList } from '@/types/order';
 import orderService from '@/services/order.service';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
@@ -223,7 +223,7 @@ export function MessagesPage() {
 
   // Fetch user orders for modal
   async function fetchUserOrders() {
-    const [userOrders, setUserOrders] = useState<OrderList[]>([]);
+    const [userOrders, setUserOrders] = useState<any[]>([]);
     try {
       const orders = await orderService.getUserOrders(user!.id);
       setUserOrders(orders);

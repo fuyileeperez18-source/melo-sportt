@@ -50,7 +50,7 @@ export function ChatWidget() {
 
   const [inputValue, setInputValue] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
