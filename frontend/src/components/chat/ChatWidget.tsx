@@ -20,7 +20,9 @@ import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 // import { motion } from 'framer-motion'; // duplicate removed
-import orderService from '@/services/order.service';\nimport messageService from '@/services/message.service';
+import orderService from '@/services/order.service';
+
+import messageService from '@/services/message.service';
 import { ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -120,10 +122,10 @@ export function ChatWidget() {
 
   const createOrderConversation = async (orderId: string) => {
     try {
-      const conv = await messageService.createOrGetConversation({ orderId, initialMessage: '' });\n      fetchConversations();\n      setShowOrderModal(false);
-      // Assume store handles createOrGetConversation with orderId
+      const conv = await messageService.createOrGetConversation({ orderId, initialMessage: '' });
+      fetchConversations();
       setShowOrderModal(false);
-      toast.success('Conversación creada para el pedido');
+            toast.success('Conversación creada para el pedido');
     } catch (error) {
       console.error('Error:', error);
     }

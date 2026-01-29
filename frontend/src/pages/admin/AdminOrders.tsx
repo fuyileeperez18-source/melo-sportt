@@ -67,12 +67,13 @@ export function AdminOrders() {
   const loadOrders = async (page = 1) => {
     setIsLoading(true);
     try {
-      const response = await orderService.getAll({
+      const filters: any = {
         limit: itemsPerPage,
         offset: (page - 1) * itemsPerPage,
-        search: (searchQuery as any),
+        search: searchQuery,
         status: statusFilter === 'all' ? undefined : statusFilter
-      });
+      };
+      const response = await orderService.getAll(filters);
       setOrders(response.data || []);
       setTotalCount(response.count || 0);
     } catch (error) {
