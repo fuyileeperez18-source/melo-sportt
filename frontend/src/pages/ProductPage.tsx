@@ -528,15 +528,15 @@ export function ProductPage() {
                       toggle(product.id);
                     }}
                     className={cn(
-                      'h-14 w-14 border border-primary-700',
-                      isWishlisted && 'bg-red-500 border-red-500'
+                      'h-14 w-14 border border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:bg-gray-50',
+                      isWishlisted && 'bg-red-500 border-red-500 text-white hover:bg-red-600 hover:border-red-600'
                     )}
                   >
-                    <Heart className={cn('h-6 w-6', isWishlisted && 'fill-current')} />
+                    <Heart className={cn('h-6 w-6', isWishlisted && 'fill-current text-white')} />
                   </IconButton>
                   <IconButton
                     onClick={handleShare}
-                    className="h-14 w-14 border border-primary-700"
+                    className="h-14 w-14 border border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:bg-gray-50"
                   >
                     <Share2 className="h-6 w-6" />
                   </IconButton>

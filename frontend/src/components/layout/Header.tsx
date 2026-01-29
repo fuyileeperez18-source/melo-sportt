@@ -195,47 +195,47 @@ export function Header() {
               ))}
             </nav>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 md:gap-4">
+            {/* Actions - Optimizado para móviles */}
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
               <IconButton
                 onClick={toggleSearch}
                 aria-label="Search"
-                className="text-white"
+                className="text-white w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10"
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
               </IconButton>
 
               <IconButton
                 onClick={() => navigate('/wishlist')}
                 aria-label="Wishlist"
-                className="text-white"
+                className="text-white w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10"
               >
-                <Heart className="h-5 w-5" />
+                <Heart className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
               </IconButton>
 
               <IconButton
                 onClick={() => navigate(isAuthenticated ? '/account' : '/login')}
                 aria-label="Account"
-                className="text-white"
+                className="text-white w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10"
               >
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
               </IconButton>
 
               <motion.button
                 onClick={toggleCart}
-                className="relative p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+                className="relative p-1.5 sm:p-1.5 md:p-2 text-white hover:bg-white/10 rounded-full transition-colors min-w-[2rem] sm:min-w-[2.25rem] md:min-w-[2.5rem] h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label="Cart"
               >
-                <ShoppingBag className="h-5 w-5" />
+                <ShoppingBag className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
                 {cartItemsCount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 h-5 w-5 bg-white text-black text-xs font-bold rounded-full flex items-center justify-center"
+                    className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5 bg-white text-black text-[10px] sm:text-xs font-bold rounded-full flex items-center justify-center"
                   >
-                    {cartItemsCount}
+                    {cartItemsCount > 9 ? '9+' : cartItemsCount}
                   </motion.span>
                 )}
               </motion.button>
