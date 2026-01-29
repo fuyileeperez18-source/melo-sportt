@@ -19,8 +19,8 @@ import { useAuthStore } from '@/stores/authStore';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { motion } from 'framer-motion';
-import { orderService } from '@/services/order.service';
+// import { motion } from 'framer-motion'; // duplicate removed
+import orderService from '@/services/order.service';
 import { ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Order } from '@/types';
@@ -50,7 +50,7 @@ export function ChatWidget() {
 
   const [inputValue, setInputValue] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [userOrders, setUserOrders] = useState([]);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -107,7 +107,7 @@ export function ChatWidget() {
   // Order selection functions
   const fetchUserOrders = async () => {
     try {
-      const orders = await orderService.getByUser(user.id);
+      const orders = await orderService.getByUser(user!.id);
       setUserOrders(orders);
       if (orders.length === 0) {
         toast.error('Crea un pedido primero para poder chatear.');
@@ -119,9 +119,9 @@ export function ChatWidget() {
     }
   };
 
-  const createOrderConversation = async (orderId) => {
+  const createOrderConversation = async (orderId: string) => {
     try {
-      const storeConv = await startNewConversation({ orderId });
+      // Use direct service call if store doesn't support\n  const storeConv = await messageService.createOrGetConversation({ orderId, initialMessage: '' });\n  setShowOrderModal(false);
       // Assume store handles createOrGetConversation with orderId
       setShowOrderModal(false);
       toast.success('Conversación creada para el pedido');

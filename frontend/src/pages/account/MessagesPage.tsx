@@ -31,7 +31,7 @@ export function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [userOrders, setUserOrders] = useState([]);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -223,7 +223,7 @@ export function MessagesPage() {
       console.error('Error loading conversations:', error);
       // Para clientes: intentar crear conversación general si hay error
       if (user?.role === 'customer') {
-        await createGeneralSupportConversation();
+        await // createGeneralSupportConversation removed as per plan();
       }
     } finally {
       setIsLoading(false);
@@ -233,7 +233,7 @@ export function MessagesPage() {
   // Fetch user orders for modal
   async function fetchUserOrders() {
     try {
-      const orders = await orderService.getByUser(user.id);
+      const orders = await orderService.getByUser(user!.id);
       setUserOrders(orders);
       if (orders.length === 0) {
         toast.error('Crea un pedido primero para poder chatear.');

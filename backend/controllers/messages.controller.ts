@@ -11,15 +11,16 @@ export const getConversations = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userRole = (req as any).user.role;
-    const pageStr = (req.query.page as string) || '1';
-    const limitStr = (req.query.limit as string) || '20';
+    const page = parseInt((req.query.page as string) || '1');
+    const limit = parseInt((req.query.limit as string) || '20');
     const search = (req.query.search as string) || '';
     const status = (req.query.status as string) || '';
     const dateFrom = (req.query.dateFrom as string) || '';
     const dateTo = (req.query.dateTo as string) || '';
-    const unreadOnlyStr = (req.query.unreadOnly as string) || 'false';
-    const sortByRaw = (req.query.sortBy as string) || 'last_message_at-desc';
-    const sortBy = sortByRaw.replace(/-/g, ' ');
+    const unreadOnly = (req.query.unreadOnly as string) === 'true';
+    const sortByField = (req.query.sortBy as string)?.split('-')[0] || 'last_message_at';
+    const sortByDirection = (req.query.sortBy as string)?.split('-')[1] || 'desc';
+    const sortBy = `${sortByField} ${sortByDirection.toUpperCase()}`;
 
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
@@ -62,7 +63,7 @@ export const getConversations = async (req: Request, res: Response) => {
     let whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
 
     let havingClause = '';
-    if (unreadOnly === 'true') {
+    if (unreadOnly) {
       havingClause = 'HAVING unread_count > 0';
     }
 
@@ -207,7 +208,7 @@ export const getConversations = async (req: Request, res: Response) => {
     let countWhereClause = countWhereConditions.length > 0 ? 'WHERE ' + countWhereConditions.join(' AND ') : '';
 
     const countQuery = `SELECT COUNT(*) FROM conversations c INNER JOIN users u ON c.user_id = u.id LEFT JOIN orders o ON c.order_id = o.id ${countWhereClause}`;
-    if (unreadOnly === 'true') {
+    if (unreadOnly) {
       // Special count for unread only
       const unreadCountQuery = `
         SELECT COUNT(*)
