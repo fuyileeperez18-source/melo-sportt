@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useChatStore, quickReplies, problemTypes } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useSocket } from '@/contexts/SocketContext';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -50,9 +51,18 @@ export function ChatWidget() {
     selectProblemType,
     cancelEscalation,
     confirmAndSubmitEscalation,
+    addMessage,
+    setTyping,
   } = useChatStore();
 
   const { user } = useAuthStore();
+  const {
+    socket,
+    isConnected,
+    joinConversation,
+    onNewMessage,
+    onUserTyping
+  } = useSocket();
 
   const [inputValue, setInputValue] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -76,18 +86,79 @@ export function ChatWidget() {
     }
   }, [isOpen, conversations.length]);
 
-  // Poll messages if active conv
+  // Poll messages if active conv (fallback)
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isOpen && activeConversation) {
       interval = setInterval(() => {
         fetchMessages(activeConversation.id);
-      }, 5000);
+      }, 10000); // Increased polling interval to 10s since we have sockets
     }
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isOpen, activeConversation]);
+
+  // Real-time updates via Socket.IO
+  useEffect(() => {
+    if (isOpen && activeConversation && isConnected) {
+      // Join conversation room
+      joinConversation(activeConversation.id);
+
+      // Listen for new messages
+      const unsubscribeMessages = onNewMessage((message) => {
+        // Only add if it belongs to current conversation
+        if (message.conversationId === activeConversation.id) {
+          // Adapt message format from socket/service to chatStore format
+          const chatMessage = {
+            id: message.id,
+            conversation_id: message.conversationId,
+            sender_type: message.senderId === user?.id ? 'user' : 'agent',
+            content: message.content,
+            message_type: 'text' as const,
+            is_read: message.isRead,
+            created_at: message.createdAt,
+            sender: {
+              role: message.sender?.role || 'agent'
+            }
+          };
+          addMessage(chatMessage as any); // Type assertion needed due to slight mismatch in types
+        }
+      });
+
+      // Listen for message edits
+      const unsubscribeMessageEdits = onMessageEdited((message) => {
+        // Only handle if it belongs to current conversation
+        if (message.conversationId === activeConversation.id) {
+          // Find and update the message in the store
+          editMessage(message.id, message.content);
+        }
+      });
+
+      // Listen for message deletes
+      const unsubscribeMessageDeletes = onMessageDeleted((data) => {
+        // Only handle if it belongs to current conversation
+        if (data.conversationId === activeConversation.id) {
+          // Remove the message from the store
+          deleteMessage(data.messageId);
+        }
+      });
+
+      // Listen for typing
+      const unsubscribeTyping = onUserTyping((data) => {
+        if (data.userId !== user?.id) {
+          setTyping(data.isTyping);
+        }
+      });
+
+      return () => {
+        unsubscribeMessages();
+        unsubscribeMessageEdits();
+        unsubscribeMessageDeletes();
+        unsubscribeTyping();
+      };
+    }
+  }, [isOpen, activeConversation, isConnected, user?.id]);
 
   // Focus input when opening
   useEffect(() => {

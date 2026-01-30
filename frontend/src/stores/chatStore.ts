@@ -50,6 +50,7 @@ interface ChatState {
   startNewConversation: () => void;
   editMessage: (messageId: string, newContent: string) => void;
   deleteMessage: (messageId: string) => void;
+  addMessage: (message: ChatMessage) => void;
 
   processUserMessage: (message: string) => Promise<void>;
   getBotResponse: (message: string) => Promise<string>;
@@ -170,6 +171,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => ({
       messages: state.messages.filter((msg) => msg.id !== messageId),
     }));
+  },
+
+  addMessage: (message) => {
+    set((state) => {
+      // Avoid duplicates
+      if (state.messages.some((m) => m.id === message.id)) {
+        return state;
+      }
+      return {
+        messages: [...state.messages, message],
+      };
+    });
   },
 
   setActiveConversation: (conversation) => set({ activeConversation: conversation }),
