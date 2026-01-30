@@ -466,9 +466,9 @@ export function AdminMessages() {
           )}
         >
           Solicitudes de Soporte
-          {supportStats?.totalPending > 0 && (
+          {(supportStats?.totalPending ?? 0) > 0 && (
             <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-              {supportStats.totalPending}
+              {supportStats?.totalPending}
             </span>
           )}
         </button>

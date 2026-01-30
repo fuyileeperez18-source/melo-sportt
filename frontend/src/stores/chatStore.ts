@@ -409,9 +409,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         initialMessage: summaryForAgent,
         metadata: {
           supportRequest: true,
-          problemType: escalationData.problemType,
-          problemLabel: escalationData.problemLabel,
-          description: escalationData.description,
+          problemType: escalationData.problemType || undefined,
+          problemLabel: escalationData.problemLabel || undefined,
+          description: escalationData.description || undefined,
         }
       });
 
