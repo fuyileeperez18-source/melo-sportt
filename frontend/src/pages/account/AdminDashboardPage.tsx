@@ -200,9 +200,9 @@ export function AdminDashboardPage() {
         </div>
       </header>
 
-      <div className="max-w-full xs:max-w-xs sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-5 md:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Stats Grid - Mobile first con mejor adaptación */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
+      <div className="w-full px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
+        {/* Stats Grid - Optimizado para móviles */}
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-6 sm:mb-8 px-1 sm:px-0">
           <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow w-full">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="p-2 sm:p-3 bg-gray-100 rounded-md sm:rounded-lg">
@@ -240,8 +240,10 @@ export function AdminDashboardPage() {
                 </span>
               )}
             </div>
-            <h3 className="text-gray-600 text-xs sm:text-sm mb-1 font-medium truncate">Productos</h3>
-            <p className="text-lg sm:text-xl md:text-2xl font-bold text-black truncate text-ellipsis overflow-hidden">{stats.totalProducts}</p>
+            <h3 className="text-gray-600 text-xs sm:text-sm mb-1 font-medium truncate">Total Productos</h3>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-black truncate text-ellipsis overflow-hidden">
+              {stats.totalProducts}
+            </p>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow w-full">
@@ -250,7 +252,7 @@ export function AdminDashboardPage() {
                 <Users className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
               </div>
             </div>
-            <h3 className="text-gray-600 text-xs sm:text-sm mb-1 font-medium truncate">Clientes</h3>
+            <h3 className="text-gray-600 text-xs sm:text-sm mb-1 font-medium truncate">Total Clientes</h3>
             <p className="text-lg sm:text-xl md:text-2xl font-bold text-black truncate text-ellipsis overflow-hidden">{stats.totalCustomers}</p>
           </div>
         </div>

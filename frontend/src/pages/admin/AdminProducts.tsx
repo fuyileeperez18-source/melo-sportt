@@ -484,8 +484,8 @@ export function AdminProducts() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Productos</h1>
-          <p className="text-gray-400">Gestiona tu catálogo de productos</p>
+          <h1 className="text-2xl font-bold text-black">Productos</h1>
+          <p className="text-gray-600">Gestiona tu catálogo de productos</p>
         </div>
         <Button onClick={handleOpenAddModal} leftIcon={<Plus className="h-5 w-5" />}>
           Agregar Producto
@@ -493,7 +493,7 @@ export function AdminProducts() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
+      <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
         {/* Main Search & Actions */}
         <div className="flex flex-col lg:flex-row gap-4 mb-4">
           {/* Search */}
@@ -504,7 +504,7 @@ export function AdminProducts() {
               placeholder="Buscar productos por nombre, SKU o marca..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 h-11 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+              className="w-full pl-10 pr-4 h-11 bg-gray-50 border border-gray-200 rounded-xl text-black placeholder-gray-500 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
             />
           </div>
 
@@ -512,8 +512,10 @@ export function AdminProducts() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'h-11 px-4 bg-white/5 border border-white/10 rounded-xl transition-all flex items-center gap-2',
-              showFilters ? 'bg-white text-black' : 'text-white hover:bg-white/10'
+              'h-11 px-4 border rounded-xl transition-all flex items-center gap-2',
+              showFilters
+                ? 'bg-black text-white border-black'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
             )}
           >
             <Filter className="h-5 w-5" />
@@ -529,20 +531,20 @@ export function AdminProducts() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+            className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-xl text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
           >
-            <option value="all" className="bg-gray-900">Todos</option>
-            <option value="active" className="bg-gray-900">Activos</option>
-            <option value="inactive" className="bg-gray-900">Inactivos</option>
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
           </select>
 
           {/* View Toggle */}
-          <div className="flex items-center gap-1 bg-white/5 rounded-xl p-1 border border-white/10">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 border border-gray-200">
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
                 'p-2 rounded-lg transition-colors',
-                viewMode === 'grid' ? 'bg-white text-black' : 'text-gray-400 hover:text-white'
+                viewMode === 'grid' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'
               )}
             >
               <Grid className="h-5 w-5" />
@@ -551,7 +553,7 @@ export function AdminProducts() {
               onClick={() => setViewMode('list')}
               className={cn(
                 'p-2 rounded-lg transition-colors',
-                viewMode === 'list' ? 'bg-white text-black' : 'text-gray-400 hover:text-white'
+                viewMode === 'list' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'
               )}
             >
               <List className="h-5 w-5" />
@@ -559,8 +561,8 @@ export function AdminProducts() {
           </div>
 
           {/* Refresh */}
-          <IconButton onClick={loadData} disabled={isLoading}>
-            <RefreshCw className={`h-5 w-5 text-white ${isLoading ? 'animate-spin' : ''}`} />
+          <IconButton onClick={loadData} disabled={isLoading} className="text-gray-500 hover:text-black hover:bg-gray-100">
+            <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
           </IconButton>
         </div>
 
@@ -574,21 +576,21 @@ export function AdminProducts() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-white/10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
                 {/* Product Type Filter */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Tipo de Producto</label>
+                  <label className="block text-xs text-gray-500 mb-1.5">Tipo de Producto</label>
                   <select
                     value={productTypeFilter}
                     onChange={(e) => {
                       setProductTypeFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                    className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   >
-                    <option value="" className="bg-gray-900">Todos</option>
+                    <option value="">Todos</option>
                     {productTypeOptions.filter(opt => opt.value).map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                      <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
@@ -597,17 +599,17 @@ export function AdminProducts() {
 
                 {/* Style Type Filter */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Estilo</label>
+                  <label className="block text-xs text-gray-500 mb-1.5">Estilo</label>
                   <select
                     value={styleTypeFilter}
                     onChange={(e) => {
                       setStyleTypeFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                    className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   >
                     {styleTypeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                      <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
@@ -616,18 +618,18 @@ export function AdminProducts() {
 
                 {/* Gender Filter */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Género</label>
+                  <label className="block text-xs text-gray-500 mb-1.5">Género</label>
                   <select
                     value={genderFilter}
                     onChange={(e) => {
                       setGenderFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                    className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   >
-                    <option value="" className="bg-gray-900">Todos</option>
+                    <option value="">Todos</option>
                     {genderOptions.filter(opt => opt.value).map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                      <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
@@ -636,18 +638,18 @@ export function AdminProducts() {
 
                 {/* Category Filter */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Categoría</label>
+                  <label className="block text-xs text-gray-500 mb-1.5">Categoría</label>
                   <select
                     value={categoryFilter}
                     onChange={(e) => {
                       setCategoryFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                    className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   >
-                    <option value="" className="bg-gray-900">Todas</option>
+                    <option value="">Todas</option>
                     {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id} className="bg-gray-900">
+                      <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
                     ))}
@@ -666,7 +668,7 @@ export function AdminProducts() {
                       setCategoryFilter('');
                       setCurrentPage(1);
                     }}
-                    className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                    className="text-sm text-gray-500 hover:text-black transition-colors flex items-center gap-1"
                   >
                     <X className="h-4 w-4" />
                     Limpiar filtros
@@ -683,19 +685,19 @@ export function AdminProducts() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 backdrop-blur-xl rounded-xl p-4 border border-white/10"
+          className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
         >
-          <p className="text-sm text-gray-400">Total Productos</p>
-          <p className="text-2xl font-bold text-white">{filteredProducts.length}</p>
+          <p className="text-sm text-gray-500">Total Productos</p>
+          <p className="text-2xl font-bold text-black">{filteredProducts.length}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/5 backdrop-blur-xl rounded-xl p-4 border border-white/10"
+          className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
         >
-          <p className="text-sm text-gray-400">Activos</p>
-          <p className="text-2xl font-bold text-emerald-400">
+          <p className="text-sm text-gray-500">Activos</p>
+          <p className="text-2xl font-bold text-emerald-600">
             {filteredProducts.filter((p) => p.is_active).length}
           </p>
         </motion.div>
@@ -703,10 +705,10 @@ export function AdminProducts() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/5 backdrop-blur-xl rounded-xl p-4 border border-white/10"
+          className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
         >
-          <p className="text-sm text-gray-400">Sin Stock</p>
-          <p className="text-2xl font-bold text-red-400">
+          <p className="text-sm text-gray-500">Sin Stock</p>
+          <p className="text-2xl font-bold text-red-600">
             {filteredProducts.filter((p) => p.quantity === 0).length}
           </p>
         </motion.div>
@@ -714,10 +716,10 @@ export function AdminProducts() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white/5 backdrop-blur-xl rounded-xl p-4 border border-white/10"
+          className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
         >
-          <p className="text-sm text-gray-400">Stock Bajo</p>
-          <p className="text-2xl font-bold text-amber-400">
+          <p className="text-sm text-gray-500">Stock Bajo</p>
+          <p className="text-2xl font-bold text-amber-500">
             {filteredProducts.filter((p) => p.quantity > 0 && p.quantity <= 5).length}
           </p>
         </motion.div>
@@ -727,17 +729,17 @@ export function AdminProducts() {
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mb-4" />
-            <p className="text-gray-400">Cargando productos...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-black mx-auto mb-4" />
+            <p className="text-gray-500">Cargando productos...</p>
           </div>
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-12 text-center border border-white/10">
-          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="h-8 w-8 text-gray-500" />
+        <div className="bg-white rounded-2xl p-12 text-center border border-gray-200 shadow-sm">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No se encontraron productos</h3>
-          <p className="text-gray-400 mb-6">Intenta ajustar tus filtros o agrega un nuevo producto</p>
+          <h3 className="text-lg font-semibold text-black mb-2">No se encontraron productos</h3>
+          <p className="text-gray-500 mb-6">Intenta ajustar tus filtros o agrega un nuevo producto</p>
           <Button onClick={handleOpenAddModal} leftIcon={<Plus className="h-5 w-5" />}>
             Agregar Producto
           </Button>
@@ -757,20 +759,20 @@ export function AdminProducts() {
               ))}
             </div>
           ) : (
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-sm border border-white/10 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <table className="w-full">
-                <thead className="bg-white/5">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Producto</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">SKU</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Precio</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Stock</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Vendidos</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Estado</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-gray-400">Acciones</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Producto</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">SKU</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Precio</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Stock</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Vendidos</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Estado</th>
+                    <th className="px-6 py-4 text-right text-sm font-medium text-gray-500">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
+                <tbody className="divide-y divide-gray-100">
                   {paginatedProducts.map((product) => {
                     const primaryImage = product.images?.find((img: any) => img.is_primary) || product.images?.[0];
                     return (
@@ -778,43 +780,43 @@ export function AdminProducts() {
                         key={product.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="hover:bg-white/5 transition-colors"
+                        className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <img
                               src={primaryImage?.url || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=100'}
                               alt={product.name}
-                              className="w-12 h-12 rounded-xl object-cover"
+                              className="w-12 h-12 rounded-xl object-cover border border-gray-200"
                             />
                             <div>
-                              <p className="font-medium text-white">{product.name}</p>
-                              <p className="text-sm text-gray-500">{product.is_featured && '⭐ Destacado'}</p>
+                              <p className="font-medium text-black">{product.name}</p>
+                              <p className="text-xs text-gray-500">{product.is_featured && '⭐ Destacado'}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-400">{product.sku}</td>
-                        <td className="px-6 py-4 font-medium text-white">{formatCurrency(product.price)}</td>
+                        <td className="px-6 py-4 text-gray-500">{product.sku}</td>
+                        <td className="px-6 py-4 font-medium text-black">{formatCurrency(product.price)}</td>
                         <td className="px-6 py-4">
                           <span
                             className={cn(
                               'px-2.5 py-1 rounded-full text-xs font-medium',
                               product.quantity === 0
-                                ? 'bg-red-500/20 text-red-400'
+                                ? 'bg-red-100 text-red-700'
                                 : product.quantity <= 5
-                                ? 'bg-amber-500/20 text-amber-400'
-                                : 'bg-emerald-500/20 text-emerald-400'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-emerald-100 text-emerald-700'
                             )}
                           >
                             {product.quantity}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-400">{product.total_sold}</td>
+                        <td className="px-6 py-4 text-gray-500">{product.total_sold}</td>
                         <td className="px-6 py-4">
                           <span
                             className={cn(
                               'px-2.5 py-1 rounded-full text-xs font-medium',
-                              product.is_active ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'
+                              product.is_active ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
                             )}
                           >
                             {product.is_active ? 'Activo' : 'Inactivo'}
@@ -822,14 +824,14 @@ export function AdminProducts() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
-                            <IconButton onClick={() => handleOpenStats(product)} variant="ghost">
-                              <Search className="h-4 w-4 text-gray-400" />
+                            <IconButton onClick={() => handleOpenStats(product)} variant="ghost" className="text-gray-500 hover:text-black">
+                              <Search className="h-4 w-4" />
                             </IconButton>
-                            <IconButton onClick={() => handleOpenEditModal(product)} variant="ghost">
-                              <Plus className="h-4 w-4 text-gray-400" />
+                            <IconButton onClick={() => handleOpenEditModal(product)} variant="ghost" className="text-gray-500 hover:text-black">
+                              <Edit2 className="h-4 w-4" />
                             </IconButton>
-                            <IconButton onClick={() => handleOpenDeleteDialog(product)} variant="ghost">
-                              <X className="h-4 w-4 text-gray-400" />
+                            <IconButton onClick={() => handleOpenDeleteDialog(product)} variant="ghost" className="text-gray-500 hover:text-red-600">
+                              <Trash2 className="h-4 w-4" />
                             </IconButton>
                           </div>
                         </td>
@@ -843,16 +845,17 @@ export function AdminProducts() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white/5 backdrop-blur-xl rounded-xl p-4 border border-white/10">
-              <p className="text-sm text-gray-400">
+            <div className="flex items-center justify-between bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <p className="text-sm text-gray-500">
                 Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredProducts.length)} de {filteredProducts.length}
               </p>
               <div className="flex items-center gap-2">
                 <IconButton
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  className="text-gray-500 hover:text-black hover:bg-gray-100"
                 >
-                  <ChevronLeft className="h-5 w-5 text-white" />
+                  <ChevronLeft className="h-5 w-5" />
                 </IconButton>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum: number;
@@ -872,8 +875,8 @@ export function AdminProducts() {
                       className={cn(
                         'w-10 h-10 rounded-lg font-medium transition-colors',
                         currentPage === pageNum
-                          ? 'bg-white text-black'
-                          : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                          ? 'bg-black text-white'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-black'
                       )}
                     >
                       {pageNum}
@@ -883,8 +886,9 @@ export function AdminProducts() {
                 <IconButton
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  className="text-gray-500 hover:text-black hover:bg-gray-100"
                 >
-                  <ChevronRight className="h-5 w-5 text-white" />
+                  <ChevronRight className="h-5 w-5" />
                 </IconButton>
               </div>
             </div>
@@ -892,7 +896,8 @@ export function AdminProducts() {
         </>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal and other dialogs remain mostly the same but with light theme classes where needed */}
+
       <AnimatePresence>
         {(isAddModalOpen || isEditModalOpen) && (
           <Modal
