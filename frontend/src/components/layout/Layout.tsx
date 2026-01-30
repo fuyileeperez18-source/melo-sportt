@@ -54,7 +54,7 @@ export function SimpleLayout() {
 // Admin layout
 export function AdminLayout() {
   return (
-    <div className="min-h-screen bg-gray-50 text-black">
+    <div className="min-h-screen w-full bg-white text-black flex flex-col">
       <Outlet />
     </div>
   );

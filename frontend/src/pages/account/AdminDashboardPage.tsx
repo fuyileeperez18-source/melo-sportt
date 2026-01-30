@@ -163,9 +163,9 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">{/* Fondo gris claro para elegancia */}
+    <div className="min-h-screen bg-gray-50 flex flex-col">{/* Fondo gris claro para elegancia */}
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm w-full">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -200,7 +200,7 @@ export function AdminDashboardPage() {
         </div>
       </header>
 
-      <div className="w-full px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
+      <div className="w-full px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden flex-1">
         {/* Stats Grid - Optimizado para móviles */}
         <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-6 sm:mb-8 px-1 sm:px-0">
           <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow w-full">

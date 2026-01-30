@@ -13,6 +13,8 @@ import {
   X,
   Check,
   Image as ImageIcon,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
