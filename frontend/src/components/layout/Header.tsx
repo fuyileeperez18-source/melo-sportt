@@ -105,8 +105,8 @@ export function Header() {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             {/* Mobile menu button */}
-            <IconButton
-              className="lg:hidden text-white hover:bg-white/10"
+            <button
+              className="lg:hidden p-2 text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
               onClick={toggleMobileMenu}
               aria-label="Toggle menu"
             >
@@ -115,7 +115,7 @@ export function Header() {
               ) : (
                 <Menu className="h-6 w-6" />
               )}
-            </IconButton>
+            </button>
 
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
@@ -293,9 +293,13 @@ export function Header() {
                     <img src="/logo.svg" alt="MELO SPORTT" className="h-8 w-auto" />
                     <span className="text-xl font-bold text-white">MELO SPORTT</span>
                   </div>
-                  <IconButton onClick={toggleMobileMenu}>
+                  <button
+                    onClick={toggleMobileMenu}
+                    className="p-2 text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
+                    aria-label="Close menu"
+                  >
                     <X className="h-6 w-6" />
-                  </IconButton>
+                  </button>
                 </div>
 
                 {/* Mobile search */}
