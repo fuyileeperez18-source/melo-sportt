@@ -61,6 +61,8 @@ export function ChatWidget() {
     isConnected,
     joinConversation,
     onNewMessage,
+    onMessageEdited,
+    onMessageDeleted,
     onUserTyping
   } = useSocket();
 
@@ -127,7 +129,7 @@ export function ChatWidget() {
       });
 
       // Listen for message edits
-      const unsubscribeMessageEdits = onMessageEdited((message) => {
+      const unsubscribeMessageEdits = onMessageEdited((message: any) => {
         // Only handle if it belongs to current conversation
         if (message.conversationId === activeConversation.id) {
           // Find and update the message in the store
@@ -136,7 +138,7 @@ export function ChatWidget() {
       });
 
       // Listen for message deletes
-      const unsubscribeMessageDeletes = onMessageDeleted((data) => {
+      const unsubscribeMessageDeletes = onMessageDeleted((data: { messageId: string; conversationId: string }) => {
         // Only handle if it belongs to current conversation
         if (data.conversationId === activeConversation.id) {
           // Remove the message from the store
