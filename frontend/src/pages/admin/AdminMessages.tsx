@@ -581,7 +581,7 @@ export function AdminMessages() {
           >
             <option value="all">Todos status</option>
             <option value="active">Activo</option>
-            <option value="closed">Cerrado</option>
+            <option value="resolved">Resuelto</option>
             <option value="archived">Archivado</option>
           </select>
 
@@ -662,8 +662,8 @@ export function AdminMessages() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="flex flex-col lg:flex-row h-[600px]">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
+          <div className="flex flex-col lg:flex-row h-full">
             {/* Sidebar - Lista de conversaciones */}
             <div className={cn(
               'flex-col border-r border-gray-200',

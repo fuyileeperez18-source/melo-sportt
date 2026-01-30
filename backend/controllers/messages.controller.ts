@@ -48,6 +48,11 @@ export const getConversations = async (req: Request, res: Response) => {
       paramIndex++;
     }
 
+    // Exclude support requests for admin in regular messages view
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      whereConditions.push(`(c.is_support_request IS NULL OR c.is_support_request = false)`);
+    }
+
     if (dateFrom) {
       whereConditions.push(`c.last_message_at >= $${paramIndex}`);
       queryParams.push(dateFrom);
@@ -914,9 +919,10 @@ export const getSupportRequests = async (req: Request, res: Response) => {
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
 
-    let whereConditions = ['c.is_support_request = true'];
+    // Use params array suitable for the list query (includes limit and offset at $1, $2)
     const params: any[] = [limitNum, offset];
     let paramIndex = 3;
+    let whereConditions = ['c.is_support_request = true'];
 
     if (status && status !== 'all') {
       whereConditions.push(`c.status = $${paramIndex}`);
@@ -971,10 +977,10 @@ export const getSupportRequests = async (req: Request, res: Response) => {
       params
     );
 
-    // Get total count
+    // Get total count - Pass ALL params to match indices ($3, etc)
     const countResult = await pool.query(
       `SELECT COUNT(*) FROM conversations c WHERE ${whereClause}`,
-      params.slice(2) // Remove limit and offset
+      params
     );
 
     const totalCount = parseInt(countResult.rows[0].count);

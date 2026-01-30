@@ -526,6 +526,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const state = get();
     const conversationId = state.activeConversation?.id || 'local';
 
+    // Si ya estamos en una conversación con agente, no interviene el bot
+    if (state.agentActiveConversationId === state.activeConversation?.id) {
+      return;
+    }
+
     // Manejar flujo de escalación
     if (state.escalationStep === 'ask_problem_type') {
       get().selectProblemType(message);
