@@ -42,7 +42,7 @@ const getSidebarItems = (userRole: string | undefined) => {
     { name: 'Productos', href: '/admin/products', icon: Package },
     { name: 'Clientes', href: '/admin/customers', icon: Users },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Mensajes', href: '/admin/messages', icon: MessageSquare, badge: 3 },
+    { name: 'Mensajes y Soporte', href: '/admin/messages', icon: MessageSquare, badge: 3 },
     { name: 'Cupones', href: '/admin/coupons', icon: Tag },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
   ];

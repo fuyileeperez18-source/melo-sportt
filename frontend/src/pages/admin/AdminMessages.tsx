@@ -15,10 +15,19 @@ import {
   Archive,
   AlertCircle,
   Inbox,
+  AlertTriangle,
+  CheckCircle,
+  UserCheck,
+  Headphones,
 } from 'lucide-react';
 import { useSocket } from '@/contexts/SocketContext';
 import { useAuthStore } from '@/stores/authStore';
-import messageService, { type Conversation, type Message } from '@/services/message.service';
+import messageService, {
+  type Conversation,
+  type Message,
+  type SupportRequest,
+  type SupportRequestStats,
+} from '@/services/message.service';
 import { cn } from '@/lib/utils';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -45,21 +54,38 @@ export function AdminMessages() {
   const [sortBy, setSortBy] = useState('last_message_at-desc');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Support requests state
+  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
+  const [supportStats, setSupportStats] = useState<SupportRequestStats | null>(null);
+  const [showSupportRequests, setShowSupportRequests] = useState(true);
+  const [assigningRequest, setAssigningRequest] = useState<string | null>(null);
+
   // Cargar conversaciones
   useEffect(() => {
-    loadConversations(currentPage);
-  }, [currentPage]);
+    if (showSupportRequests) {
+      loadSupportRequests(currentPage);
+      loadSupportStats();
+    } else {
+      loadConversations(currentPage);
+    }
+  }, [currentPage, showSupportRequests]);
 
   useEffect(() => {
     setCurrentPage(1);
-    loadConversations(1);
+    if (showSupportRequests) {
+      loadSupportRequests(1);
+      loadSupportStats();
+    } else {
+      loadConversations(1);
+    }
   }, [searchQuery, statusFilter, dateFrom, dateTo, filterUnread, sortBy]);
 
   // Polling cada 30s - respects filters/page
   useEffect(() => {
-    const interval = setInterval(() => loadConversations(currentPage), 30000);
+    const loadFunc = showSupportRequests ? () => { loadSupportRequests(currentPage); loadSupportStats(); } : () => loadConversations(currentPage);
+    const interval = setInterval(loadFunc, 30000);
     return () => clearInterval(interval);
-  }, [currentPage, searchQuery, statusFilter, dateFrom, dateTo, filterUnread, sortBy]);
+  }, [currentPage, searchQuery, statusFilter, dateFrom, dateTo, filterUnread, sortBy, showSupportRequests]);
 
   // Escuchar nuevos mensajes en tiempo real
   useEffect(() => {
@@ -78,7 +104,12 @@ export function AdminMessages() {
         messageService.markMessagesAsRead(selectedConversation.id);
       }
 
-      loadConversations();
+      if (showSupportRequests) {
+        loadSupportRequests(currentPage);
+        loadSupportStats();
+      } else {
+        loadConversations(currentPage);
+      }
     });
 
     const unsubscribeEdited = onMessageEdited((message: Message) => {
@@ -98,7 +129,11 @@ export function AdminMessages() {
         setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
       }
 
-      loadConversations();
+      if (showSupportRequests) {
+        loadSupportRequests(currentPage);
+      } else {
+        loadConversations(currentPage);
+      }
     });
 
     return () => {
@@ -106,7 +141,7 @@ export function AdminMessages() {
       unsubscribeEdited();
       unsubscribeDeleted();
     };
-  }, [isConnected, selectedConversation, onNewMessage, onMessageEdited, onMessageDeleted]);
+  }, [isConnected, selectedConversation, onNewMessage, onMessageEdited, onMessageDeleted, showSupportRequests, currentPage]);
 
   // Join/leave conversation
   useEffect(() => {
@@ -130,6 +165,7 @@ export function AdminMessages() {
   };
 
   async function loadConversations(page = 1) {
+    setIsLoading(true);
     try {
       const response = await messageService.getConversations({
         page,
@@ -146,13 +182,72 @@ export function AdminMessages() {
       const paginationData = response.pagination || {};
       setConversations(conversationsData);
       setPagination(paginationData);
-      console.log('Set convs:', conversationsData.length, 'Pagination:', paginationData);
-      toast(`Página ${page}: ${conversationsData.length} conversaciones (${paginationData.totalCount || 0} total)`);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast.error('Error al cargar conversaciones');
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function loadSupportRequests(page = 1) {
+    setIsLoading(true);
+    try {
+      const response = await messageService.getSupportRequests({
+        page,
+        limit: 20,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        problemType: filterUnread ? undefined : undefined // Reuse filter unread variable or add new one if needed
+      });
+
+      const requests = response.supportRequests || [];
+      const paginationData = response.pagination || {};
+
+      // Convert SupportRequest to Conversation type for compatibility with the view
+      const convertedConversations: Conversation[] = requests.map(req => ({
+        id: req.id,
+        customerId: req.customerId,
+        customerName: req.customerName,
+        customerEmail: req.customerEmail,
+        customerAvatar: req.customerAvatar,
+        orderId: null,
+        orderNumber: null,
+        productId: null,
+        productName: req.problemType, // Use problem type as "product name" context
+        status: req.status,
+        lastMessageAt: req.lastMessageAt,
+        lastMessage: null,
+        unreadCount: req.unreadCount,
+        totalMessages: req.totalMessages,
+        createdAt: req.createdAt,
+        updatedAt: req.updatedAt,
+        // Add extra property for support requests
+        isSupportRequest: true,
+        priority: req.priority,
+        problemType: req.problemType,
+        problemLabel: req.problemLabel,
+        problemDescription: req.problemDescription,
+        assignedAdminId: req.assignedAdminId,
+        assignedAdminName: req.assignedAdminName
+      } as any));
+
+      setConversations(convertedConversations);
+      setSupportRequests(requests);
+      setPagination(paginationData);
+    } catch (error) {
+      console.error('Error loading support requests:', error);
+      toast.error('Error al cargar solicitudes de soporte');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function loadSupportStats() {
+    try {
+      const stats = await messageService.getSupportRequestStats();
+      setSupportStats(stats);
+    } catch (error) {
+      console.error('Error loading support stats:', error);
     }
   }
 
@@ -164,6 +259,57 @@ export function AdminMessages() {
       await messageService.markMessagesAsRead(conversationId);
     } catch (error) {
       console.error('Error loading messages:', error);
+    }
+  }
+
+  async function handleUpdateSupportPriority(priority: 'low' | 'normal' | 'high' | 'urgent') {
+    if (!selectedConversation || !(selectedConversation as any).isSupportRequest) return;
+
+    try {
+      await messageService.updateSupportRequestPriority(selectedConversation.id, priority);
+      // Update local state
+      setSelectedConversation(prev => prev ? ({...prev, priority} as any) : null);
+      if (showSupportRequests) loadSupportRequests(currentPage);
+      toast.success(`Prioridad actualizada a ${priority}`);
+    } catch (error) {
+      console.error('Error updating priority', error);
+      toast.error('Error al actualizar prioridad');
+    }
+  }
+
+  async function handleAssignSupport(adminId?: string) {
+    if (!selectedConversation || !(selectedConversation as any).isSupportRequest) return;
+
+    try {
+      await messageService.assignSupportRequest(selectedConversation.id, adminId);
+      // Update local state
+      setSelectedConversation(prev => prev ? ({...prev, assignedAdminId: adminId || user?.id, status: 'active'} as any) : null);
+      if (showSupportRequests) loadSupportRequests(currentPage);
+      toast.success('Solicitud asignada correctamente');
+      setAssigningRequest(null);
+    } catch (error) {
+      console.error('Error assigning request', error);
+      toast.error('Error al asignar solicitud');
+    }
+  }
+
+  async function handleResolveSupport() {
+    if (!selectedConversation || !(selectedConversation as any).isSupportRequest) return;
+
+    if (!confirm('¿Estás seguro de que quieres marcar esta solicitud como resuelta?')) return;
+
+    try {
+      await messageService.resolveSupportRequest(selectedConversation.id);
+      // Update local state
+      setSelectedConversation(prev => prev ? ({...prev, status: 'resolved'} as any) : null);
+      if (showSupportRequests) {
+        loadSupportRequests(currentPage);
+        loadSupportStats();
+      }
+      toast.success('Solicitud resuelta correctamente');
+    } catch (error) {
+      console.error('Error resolving request', error);
+      toast.error('Error al resolver solicitud');
     }
   }
 
@@ -272,7 +418,7 @@ export function AdminMessages() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-black">Mensajes de Clientes</h1>
+          <h1 className="text-2xl font-bold text-black">Mensajes y Soporte</h1>
           <p className="text-gray-600">
             {isConnected ? (
               <span className="text-green-600 flex items-center gap-1">
@@ -289,8 +435,48 @@ export function AdminMessages() {
         </div>
       </div>
 
-      {/* Stats - Solo mostrar si hay conversaciones */}
-      {conversations.length > 0 && (
+      {/* Tabs */}
+      <div className="flex space-x-1 rounded-xl bg-gray-100 p-1 mb-4 w-fit">
+        <button
+          onClick={() => {
+            setShowSupportRequests(false);
+            setSelectedConversation(null);
+            setSearchQuery('');
+          }}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            !showSupportRequests
+              ? 'bg-white text-black shadow-sm'
+              : 'text-gray-500 hover:text-black'
+          )}
+        >
+          Mensajes
+        </button>
+        <button
+          onClick={() => {
+            setShowSupportRequests(true);
+            setSelectedConversation(null);
+            setSearchQuery('');
+          }}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
+            showSupportRequests
+              ? 'bg-white text-black shadow-sm'
+              : 'text-gray-500 hover:text-black'
+          )}
+        >
+          Solicitudes de Soporte
+          {supportStats?.totalPending > 0 && (
+            <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+              {supportStats.totalPending}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Stats - Mostrar dependiendo de la vista activa */}
+      {!showSupportRequests ? (
+        conversations.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => setFilterUnread(!filterUnread)}
@@ -325,6 +511,38 @@ export function AdminMessages() {
               <p className="text-gray-600 text-sm font-medium">Consultas</p>
             </div>
             <p className="text-2xl font-bold text-black">{stats.withProduct}</p>
+          </div>
+        </div>
+        )
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-gray-600 text-sm font-medium">Pendientes</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{supportStats?.totalPending || 0}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <Clock className="h-5 w-5 text-blue-600" />
+              <p className="text-gray-600 text-sm font-medium">En Progreso</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{supportStats?.totalActive || 0}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <p className="text-gray-600 text-sm font-medium">Resueltos Hoy</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{supportStats?.totalResolvedToday || 0}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <Archive className="h-5 w-5 text-gray-600" />
+              <p className="text-gray-600 text-sm font-medium">Total Histórico</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{supportStats?.totalAll || 0}</p>
           </div>
         </div>
       )}
@@ -474,6 +692,15 @@ export function AdminMessages() {
                             {conv.unreadCount}
                           </span>
                         )}
+                        {(conv as any).isSupportRequest && (
+                          <span className={cn(
+                            "absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border border-white",
+                            (conv as any).priority === 'urgent' ? 'bg-red-500' :
+                            (conv as any).priority === 'high' ? 'bg-orange-500' :
+                            (conv as any).priority === 'normal' ? 'bg-blue-500' : 'bg-green-500'
+                          )}>
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
@@ -489,6 +716,22 @@ export function AdminMessages() {
                         <p className="text-xs text-gray-500 truncate mb-1">
                           {conv.customerEmail}
                         </p>
+                        {(conv as any).isSupportRequest ? (
+                          <div className="flex items-center gap-1 text-xs mb-1 font-medium text-black">
+                             <AlertCircle className="w-3 h-3" />
+                             <span>{(conv as any).problemType}</span>
+                             <span className="text-gray-400">|</span>
+                             <span className={cn(
+                               "uppercase text-[10px] px-1 py-0.5 rounded",
+                               (conv as any).status === 'pending' ? 'bg-red-100 text-red-600' :
+                               (conv as any).status === 'active' ? 'bg-blue-100 text-blue-600' :
+                               'bg-green-100 text-green-600'
+                             )}>
+                               {(conv as any).status}
+                             </span>
+                          </div>
+                        ) : (
+                          <>
                         {conv.productName && (
                           <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
                             <Package className="w-3 h-3" />
@@ -500,6 +743,13 @@ export function AdminMessages() {
                             <ShoppingBag className="w-3 h-3" />
                             <span>Orden #{conv.orderNumber}</span>
                           </div>
+                        )}
+                          </>
+                        )}
+                        {(conv as any).description && (
+                          <p className="text-sm text-gray-600 truncate italic mb-1">
+                            "{(conv as any).description}"
+                          </p>
                         )}
                         {conv.lastMessage && (
                           <p className="text-sm text-gray-600 truncate">
@@ -521,7 +771,8 @@ export function AdminMessages() {
               {selectedConversation ? (
                 <>
                   {/* Header del chat */}
-                  <div className="p-4 border-b border-gray-200 flex items-center gap-3">
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
                     <button
                       onClick={() => setSelectedConversation(null)}
                       className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
@@ -547,6 +798,74 @@ export function AdminMessages() {
                         </p>
                       )}
                     </div>
+                    </div>
+
+                    {/* Support Request Actions Actions */}
+                    {(selectedConversation as any).isSupportRequest && (
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                           <div>
+                             <p className="text-xs font-semibold uppercase text-gray-500 mb-1">Prioridad</p>
+                             <div className="flex gap-1">
+                               {['low', 'normal', 'high', 'urgent'].map(p => (
+                                 <button
+                                   key={p}
+                                   onClick={() => handleUpdateSupportPriority(p as any)}
+                                   className={cn(
+                                     "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                     (selectedConversation as any).priority === p ? 'border-black scale-110' : 'border-transparent opacity-50 hover:opacity-100',
+                                     p === 'urgent' ? 'bg-red-500' : p === 'high' ? 'bg-orange-500' : p === 'normal' ? 'bg-blue-500' : 'bg-green-500'
+                                   )}
+                                   title={`Prioridad ${p}`}
+                                 >
+                                    {(selectedConversation as any).priority === p && <Check className="w-3 h-3 text-white" />}
+                                 </button>
+                               ))}
+                             </div>
+                           </div>
+
+                           <div>
+                             <p className="text-xs font-semibold uppercase text-gray-500 mb-1">Estado</p>
+                             <div className="flex items-center gap-2">
+                               <span className={cn(
+                                 "px-2 py-1 rounded text-xs font-medium uppercase",
+                                 (selectedConversation as any).status === 'pending' ? 'bg-red-100 text-red-600' :
+                                 (selectedConversation as any).status === 'active' ? 'bg-blue-100 text-blue-600' :
+                                 'bg-green-100 text-green-600'
+                               )}>
+                                 {(selectedConversation as any).status}
+                               </span>
+                               {(selectedConversation as any).status !== 'resolved' && (
+                                 <button
+                                   onClick={handleResolveSupport}
+                                   className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors flex items-center gap-1"
+                                 >
+                                   <CheckCircle className="w-3 h-3" />
+                                   Resolver
+                                 </button>
+                               )}
+                             </div>
+                           </div>
+
+                             {!(selectedConversation as any).assignedAdminId && (
+                               <div>
+                                 <p className="text-xs font-semibold uppercase text-gray-500 mb-1">Asignación</p>
+                                 <button
+                                   onClick={() => handleAssignSupport(user?.id)}
+                                   className="text-xs bg-black text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors flex items-center gap-1"
+                                 >
+                                   <UserCheck className="w-3 h-3" />
+                                   Tomar Caso
+                                 </button>
+                               </div>
+                             )}
+
+                           <div className="w-full text-xs text-gray-600 bg-white p-2 rounded border border-gray-200 mt-2">
+                              <span className="font-semibold">Problema:</span> {(selectedConversation as any).problemLabel} | <span className="font-semibold">Descripción:</span> {(selectedConversation as any).problemDescription || 'Sin descripción'}
+                           </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Mensajes */}

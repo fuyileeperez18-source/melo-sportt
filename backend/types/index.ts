@@ -283,8 +283,19 @@ export interface Conversation {
   user_id?: string;
   user?: PublicUser;
   channel: 'website' | 'whatsapp' | 'instagram';
-  status: 'active' | 'resolved' | 'pending';
+  status: 'active' | 'resolved' | 'pending' | 'closed' | 'archived';
   assigned_to?: string;
+  assigned_admin_id?: string;
+
+  // Support request fields
+  is_support_request?: boolean;
+  problem_type?: string;
+  problem_label?: string;
+  problem_description?: string;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  resolved_at?: string;
+  resolved_by?: string;
+
   messages?: ChatMessage[];
   unread_count: number;
   created_at: string;

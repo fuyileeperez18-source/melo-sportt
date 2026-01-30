@@ -81,6 +81,10 @@ export const getConversations = async (req: Request, res: Response) => {
         c.last_message_at,
         c.created_at,
         c.updated_at,
+        c.is_support_request,
+        c.problem_type,
+        c.problem_label,
+        c.priority,
         u.id as customer_id,
         u.full_name as customer_name,
         u.email as customer_email,
@@ -159,6 +163,10 @@ export const getConversations = async (req: Request, res: Response) => {
       totalMessages: parseInt(conv.total_messages || '0'),
       createdAt: conv.created_at,
       updatedAt: conv.updated_at,
+      isSupportRequest: conv.is_support_request,
+      problemType: conv.problem_type,
+      problemLabel: conv.problem_label,
+      priority: conv.priority,
     }));
 
     // Count total conversations - mirror WHERE and HAVING
@@ -486,17 +494,86 @@ export const sendMessage = async (req: Request, res: Response) => {
 /**
  * Create or get existing conversation
  * - Customers can create conversations about products or orders
+ * - Also handles support requests from MELOBOT
  */
 export const createOrGetConversation = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
-    const { productId, orderId, initialMessage } = req.body;
+    const { productId, orderId, initialMessage, metadata } = req.body;
 
-// Permitir conversaciones de soporte general sin productId ni orderId
-    if (!productId && !orderId) {
-      // Se creará con product_id=null, order_id=null para soporte general
+    // Check if this is a support request from MELOBOT
+    const isSupportRequest = metadata?.supportRequest === true;
+    const problemType = metadata?.problemType || null;
+    const problemLabel = metadata?.problemLabel || null;
+    const problemDescription = metadata?.description || null;
+
+    // For support requests, always create a new conversation
+    if (isSupportRequest) {
+      const convResult = await pool.query(
+        `INSERT INTO conversations (
+          user_id, product_id, order_id, status,
+          is_support_request, problem_type, problem_label, problem_description,
+          created_at
+        )
+        VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, NOW())
+        RETURNING *`,
+        [
+          userId,
+          productId || null,
+          orderId || null,
+          true,
+          problemType,
+          problemLabel,
+          problemDescription
+        ]
+      );
+
+      const conversation = convResult.rows[0];
+
+      // Send initial message (summary for admin)
+      if (initialMessage) {
+        await pool.query(
+          `INSERT INTO messages (conversation_id, sender_id, content, created_at)
+           VALUES ($1, $2, $3, NOW())`,
+          [conversation.id, userId, initialMessage.trim()]
+        );
+      }
+
+      // Notify admins about new support request via WebSocket
+      try {
+        const adminsResult = await pool.query(
+          `SELECT id FROM users WHERE role IN ('admin', 'super_admin')`
+        );
+        for (const admin of adminsResult.rows) {
+          sendNotificationToUser(admin.id, {
+            type: 'new-support-request',
+            conversationId: conversation.id,
+            problemType,
+            problemLabel,
+            problemDescription,
+          });
+        }
+      } catch (notifyError) {
+        console.error('Error notifying admins:', notifyError);
+      }
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          id: conversation.id,
+          customerId: conversation.user_id,
+          status: conversation.status,
+          isSupportRequest: true,
+          problemType: conversation.problem_type,
+          problemLabel: conversation.problem_label,
+          createdAt: conversation.created_at,
+          updatedAt: conversation.updated_at,
+        },
+        isNew: true,
+      });
     }
 
+    // Regular conversation flow (not a support request)
     // Check if conversation already exists
     let existingConv;
     if (orderId) {
@@ -518,9 +595,13 @@ export const createOrGetConversation = async (req: Request, res: Response) => {
       return res.json({
         success: true,
         data: {
-          conversation: existingConv,
-          isNew: false,
+          id: existingConv.id,
+          customerId: existingConv.user_id,
+          status: existingConv.status,
+          createdAt: existingConv.created_at,
+          updatedAt: existingConv.updated_at,
         },
+        isNew: false,
       });
     }
 
@@ -546,9 +627,13 @@ export const createOrGetConversation = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       data: {
-        conversation,
-        isNew: true,
+        id: conversation.id,
+        customerId: conversation.user_id,
+        status: conversation.status,
+        createdAt: conversation.created_at,
+        updatedAt: conversation.updated_at,
       },
+      isNew: true,
     });
   } catch (error: any) {
     console.error('Error creating conversation:', error);
@@ -799,6 +884,362 @@ export const deleteMessage = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting message',
+      error: error.message,
+    });
+  }
+};
+
+// ============================================
+// SUPPORT REQUESTS ENDPOINTS
+// ============================================
+
+/**
+ * Get all support requests (Admin only)
+ * Returns pending and active support requests for the admin panel
+ */
+export const getSupportRequests = async (req: Request, res: Response) => {
+  try {
+    const userRole = (req as any).user.role;
+
+    // Only admins can view support requests
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin role required.',
+      });
+    }
+
+    const { status, problemType, page = 1, limit = 20 } = req.query;
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
+
+    let whereConditions = ['c.is_support_request = true'];
+    const params: any[] = [limitNum, offset];
+    let paramIndex = 3;
+
+    if (status && status !== 'all') {
+      whereConditions.push(`c.status = $${paramIndex}`);
+      params.push(status);
+      paramIndex++;
+    } else {
+      whereConditions.push(`c.status IN ('pending', 'active')`);
+    }
+
+    if (problemType && problemType !== 'all') {
+      whereConditions.push(`c.problem_type = $${paramIndex}`);
+      params.push(problemType);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+
+    const result = await pool.query(
+      `SELECT
+        c.id,
+        c.user_id as customer_id,
+        c.problem_type,
+        c.problem_label,
+        c.problem_description,
+        c.priority,
+        c.status,
+        c.assigned_admin_id,
+        c.created_at,
+        c.updated_at,
+        c.last_message_at,
+        c.resolved_at,
+        u.full_name as customer_name,
+        u.email as customer_email,
+        u.phone as customer_phone,
+        u.avatar_url as customer_avatar,
+        admin.full_name as assigned_admin_name,
+        (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.is_read = false AND m.sender_id = c.user_id) as unread_count,
+        (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as total_messages
+      FROM conversations c
+      INNER JOIN users u ON c.user_id = u.id
+      LEFT JOIN users admin ON c.assigned_admin_id = admin.id
+      WHERE ${whereClause}
+      ORDER BY
+        CASE c.priority
+          WHEN 'urgent' THEN 1
+          WHEN 'high' THEN 2
+          WHEN 'normal' THEN 3
+          WHEN 'low' THEN 4
+        END,
+        c.created_at ASC
+      LIMIT $1 OFFSET $2`,
+      params
+    );
+
+    // Get total count
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM conversations c WHERE ${whereClause}`,
+      params.slice(2) // Remove limit and offset
+    );
+
+    const totalCount = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    const supportRequests = result.rows.map(row => ({
+      id: row.id,
+      customerId: row.customer_id,
+      customerName: row.customer_name,
+      customerEmail: row.customer_email,
+      customerPhone: row.customer_phone,
+      customerAvatar: row.customer_avatar,
+      problemType: row.problem_type,
+      problemLabel: row.problem_label,
+      problemDescription: row.problem_description,
+      priority: row.priority,
+      status: row.status,
+      assignedAdminId: row.assigned_admin_id,
+      assignedAdminName: row.assigned_admin_name,
+      unreadCount: parseInt(row.unread_count),
+      totalMessages: parseInt(row.total_messages),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      lastMessageAt: row.last_message_at,
+      resolvedAt: row.resolved_at,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        supportRequests,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalCount,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error getting support requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting support requests',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get support request stats (Admin only)
+ */
+export const getSupportRequestStats = async (req: Request, res: Response) => {
+  try {
+    const userRole = (req as any).user.role;
+
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin role required.',
+      });
+    }
+
+    const result = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM conversations WHERE is_support_request = true AND status = 'pending') as total_pending,
+        (SELECT COUNT(*) FROM conversations WHERE is_support_request = true AND status = 'active') as total_active,
+        (SELECT COUNT(*) FROM conversations WHERE is_support_request = true AND status = 'resolved' AND resolved_at >= CURRENT_DATE) as total_resolved_today,
+        (SELECT COUNT(*) FROM conversations WHERE is_support_request = true) as total_all
+    `);
+
+    // Get counts by problem type
+    const byTypeResult = await pool.query(`
+      SELECT problem_type, COUNT(*) as count
+      FROM conversations
+      WHERE is_support_request = true AND status IN ('pending', 'active')
+      GROUP BY problem_type
+    `);
+
+    const byType: Record<string, number> = {};
+    byTypeResult.rows.forEach(row => {
+      byType[row.problem_type || 'unknown'] = parseInt(row.count);
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalPending: parseInt(result.rows[0].total_pending),
+        totalActive: parseInt(result.rows[0].total_active),
+        totalResolvedToday: parseInt(result.rows[0].total_resolved_today),
+        totalAll: parseInt(result.rows[0].total_all),
+        byType,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error getting support request stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting support request stats',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Assign support request to admin
+ */
+export const assignSupportRequest = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const userRole = (req as any).user.role;
+    const { conversationId } = req.params;
+    const { adminId } = req.body;
+
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin role required.',
+      });
+    }
+
+    // If no adminId provided, assign to current user
+    const assignToId = adminId || userId;
+
+    const result = await pool.query(
+      `UPDATE conversations
+       SET assigned_admin_id = $1, status = 'active', updated_at = NOW()
+       WHERE id = $2 AND is_support_request = true
+       RETURNING *`,
+      [assignToId, conversationId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support request not found',
+      });
+    }
+
+    // Notify the customer that an admin has taken their request
+    const conversation = result.rows[0];
+    sendNotificationToUser(conversation.user_id, {
+      type: 'support-request-assigned',
+      conversationId: conversation.id,
+      message: 'Un agente ha tomado tu solicitud y te responderá pronto.',
+    });
+
+    res.json({
+      success: true,
+      message: 'Support request assigned successfully',
+      data: { conversation: result.rows[0] },
+    });
+  } catch (error: any) {
+    console.error('Error assigning support request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error assigning support request',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Resolve support request
+ */
+export const resolveSupportRequest = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const userRole = (req as any).user.role;
+    const { conversationId } = req.params;
+
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin role required.',
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE conversations
+       SET status = 'resolved', resolved_at = NOW(), resolved_by = $1, updated_at = NOW()
+       WHERE id = $2 AND is_support_request = true
+       RETURNING *`,
+      [userId, conversationId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support request not found',
+      });
+    }
+
+    // Notify the customer
+    const conversation = result.rows[0];
+    sendNotificationToUser(conversation.user_id, {
+      type: 'support-request-resolved',
+      conversationId: conversation.id,
+      message: 'Tu solicitud de soporte ha sido resuelta.',
+    });
+
+    res.json({
+      success: true,
+      message: 'Support request resolved successfully',
+      data: { conversation: result.rows[0] },
+    });
+  } catch (error: any) {
+    console.error('Error resolving support request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error resolving support request',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Update support request priority
+ */
+export const updateSupportRequestPriority = async (req: Request, res: Response) => {
+  try {
+    const userRole = (req as any).user.role;
+    const { conversationId } = req.params;
+    const { priority } = req.body;
+
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin role required.',
+      });
+    }
+
+    if (!['low', 'normal', 'high', 'urgent'].includes(priority)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid priority. Must be one of: low, normal, high, urgent',
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE conversations
+       SET priority = $1, updated_at = NOW()
+       WHERE id = $2 AND is_support_request = true
+       RETURNING *`,
+      [priority, conversationId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support request not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Priority updated successfully',
+      data: { conversation: result.rows[0] },
+    });
+  } catch (error: any) {
+    console.error('Error updating priority:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating priority',
       error: error.message,
     });
   }

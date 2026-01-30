@@ -14,7 +14,7 @@ import {
   Check,
   MoreVertical,
 } from 'lucide-react';
-import { useChatStore, quickReplies } from '@/stores/chatStore';
+import { useChatStore, quickReplies, problemTypes } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,11 @@ export function ChatWidget() {
     deleteMessage,
     fetchConversations,
     fetchMessages,
+    // Escalación
+    escalationStep,
+    selectProblemType,
+    cancelEscalation,
+    confirmAndSubmitEscalation,
   } = useChatStore();
 
   const { user } = useAuthStore();
@@ -432,6 +437,62 @@ export function ChatWidget() {
                           <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                       </div>
+                    </motion.div>
+                  )}
+
+                  {/* Botones de selección de tipo de problema */}
+                  {escalationStep === 'ask_problem_type' && !isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-2"
+                    >
+                      <div className="grid grid-cols-2 gap-2">
+                        {problemTypes.map((problem) => (
+                          <motion.button
+                            key={problem.id}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => selectProblemType(problem.id)}
+                            className="px-3 py-2 bg-primary-800 text-sm text-white rounded-xl hover:bg-primary-700 transition-colors text-left flex items-center gap-2"
+                          >
+                            <span className="text-lg">{problem.icon}</span>
+                            <span className="text-xs">{problem.label}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={cancelEscalation}
+                        className="w-full px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Botones de confirmación */}
+                  {escalationStep === 'confirming' && !isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex gap-2"
+                    >
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => confirmAndSubmitEscalation()}
+                        className="flex-1 px-4 py-2 bg-green-600 text-sm text-white rounded-xl hover:bg-green-500 transition-colors font-medium"
+                      >
+                        Confirmar
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={cancelEscalation}
+                        className="flex-1 px-4 py-2 bg-primary-800 text-sm text-white rounded-xl hover:bg-primary-700 transition-colors"
+                      >
+                        Cancelar
+                      </motion.button>
                     </motion.div>
                   )}
 

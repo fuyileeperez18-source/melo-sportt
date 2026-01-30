@@ -8,6 +8,12 @@ import {
   getUnreadCount,
   editMessage,
   deleteMessage,
+  // Support requests
+  getSupportRequests,
+  getSupportRequestStats,
+  assignSupportRequest,
+  resolveSupportRequest,
+  updateSupportRequestPriority,
 } from '../controllers/messages.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -39,5 +45,24 @@ router.put('/conversations/:conversationId/read', markMessagesAsRead);
 
 // Get unread messages count
 router.get('/unread-count', getUnreadCount);
+
+// ============================================
+// SUPPORT REQUESTS ROUTES (Admin only)
+// ============================================
+
+// Get all support requests
+router.get('/support-requests', getSupportRequests);
+
+// Get support request statistics
+router.get('/support-requests/stats', getSupportRequestStats);
+
+// Assign support request to admin
+router.put('/support-requests/:conversationId/assign', assignSupportRequest);
+
+// Resolve support request
+router.put('/support-requests/:conversationId/resolve', resolveSupportRequest);
+
+// Update support request priority
+router.put('/support-requests/:conversationId/priority', updateSupportRequestPriority);
 
 export default router;

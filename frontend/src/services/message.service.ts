@@ -146,18 +146,25 @@ export interface CreateConversationResponse {
 
 /**
  * Create or get existing conversation
+ * @param data.metadata - Optional metadata for support requests (supportRequest, problemType, problemLabel, description)
  */
 export const createOrGetConversation = async (data: {
   productId?: string;
   orderId?: string;
   initialMessage?: string;
+  metadata?: {
+    supportRequest?: boolean;
+    problemType?: string;
+    problemLabel?: string;
+    description?: string;
+  };
 }): Promise<any> => {
   const response = await api.post('/messages/conversations', data);
   // Backend devuelve {success: true, data: {conversation: {...}, isNew: boolean}}
   const backendData = response.data as any;
   return {
     success: backendData?.success ?? true,
-    data: backendData?.data?.conversation ?? backendData?.conversation ?? backendData ?? {},
+    data: backendData?.data ?? backendData ?? {},
   };
 };
 
@@ -195,6 +202,109 @@ export const deleteMessage = async (messageId: string) => {
   return response.data;
 };
 
+// ============================================
+// SUPPORT REQUESTS (Admin only)
+// ============================================
+
+export interface SupportRequest {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  customerAvatar: string | null;
+  problemType: string;
+  problemLabel: string;
+  problemDescription: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  status: string;
+  assignedAdminId: string | null;
+  assignedAdminName: string | null;
+  unreadCount: number;
+  totalMessages: number;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string | null;
+  resolvedAt: string | null;
+}
+
+export interface SupportRequestStats {
+  totalPending: number;
+  totalActive: number;
+  totalResolvedToday: number;
+  totalAll: number;
+  byType: Record<string, number>;
+}
+
+/**
+ * Get all support requests (Admin only)
+ */
+export const getSupportRequests = async (params: {
+  status?: string;
+  problemType?: string;
+  page?: number;
+  limit?: number;
+} = {}): Promise<{ supportRequests: SupportRequest[]; pagination: any }> => {
+  const queryParams: Record<string, string> = {
+    page: String(params.page || 1),
+    limit: String(params.limit || 20),
+    ...(params.status && { status: params.status }),
+    ...(params.problemType && { problemType: params.problemType }),
+  };
+  const response = await api.get('/messages/support-requests', queryParams);
+  const data = response.data as any;
+  return {
+    supportRequests: data?.data?.supportRequests || [],
+    pagination: data?.data?.pagination || {},
+  };
+};
+
+/**
+ * Get support request statistics (Admin only)
+ */
+export const getSupportRequestStats = async (): Promise<SupportRequestStats> => {
+  const response = await api.get('/messages/support-requests/stats');
+  const data = response.data as any;
+  return data?.data || {
+    totalPending: 0,
+    totalActive: 0,
+    totalResolvedToday: 0,
+    totalAll: 0,
+    byType: {},
+  };
+};
+
+/**
+ * Assign support request to admin
+ */
+export const assignSupportRequest = async (conversationId: string, adminId?: string) => {
+  const response = await api.put(`/messages/support-requests/${conversationId}/assign`, {
+    adminId,
+  });
+  return response.data;
+};
+
+/**
+ * Resolve support request
+ */
+export const resolveSupportRequest = async (conversationId: string) => {
+  const response = await api.put(`/messages/support-requests/${conversationId}/resolve`);
+  return response.data;
+};
+
+/**
+ * Update support request priority
+ */
+export const updateSupportRequestPriority = async (
+  conversationId: string,
+  priority: 'low' | 'normal' | 'high' | 'urgent'
+) => {
+  const response = await api.put(`/messages/support-requests/${conversationId}/priority`, {
+    priority,
+  });
+  return response.data;
+};
+
 const messageService = {
   getConversations,
   getMessages,
@@ -204,6 +314,12 @@ const messageService = {
   getUnreadCount,
   editMessage,
   deleteMessage,
+  // Support requests
+  getSupportRequests,
+  getSupportRequestStats,
+  assignSupportRequest,
+  resolveSupportRequest,
+  updateSupportRequestPriority,
 };
 
 export default messageService;
