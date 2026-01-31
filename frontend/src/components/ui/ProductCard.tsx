@@ -245,40 +245,40 @@ export function ProductCard({
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-2 md:p-4">
           {/* Category */}
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
             {formatCategoryName(product.category?.name) || 'Colección'}
           </p>
 
           {/* Name */}
-          <h3 className="text-white font-medium text-lg mb-2 truncate group-hover:text-gray-200 transition-colors">
+          <h3 className="text-white font-medium text-xs sm:text-base md:text-lg mb-1 md:mb-2 truncate group-hover:text-gray-200 transition-colors">
             {product.name}
           </h3>
 
           {/* Rating (if available) */}
           {variant === 'detailed' && (
-            <div className="flex items-center gap-1 mb-2">
+            <div className="flex items-center gap-1 mb-1 md:mb-2">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={cn(
-                    'h-4 w-4',
+                    'h-3 w-3 md:h-4 md:w-4',
                     i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'
                   )}
                 />
               ))}
-              <span className="text-gray-500 text-sm ml-1">(24)</span>
+              <span className="text-gray-500 text-xs sm:text-sm ml-1">(24)</span>
             </div>
           )}
 
           {/* Price */}
           <div className="flex items-center gap-2">
-            <span className="text-white font-semibold text-lg">
+            <span className="text-white font-semibold text-xs sm:text-base md:text-lg">
               {formatCurrency(product.price)}
             </span>
             {product.compare_at_price && (
-              <span className="text-gray-500 line-through text-sm">
+              <span className="text-gray-500 line-through text-[10px] sm:text-sm">
                 {formatCurrency(product.compare_at_price)}
               </span>
             )}
@@ -323,13 +323,13 @@ export function ProductGrid({
   variant = 'default',
 }: ProductGridProps) {
   const gridCols = {
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+    2: 'grid-cols-2 sm:grid-cols-2',
+    3: 'grid-cols-3 sm:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4',
   };
 
   return (
-    <div className={cn('grid gap-6', gridCols[columns])}>
+    <div className={cn('grid gap-2 sm:gap-4 md:gap-6', gridCols[columns])}>
       {products.map((product, index) => (
         <motion.div
           key={product.id}
