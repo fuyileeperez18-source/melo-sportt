@@ -151,12 +151,12 @@ export function ProductCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           {/* Badges */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2">
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-col gap-1 md:gap-2">
             {product.is_featured && (
               <motion.span
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="px-3 py-1 bg-white text-black text-xs font-bold rounded-full"
+                className="px-2 py-0.5 md:px-3 md:py-1 bg-white text-black text-[10px] md:text-xs font-bold rounded-full"
               >
                 DESTACADO
               </motion.span>
@@ -166,7 +166,7 @@ export function ProductCard({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full"
+                className="px-2 py-0.5 md:px-3 md:py-1 bg-red-500 text-white text-[10px] md:text-xs font-bold rounded-full"
               >
                 -{discount}%
               </motion.span>
@@ -176,7 +176,7 @@ export function ProductCard({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="px-3 py-1 bg-amber-500 text-black text-xs font-bold rounded-full"
+                className="px-2 py-0.5 md:px-3 md:py-1 bg-amber-500 text-black text-[10px] md:text-xs font-bold rounded-full"
               >
                 ÚLTIMAS UNIDADES
               </motion.span>
