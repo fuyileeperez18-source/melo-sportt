@@ -1,7 +1,7 @@
 {
-  "name": "melo-sportt",
+  "name": "goomelooskin",
   "version": "1.0.0",
-  "description": "E-commerce MELO SPORTT - Frontend + Backend",
+  "description": "E-commerce GOOMELOOSKIN - Tienda de ropa exclusiva urbana - Frontend + Backend",
   "main": "backend/dist/index.js",
   "scripts": {
     "dev": "tsx watch backend/index.ts",

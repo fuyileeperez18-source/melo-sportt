@@ -2,7 +2,7 @@ import { query, pool } from '../config/database.js';
 
 async function setupTeam() {
   try {
-    console.log('Configurando equipo de MELO SPORTT...\n');
+    console.log('Configurando equipo de GOOMELOOSKIN...\n');
 
     // Obtener argumentos de linea de comandos
     const args = process.argv.slice(2);
@@ -31,8 +31,8 @@ async function setupTeam() {
         `SELECT id, email, full_name, role FROM users
          WHERE email ILIKE '%walmer%'
          OR full_name ILIKE '%walmer%'
-         OR email ILIKE '%melo%'
-         OR full_name ILIKE '%melo%'
+         OR email ILIKE '%goomelooskin%'
+         OR full_name ILIKE '%goomelooskin%'
          LIMIT 1`
       );
     }

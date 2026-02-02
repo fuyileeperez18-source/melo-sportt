@@ -143,11 +143,11 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3 mb-6">
-              <img src="/logo.svg" alt="MELO SPORTT" className="h-12 w-auto" />
+              <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="MELO SPORTT" className="h-12 w-auto" />
               <span className="text-2xl font-bold text-white tracking-wider">MELO SPORTT</span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">
-              Moda premium para el individuo moderno. Descubre piezas atemporales creadas con atención al detalle.
+              Marca de moda urbana y juvenil con presencia sólida en la costa colombiana, específicamente en Cartagena. Referente de estilo en la región.
             </p>
 
             {/* Contact info */}
@@ -181,7 +181,7 @@ export function Footer() {
                 className="block overflow-hidden rounded-lg border border-primary-700 hover:border-primary-500 transition-colors"
               >
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3923.246095095958!2d-75.5165212!3d10.437434!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8ef62566056360a1%3A0x6c61684097234a70!2sConjunto%20Residencial%20Portal%20del%20Virrey!5e0!3m2!1ses!2sco!4v1699999999999!5m2!1ses!2sco"
+                  src="https://www.google.com/maps/embed?pb=!4v1769986390210!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJREtpb0wzYkE.!2m2!1d10.39350379903227!2d-75.48728961323505!3f229.91895631114716!4f-27.47628388929369!5f0.7820865974627469"
                   width="100%"
                   height="150"
                   style={{ border: 0 }}

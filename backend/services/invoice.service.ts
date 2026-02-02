@@ -281,10 +281,10 @@ export const invoiceService = {
       <body>
         <div class="header">
           <div class="company-info">
-            <h1>MELO SPORTT</h1>
-            <p>Cartagena de Indias, Colombia<br>
-            741 Cra. 17, Barrio San Francisco<br>
-            Email: info@melosportt.com</p>
+            <h1>GOOMELOOSKIN</h1>
+            <p>Plazuela, Colombia<br>
+            Tienda de Ropa Exclusiva Urbana<br>
+            Email: info@goomelooskin.com</p>
           </div>
           <div class="invoice-info">
             <h2>FACTURA</h2>

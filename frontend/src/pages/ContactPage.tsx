@@ -21,7 +21,7 @@ export function ContactPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <img
-            src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1767113974/MELO_SPORTT_logo_1_dxnwcv.svg"
+            src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
             alt="Melo Sportt Logo"
             className="h-20 mx-auto mb-6"
           />
@@ -29,7 +29,7 @@ export function ContactPage() {
             Contáctanos
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Estamos aquí para ayudarte con cualquier pregunta sobre nuestros productos y servicios
+            Como marca de moda urbana y juvenil con presencia sólida en la costa colombiana, estamos aquí para ayudarte con cualquier consulta sobre nuestros productos y servicios
           </p>
         </div>
 

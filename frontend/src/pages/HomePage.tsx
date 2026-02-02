@@ -504,7 +504,7 @@ export function HomePage() {
                 {/* Street View iframe with fallback */}
                 <div className="relative w-full h-[450px] bg-primary-900">
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!4v1767125254299!6m8!1m7!1s1XMT5bRvBnHCpslJ_lwVWw!2m2!1d10.43711374619797!2d-75.51578191333984!3f177.19962735201298!4f-0.36276961538061414!5f0.7820865974627469"
+                    src="https://www.google.com/maps/embed?pb=!4v1769986390210!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJREtpb0wzYkE.!2m2!1d10.39350379903227!2d-75.48728961323505!3f229.91895631114716!4f-27.47628388929369!5f0.7820865974627469"
                     width="100%"
                     height="100%"
                     style={{ border: 0, position: 'absolute', inset: 0 }}

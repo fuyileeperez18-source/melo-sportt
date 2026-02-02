@@ -316,7 +316,7 @@ Ahora, cuéntanos, ¿qué tipo de estilo buscas?
     const wantsOnline = input.toLowerCase().includes('online') || input.toLowerCase().includes('web') || input.includes('1');
 
     if (wantsOnline) {
-      const catalogMessage = `📱 *Aquí está nuestro catálogo online:*\n\n🔗 https://melo-sportt.vercel.app/products\n\nPuedes filtrar por:\n• Estilo: Urbano 🏙️ / Clásico 👔\n• Tipo: Camisetas, Buzos, Pantalonetas...\n• Género: Hombre / Mujer\n\nCuando Encuentres algo que te guste, vuelve aquí y me dices qué quieres comprar. 💪`;
+      const catalogMessage = `📱 *Aquí está nuestro catálogo online:*\n\n🔗 https://goomelooskin.vercel.app/products\n\nPuedes filtrar por:\n• Estilo: Urbano 🏙️ / Clásico 👔\n• Tipo: Camisetas, Buzos, Pantalonetas...\n• Género: Hombre / Mujer\n\nCuando Encuentres algo que te guste, vuelve aquí y me dices qué quieres comprar. 💪`;
 
       await whatsappService.sendMessage({
         to: conversation.phone,

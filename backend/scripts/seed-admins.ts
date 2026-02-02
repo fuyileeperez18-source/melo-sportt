@@ -14,21 +14,21 @@ async function seedAdmins() {
 
   const admins = [
     {
-      email: 'fuyi@melosportt.com',
+      email: 'fuyi@goomelooskin.com',
       password: 'Fuyi123!*',
       fullName: 'Fuyi Desarrollador',
       role: 'super_admin',
       description: 'Programador - Acceso total, comisión 12% por venta',
     },
     {
-      email: 'walmer@melosportt.com',
+      email: 'walmer@goomelooskin.com',
       password: 'Walmer123!*',
       fullName: 'Walmer Admin',
       role: 'admin',
       description: 'Dueño del local - Gestión de productos y pedidos',
     },
     {
-      email: 'admin@melosportt.com',
+      email: 'admin@goomelooskin.com',
       password: 'Admin123!*',
       fullName: 'Admin Test',
       role: 'admin',
@@ -77,7 +77,7 @@ async function seedAdmins() {
 
   const teamMembers = [
     {
-      email: 'fuyi@melosportt.com',
+      email: 'fuyi@goomelooskin.com',
       position: 'developer',
       commission_percentage: 12.00, // 12% commission
       permissions: {
@@ -90,7 +90,7 @@ async function seedAdmins() {
       }
     },
     {
-      email: 'walmer@melosportt.com',
+      email: 'walmer@goomelooskin.com',
       position: 'owner',
       commission_percentage: 0.00, // Walmer doesn't get commission, he owns the store
       permissions: {
@@ -186,7 +186,7 @@ async function seedAdmins() {
   console.log('\n📋 Resumen de roles:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('SUPER_ADMIN (Fuyi):');
-  console.log('  • Email: fuyi@melosportt.com');
+  console.log('  • Email: fuyi@goomelooskin.com');
   console.log('  • Password: Fuyi123!*');
   console.log('  • Acceso total al sistema');
   console.log('  • Ver todas las ventas y comisiones (12%)');
@@ -195,7 +195,7 @@ async function seedAdmins() {
   console.log('  • Analytics y reportes completos');
   console.log('');
   console.log('ADMIN (Walmer):');
-  console.log('  • Email: walmer@melosportt.com');
+  console.log('  • Email: walmer@goomelooskin.com');
   console.log('  • Password: Walmer123!*');
   console.log('  • Gestionar productos (crear, editar, eliminar)');
   console.log('  • Ver y gestionar pedidos');
@@ -203,7 +203,7 @@ async function seedAdmins() {
   console.log('  • Ver analytics básicos de ventas');
   console.log('');
   console.log('ADMIN (Test User):');
-  console.log('  • Email: admin@melosportt.com');
+  console.log('  • Email: admin@goomelooskin.com');
   console.log('  • Password: Admin123!*');
   console.log('  • Usuario de prueba para verificar panel admin');
   console.log('  • Mismos permisos que Walmer');

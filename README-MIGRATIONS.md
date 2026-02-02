@@ -1,4 +1,4 @@
-# 🚀 Migraciones Automáticas - MELO SPORTT
+# 🚀 Migraciones Automáticas - GOOMELOOSKIN
 
 ## 📋 Configuración Inicial
 

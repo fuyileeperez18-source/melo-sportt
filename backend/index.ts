@@ -26,10 +26,10 @@ const allowedOrigins = env.ALLOWED_ORIGINS
   : [env.FRONTEND_URL];
 
 // Add custom domains manually to ensure they are always allowed
-allowedOrigins.push('https://www.melosportt.com', 'https://melosportt.com');
+allowedOrigins.push('https://www.goomelooskin.com', 'https://goomelooskin.com');
 
 // Add Vercel preview deployments automatically
-const vercelPreviewPattern = /^https:\/\/melo-sportt(?:-.*)?\.vercel\.app$/;
+const vercelPreviewPattern = /^https:\/\/goomelooskin(?:-.*)?\.vercel\.app$/;
 
 app.use(cors({
   origin: (origin, callback) => {

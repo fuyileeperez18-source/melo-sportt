@@ -389,7 +389,7 @@ router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, 
     }
 
     // Construir redirect_url para PSE y otros métodos que requieren redirección
-    const frontendUrl = env.FRONTEND_URL || 'https://melo-sportt.vercel.app';
+    const frontendUrl = env.FRONTEND_URL || 'https://goomelooskin.vercel.app';
     const redirectUrl = `${frontendUrl}/checkout/confirmation?ref=${reference}`;
 
     const transactionData: any = {

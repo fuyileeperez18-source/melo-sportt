@@ -8,7 +8,7 @@ export function AboutPage() {
         <div className="text-center mb-16">
           <div className="relative w-32 h-32 mx-auto mb-8">
             <img
-              src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1767113974/MELO_SPORTT_logo_1_dxnwcv.svg"
+              src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
               alt="Melo Sportt Logo"
               className="w-full h-full object-contain"
             />
@@ -17,7 +17,7 @@ export function AboutPage() {
             Melo Sportt
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-            Tu destino para la moda deportiva y ropa urbana de la mejor calidad
+            Marca de moda urbana y juvenil con presencia sólida en la costa colombiana, específicamente en Cartagena
           </p>
         </div>
 
@@ -30,24 +30,24 @@ export function AboutPage() {
           <div className="grid md:grid-cols-2 gap-8 text-gray-300">
             <div className="space-y-4">
               <p className="text-lg leading-relaxed">
-                En Melo Sportt, somos apasionados de la moda deportiva y la ropa urbana. Nuestra misión es proporcionar
-                a nuestros clientes colombianos acceso a ropa de la mejor calidad, con diseños modernos y
-                tendencias actuales para todos los estilos.
+                Somos una marca de moda urbana y juvenil con una presencia muy sólida en la costa colombiana,
+                específicamente en Cartagena. Nos hemos consolidado como un referente de estilo en la región,
+                ofreciendo prendas que combinan diseño contemporáneo con la esencia juvenil del Caribe colombiano.
               </p>
               <p className="text-lg leading-relaxed">
-                Nos especializamos en ropa deportiva, urbana y casual. Ofrecemos una amplia variedad de
-                prendas como camisetas, sudaderas, pantalones, gorras y accesorios que se adaptan a tu estilo
-                de vida, ya sea para el día a día o para actividades deportivas.
+                Nuestra propuesta incluye ropa urbana, casual y deportiva que resalta la identidad joven y
+                moderna de quienes viven y disfrutan la cultura caribeña. Cada prenda está diseñada para
+                expresar la autenticidad y el estilo único de nuestra comunidad.
               </p>
             </div>
             <div className="space-y-4">
               <p className="text-lg leading-relaxed">
-                Nuestra colección está cuidadosamente seleccionada para asegurar que cada pieza cumpla con los
-                más altos estándares de calidad y moda. Trabajamos directamente con fabricantes reconocidos
-                para garantizar que cada prenda combine estilo, comodidad y durabilidad.
+                Desde nuestros inicios en Cartagena, hemos trabajado para posicionar nuestra marca como
+                sinónimo de moda juvenil de calidad. Nos enorgullece ser parte de la escena fashion de la costa
+                colombiana, contribuyendo al desarrollo de tendencias locales con visión global.
               </p>
               <p className="text-lg leading-relaxed font-medium text-white">
-                ¡Expresa tu estilo único con Melo Sportt!
+                ¡Únete a la comunidad MELO SPORTT y expresa tu estilo único!
               </p>
             </div>
           </div>

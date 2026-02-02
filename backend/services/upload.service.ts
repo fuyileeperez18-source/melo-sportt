@@ -17,7 +17,7 @@ export const uploadService = {
    */
   async uploadImage(
     file: Express.Multer.File,
-    folder: string = 'melo-sportt/products'
+    folder: string = 'goomelooskin/products'
   ): Promise<UploadResult> {
     try {
       // Convertir el buffer a base64
@@ -53,7 +53,7 @@ export const uploadService = {
    */
   async uploadMultipleImages(
     files: Express.Multer.File[],
-    folder: string = 'melo-sportt/products'
+    folder: string = 'goomelooskin/products'
   ): Promise<UploadResult[]> {
     const uploadPromises = files.map((file) => this.uploadImage(file, folder));
     return Promise.all(uploadPromises);

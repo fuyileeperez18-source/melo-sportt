@@ -52,7 +52,7 @@ router.post(
       }
 
       const folder = Array.isArray(req.body.folder) ? req.body.folder[0] : req.body.folder;
-      const targetFolder = folder || 'melo-sportt/products';
+      const targetFolder = folder || 'goomelooskin/products';
 
       const result = await uploadService.uploadImage(req.file, targetFolder);
 
@@ -92,7 +92,7 @@ router.post(
       }
 
       const folder = Array.isArray(req.body.folder) ? req.body.folder[0] : req.body.folder;
-      const targetFolder = folder || 'melo-sportt/products';
+      const targetFolder = folder || 'goomelooskin/products';
 
       const results = await uploadService.uploadMultipleImages(files, targetFolder);
 
@@ -169,7 +169,7 @@ router.post(
       // Subir imagen a Cloudinary
       const uploadResult = await uploadService.uploadImage(
         req.file,
-        `melo-sportt/products/${productId}`
+        `goomelooskin/products/${productId}`
       );
 
       // Agregar imagen al producto en la base de datos
@@ -230,7 +230,7 @@ router.post(
       // Subir todas las imágenes a Cloudinary
       const uploadResults = await uploadService.uploadMultipleImages(
         files,
-        `melo-sportt/products/${productId}`
+        `goomelooskin/products/${productId}`
       );
 
       // Agregar imágenes al producto en la base de datos

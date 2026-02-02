@@ -237,7 +237,7 @@ export function CheckoutPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.svg" alt="MELO SPORTT" className="h-10 w-auto" />
+            <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="MELO SPORTT" className="h-10 w-auto" />
             <span className="text-xl font-bold text-white">MELO SPORTT</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-gray-400">

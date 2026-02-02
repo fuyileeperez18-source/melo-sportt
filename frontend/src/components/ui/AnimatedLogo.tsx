@@ -131,7 +131,7 @@ export function AnimatedLogo({
       {/* Logo Image with advanced effects */}
       <div className="relative">
         <motion.img
-          src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1767113974/MELO_SPORTT_logo_1_dxnwcv.svg"
+          src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
           alt="MELO SPORTT"
           className={`${sizeMap[size]} w-auto relative z-10`}
           style={{

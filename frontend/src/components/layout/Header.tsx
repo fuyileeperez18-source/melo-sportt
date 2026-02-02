@@ -125,7 +125,7 @@ export function Header() {
                 whileTap={{ scale: 0.95 }}
               >
                 <img
-                  src="/logo.svg"
+                  src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
                   alt="MELO SPORTT"
                   className="h-10 md:h-12 w-auto"
                 />
@@ -290,7 +290,7 @@ export function Header() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
-                    <img src="/logo.svg" alt="MELO SPORTT" className="h-8 w-auto" />
+                    <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="MELO SPORTT" className="h-8 w-auto" />
                     <span className="text-xl font-bold text-white">MELO SPORTT</span>
                   </div>
                   <button
