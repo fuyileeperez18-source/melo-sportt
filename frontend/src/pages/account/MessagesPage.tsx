@@ -353,10 +353,10 @@ export function MessagesPage() {
     }
   }
 
-  // Para clientes: obtener el nombre de la conversación (MELO SPORTT por defecto)
+  // Para clientes: obtener el nombre de la conversación (GOMELOOSKIN por defecto)
   const getConversationName = (conversation: Conversation | null) => {
-    if (!conversation) return 'MELO SPORTT';
-    return conversation.productName || conversation.orderNumber ? `Consulta ${conversation.orderNumber ? `pedido #${conversation.orderNumber}` : 'producto'}` : 'MELO SPORTT';
+    if (!conversation) return 'GOMELOOSKIN';
+    return conversation.productName || conversation.orderNumber ? `Consulta ${conversation.orderNumber ? `pedido #${conversation.orderNumber}` : 'producto'}` : 'GOMELOOSKIN';
   };
 
   if (isLoading) {
@@ -439,7 +439,7 @@ export function MessagesPage() {
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div className="flex-1">
-                  <h2 className="font-bold">Soporte MELO SPORTT</h2>
+                  <h2 className="font-bold">Soporte GOMELOOSKIN</h2>
                   <p className="text-sm text-zinc-500">Estamos aquí para ayudarte</p>
                 </div>
                 <div className="text-sm text-zinc-500">
@@ -542,7 +542,7 @@ export function MessagesPage() {
                     <MessageSquare className="w-12 h-12 mx-auto mb-4 text-zinc-700" />
                     <h3 className="text-lg font-semibold mb-2">No hay mensajes aún</h3>
                     <p className="text-zinc-500">
-                      ¡Envía tu primer mensaje al soporte MELO SPORTT!
+                      ¡Envía tu primer mensaje al soporte GOMELOOSKIN!
                     </p>
                   </div>
                 )}
@@ -585,7 +585,7 @@ export function MessagesPage() {
                 <MessageSquare className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
                 <h3 className="text-lg font-semibold mb-2">Cargando soporte...</h3>
                 <p className="text-zinc-500">
-                  Preparando chat con el equipo de MELO SPORTT
+                  Preparando chat con el equipo de GOMELOOSKIN
                 </p>
               </div>
             </div>

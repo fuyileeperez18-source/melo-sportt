@@ -122,8 +122,8 @@ export function AdminSettings() {
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Input label="Nombre de la Tienda" defaultValue="MELO SPORTT" />
-                  <Input label="Email de Contacto" type="email" defaultValue="contacto@melosportt.com" />
+                  <Input label="Nombre de la Tienda" defaultValue="GOMELOOSKIN" />
+                  <Input label="Email de Contacto" type="email" defaultValue="contacto@gomeLooskin.com" />
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -178,7 +178,7 @@ export function AdminSettings() {
                 <Input
                   label="Email de Notificaciones"
                   type="email"
-                  defaultValue="admin@melosportt.com"
+                  defaultValue="admin@gomeLooskin.com"
                   hint="Todas las notificaciones se enviarán a este correo"
                 />
               </div>
@@ -287,13 +287,13 @@ export function AdminSettings() {
 
                 <Input
                   label="Título del Sitio"
-                  defaultValue="MELO SPORTT - Moda Deportiva Premium"
+                  defaultValue="GOMELOOSKIN - Moda Deportiva Premium"
                   hint="Aparece en resultados de búsqueda y pestañas del navegador"
                 />
 
                 <Textarea
                   label="Meta Descripción"
-                  defaultValue="Descubre moda deportiva premium en MELO SPORTT. Compra las últimas tendencias en ropa, accesorios y más con envío gratis en compras mayores a $200.000."
+                  defaultValue="Descubre moda deportiva premium en GOMELOOSKIN. Compra las últimas tendencias en ropa, accesorios y más con envío gratis en compras mayores a $200.000."
                   hint="Recomendado: 150-160 caracteres"
                 />
 
@@ -308,9 +308,9 @@ export function AdminSettings() {
                   <div className="border border-primary-700 rounded-lg overflow-hidden">
                     <div className="h-32 bg-primary-700"></div>
                     <div className="p-4">
-                      <p className="text-blue-400 text-sm">melosportt.com</p>
-                      <p className="text-white font-medium">MELO SPORTT - Moda Deportiva Premium</p>
-                      <p className="text-gray-400 text-sm">Descubre moda deportiva premium en MELO SPORTT...</p>
+                      <p className="text-blue-400 text-sm">gomeLooskin.com</p>
+                      <p className="text-white font-medium">GOMELOOSKIN - Moda Deportiva Premium</p>
+                      <p className="text-gray-400 text-sm">Descubre moda deportiva premium en GOMELOOSKIN...</p>
                     </div>
                   </div>
                 </div>

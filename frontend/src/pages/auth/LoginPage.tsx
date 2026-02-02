@@ -90,10 +90,10 @@ export function LoginPage() {
         <div className="absolute inset-0 flex items-center justify-center p-12">
           <div className="max-w-lg text-center">
             <Link to="/" className="inline-block mb-8">
-              <span className="text-4xl font-bold text-white tracking-wider">MELO SPORTT</span>
+              <span className="text-4xl font-bold text-white tracking-wider">GOMELOOSKIN</span>
             </Link>
             <h2 className="text-3xl font-bold text-white mb-4">
-              Bienvenido de nuevo a MELO SPORTT
+              Bienvenido de nuevo a GOMELOOSKIN
             </h2>
             <p className="text-gray-300">
               Inicia sesión para acceder a tu cuenta, rastrear pedidos y disfrutar de una experiencia de compra personalizada.
@@ -111,7 +111,7 @@ export function LoginPage() {
         >
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden block text-center mb-8">
-            <span className="text-3xl font-bold text-white tracking-wider">MELO SPORTT</span>
+            <span className="text-3xl font-bold text-white tracking-wider">GOMELOOSKIN</span>
           </Link>
 
           <h1 className="text-3xl font-bold text-white mb-2">Iniciar Sesión</h1>

@@ -22,7 +22,7 @@ export function ContactPage() {
         <div className="text-center mb-16">
           <img
             src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
-            alt="Melo Sportt Logo"
+            alt="GomeLooskin Logo"
             className="h-20 mx-auto mb-6"
           />
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-primary-400 bg-clip-text text-transparent">
@@ -48,7 +48,7 @@ export function ContactPage() {
                   <div>
                     <p className="font-semibold">Teléfonos</p>
                     <p className="text-gray-400">+57 323 802 0198</p>
-                    <p className="text-gray-400">+57 304 415 5473</p>
+                    <p className="text-gray-400">+57 320 7486741</p>
                   </div>
                 </div>
 
@@ -56,8 +56,8 @@ export function ContactPage() {
                   <Mail className="w-5 h-5 text-primary-500 mt-1" />
                   <div>
                     <p className="font-semibold">Email</p>
-                    <p className="text-gray-400">hola@melosportt.com</p>
-                    <p className="text-gray-400">soporte@melosportt.com</p>
+                    <p className="text-gray-400">hola@gomeLooskin.com</p>
+                    <p className="text-gray-400">soporte@gomeLooskin.com</p>
                   </div>
                 </div>
 

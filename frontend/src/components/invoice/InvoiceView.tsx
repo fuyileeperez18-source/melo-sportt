@@ -124,11 +124,11 @@ export function InvoiceView({ invoiceId, onClose }: InvoiceViewProps) {
       <div className="bg-black text-white p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">MELO SPORTT</h1>
+            <h1 className="text-3xl font-bold mb-2">GOMELOOSKIN</h1>
             <p className="text-sm text-gray-300">
               Cartagena de Indias, Colombia<br />
               741 Cra. 17, Barrio San Francisco<br />
-              Email: info@melosportt.com
+              Email: info@gomeLooskin.com
             </p>
           </div>
           <div className="text-right">
@@ -284,7 +284,7 @@ export function InvoiceView({ invoiceId, onClose }: InvoiceViewProps) {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-500 pt-6 border-t">
-          <p>Gracias por tu compra en Melo Sportt</p>
+          <p>Gracias por tu compra en GomeLooskin</p>
         </div>
       </div>
     </motion.div>

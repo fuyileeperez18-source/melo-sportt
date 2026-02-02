@@ -237,8 +237,8 @@ export function CheckoutPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link to="/" className="flex items-center gap-3">
-            <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="MELO SPORTT" className="h-10 w-auto" />
-            <span className="text-xl font-bold text-white">MELO SPORTT</span>
+            <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="GOMELOOSKIN" className="h-10 w-auto" />
+            <span className="text-xl font-bold text-white">GOMELOOSKIN</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Lock className="h-4 w-4" />
@@ -818,8 +818,8 @@ export function CheckoutPage() {
                         <div className="mt-8 pt-8 border-t border-gray-800 max-w-2xl mx-auto">
                           <p className="text-gray-400 text-sm">
                             ¿Tienes alguna pregunta? Contáctanos en
-                            <a href="mailto:soporte@melosportt.com" className="text-white hover:text-green-400 underline transition-colors ml-1">
-                              soporte@melosportt.com
+                            <a href="mailto:soporte@gomeLooskin.com" className="text-white hover:text-green-400 underline transition-colors ml-1">
+                              soporte@gomeLooskin.com
                             </a>
                           </p>
                         </div>
@@ -830,7 +830,7 @@ export function CheckoutPage() {
                     {/* Footer */}
                     <div className="mt-16 pt-8 border-t border-gray-800 max-w-6xl mx-auto">
                       <div className="text-center text-gray-500 text-sm">
-                        <p>&copy; {new Date().getFullYear()} MELO SPORTT. Todos los derechos reservados.</p>
+                        <p>&copy; {new Date().getFullYear()} GOMELOOSKIN. Todos los derechos reservados.</p>
                         <div className="mt-2 flex justify-center gap-4">
                           <a href="#" className="hover:text-white transition-colors">Términos y Condiciones</a>
                           <span>•</span>

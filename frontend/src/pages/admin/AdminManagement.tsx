@@ -295,7 +295,7 @@ export function AdminManagement() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="admin@melosportt.com"
+                  placeholder="admin@gomeLooskin.com"
                 />
               </div>
 

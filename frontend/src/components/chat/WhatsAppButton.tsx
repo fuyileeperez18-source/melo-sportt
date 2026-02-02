@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { generateWhatsAppUrl } from '@/lib/utils';
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '+573044155473';
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '+573207486741';
 const DEFAULT_MESSAGE = '¡Hola! Me gustaría obtener más información sobre sus productos.';
 
 interface WhatsAppButtonProps {

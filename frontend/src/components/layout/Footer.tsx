@@ -42,8 +42,8 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { name: 'Instagram', icon: Instagram, href: 'https://www.instagram.com/melo_sportt23/', color: 'hover:bg-pink-600' },
-  { name: 'Facebook', icon: Facebook, href: 'https://www.facebook.com/melo.sportt', color: 'hover:bg-blue-600' },
+  { name: 'Instagram', icon: Instagram, href: 'https://www.instagram.com/gomelooskin?igsh=MXd2d3FvMGJ4eml2eA==', color: 'hover:bg-pink-600' },
+  { name: 'Facebook', icon: Facebook, href: 'https://www.facebook.com/Gomelooskin', color: 'hover:bg-blue-600' },
 ];
 
 export function Footer() {
@@ -66,7 +66,7 @@ export function Footer() {
           <div className="container mx-auto px-6 py-16">
             <div className="max-w-4xl mx-auto text-center">
               <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Únete a la comunidad MELO SPORTT
+                Únete a la comunidad GOMELOOSKIN
               </h3>
               <p className="text-gray-400 mb-8">
                 Suscríbete a nuestro boletín para ofertas exclusivas, nuevos productos e inspiración de estilo.
@@ -143,8 +143,8 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3 mb-6">
-              <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="MELO SPORTT" className="h-12 w-auto" />
-              <span className="text-2xl font-bold text-white tracking-wider">MELO SPORTT</span>
+              <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="GOMELOOSKIN" className="h-12 w-auto" />
+              <span className="text-2xl font-bold text-white tracking-wider">GOMELOOSKIN</span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">
               Marca de moda urbana y juvenil con presencia sólida en la costa colombiana, específicamente en Cartagena. Referente de estilo en la región.
@@ -153,18 +153,18 @@ export function Footer() {
             {/* Contact info */}
             <div className="space-y-3 text-sm">
               <a
-                href="mailto:contacto@melosportt.com"
+                href="mailto:contacto@gomeLooskin.com"
                 className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors"
               >
                 <Mail className="h-4 w-4" />
-                contacto@melosportt.com
+                contacto@gomeLooskin.com
               </a>
               <a
-                href="tel:+573044155473"
+                href="tel:+573207486741"
                 className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors"
               >
                 <Phone className="h-4 w-4" />
-                +57 304 415 5473
+                +57 320 7486741
               </a>
               <div className="flex items-start gap-3 text-gray-400">
                 <MapPin className="h-4 w-4 mt-0.5" />
@@ -188,7 +188,7 @@ export function Footer() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Ubicación de MELO SPORTT"
+                  title="Ubicación de GOMELOOSKIN"
                 />
               </a>
               <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
@@ -273,7 +273,7 @@ export function Footer() {
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm text-center md:text-left">
-              &copy; {new Date().getFullYear()} MELO SPORTT. Todos los derechos reservados.
+              &copy; {new Date().getFullYear()} GOMELOOSKIN. Todos los derechos reservados.
             </p>
 
             {/* Payment methods */}

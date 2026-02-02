@@ -132,7 +132,7 @@ export function AnimatedLogo({
       <div className="relative">
         <motion.img
           src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
-          alt="MELO SPORTT"
+          alt="GOMELOOSKIN"
           className={`${sizeMap[size]} w-auto relative z-10`}
           style={{
             filter: variant === 'glow' && isHovered
@@ -198,7 +198,7 @@ export function AnimatedLogo({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            MELO SPORTT
+            GOMELOOSKIN
           </motion.span>
 
           {/* Underline animation */}

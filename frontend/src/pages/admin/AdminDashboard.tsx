@@ -127,7 +127,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-white">
           <Link to="/admin" className="flex items-center gap-2" onClick={onClose}>
             <span className="text-xl font-bold text-black">
-              MELO SPORTT
+              GOMELOOSKIN
             </span>
             <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">Admin</span>
           </Link>

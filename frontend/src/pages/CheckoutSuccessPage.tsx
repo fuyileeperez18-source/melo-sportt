@@ -378,11 +378,11 @@ export function CheckoutSuccessPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-400 text-sm">
               <motion.a
                 whileHover={{ scale: 1.05, color: '#fff' }}
-                href="mailto:soporte@melosportt.com"
+                href="mailto:soporte@gomeLooskin.com"
                 className="flex items-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                soporte@melosportt.com
+                soporte@gomeLooskin.com
               </motion.a>
               <motion.a
                 whileHover={{ scale: 1.05, color: '#fff' }}

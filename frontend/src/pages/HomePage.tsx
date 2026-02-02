@@ -458,7 +458,7 @@ export function HomePage() {
           <AnimatedSection animation="fadeUp">
             <div className="text-center mb-16">
               <span className="text-sm text-gray-400 uppercase tracking-wider">Síguenos</span>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mt-2">@MeloSportt</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mt-2">@GomeLooskin</h2>
             </div>
           </AnimatedSection>
 
@@ -511,7 +511,7 @@ export function HomePage() {
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Street View - Melo Sportt"
+                    title="Street View - GomeLooskin"
                     onError={(e) => {
                       // Fallback to static image if embed fails
                       const target = e.target as HTMLIFrameElement;
@@ -648,7 +648,7 @@ export function HomePage() {
         <div className="relative container mx-auto px-6 text-center">
           <AnimatedSection animation="scale">
             <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Únete a la Familia MELO SPORTT
+              Únete a la Familia GOMELOOSKIN
             </h2>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
               Sé el primero en conocer nuevas colecciones, ofertas exclusivas y consejos de estilo.

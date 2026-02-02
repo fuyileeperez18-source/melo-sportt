@@ -9,12 +9,12 @@ export function AboutPage() {
           <div className="relative w-32 h-32 mx-auto mb-8">
             <img
               src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
-              alt="Melo Sportt Logo"
+              alt="GomeLooskin Logo"
               className="w-full h-full object-contain"
             />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-primary-400 bg-clip-text text-transparent">
-            Melo Sportt
+            GomeLooskin
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
             Marca de moda urbana y juvenil con presencia sólida en la costa colombiana, específicamente en Cartagena
@@ -47,7 +47,7 @@ export function AboutPage() {
                 colombiana, contribuyendo al desarrollo de tendencias locales con visión global.
               </p>
               <p className="text-lg leading-relaxed font-medium text-white">
-                ¡Únete a la comunidad MELO SPORTT y expresa tu estilo único!
+                ¡Únete a la comunidad GOMELOOSKIN y expresa tu estilo único!
               </p>
             </div>
           </div>

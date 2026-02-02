@@ -1,5 +1,5 @@
 // ============================================
-// MELO SPORTT - TYPE DEFINITIONS
+// GOMELOOSKIN - TYPE DEFINITIONS
 // ============================================
 
 // User Types

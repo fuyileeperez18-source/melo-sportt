@@ -1,5 +1,5 @@
 // ============================================
-// MELO SPORTT - API CLIENT
+// GOMELOOSKIN - API CLIENT
 // ============================================
 // Connects to the Node.js backend on Railway
 

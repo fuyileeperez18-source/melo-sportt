@@ -126,11 +126,11 @@ export function Header() {
               >
                 <img
                   src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg"
-                  alt="MELO SPORTT"
+                  alt="GOMELOOSKIN"
                   className="h-10 md:h-12 w-auto"
                 />
                 <span className="text-xl md:text-2xl font-bold text-white tracking-wider">
-                  MELO SPORTT
+                  GOMELOOSKIN
                 </span>
                 <motion.span
                   className="absolute -bottom-1 left-0 h-0.5 bg-white"
@@ -290,8 +290,8 @@ export function Header() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
-                    <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="MELO SPORTT" className="h-8 w-auto" />
-                    <span className="text-xl font-bold text-white">MELO SPORTT</span>
+                    <img src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1769987804/images_2_mxdqcu.jpg" alt="GOMELOOSKIN" className="h-8 w-auto" />
+                    <span className="text-xl font-bold text-white">GOMELOOSKIN</span>
                   </div>
                   <button
                     onClick={toggleMobileMenu}

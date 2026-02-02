@@ -394,7 +394,7 @@ export function OwnerDashboardPage() {
                 <Wallet className="w-6 h-6 text-white" />
                 <h3 className="font-semibold">Tu Negocio</h3>
               </div>
-              <p className="text-3xl font-bold text-white mb-1">MELO SPORTT</p>
+              <p className="text-3xl font-bold text-white mb-1">GOMELOOSKIN</p>
               <p className="text-sm text-zinc-400">Propietario: {profile?.full_name}</p>
               <div className="mt-4 pt-4 border-t border-zinc-700">
                 <div className="flex items-center justify-between text-sm">

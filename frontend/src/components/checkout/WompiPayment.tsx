@@ -453,7 +453,7 @@ export function WompiPayment({
 
               // Construir name - debe tener al menos 4 caracteres
               const fullName = `${shippingAddress.firstName?.trim() || ''} ${shippingAddress.lastName?.trim() || ''}`.trim();
-              const name = fullName.length >= 4 ? fullName : 'Cliente Melo Sportt';
+              const name = fullName.length >= 4 ? fullName : 'Cliente GomeLooskin';
 
               formattedShippingAddress = {
                 address_line_1: trimmedAddress,
@@ -506,7 +506,7 @@ export function WompiPayment({
         console.log('[WompiPayment] Including payment_type for redirect flow:', paymentType);
 
         // Include payment_description for all redirect flows
-        requestBody.payment_description = `Pago de pedido ${reference} - Melo Sportt`;
+        requestBody.payment_description = `Pago de pedido ${reference} - GomeLooskin`;
 
         // Add NEQUI phone if available
         if (paymentType === 'NEQUI' && nequiPhone) {
@@ -717,7 +717,7 @@ export function WompiPayment({
       // Usar descripción por defecto si no se proporciona
       const finalPseData = {
         ...pseData,
-        payment_description: pseData.payment_description || `Compra en Melo Sportt - ${reference}`
+        payment_description: pseData.payment_description || `Compra en GomeLooskin - ${reference}`
       };
 
       console.log('[WompiPayment] PSE payment data:', finalPseData);
@@ -1079,7 +1079,7 @@ export function WompiPayment({
 
               <Input
                 label="Descripción del pago (opcional)"
-                placeholder="Compra en Melo Sportt"
+                placeholder="Compra en GomeLooskin"
                 value={pseData.payment_description}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPseData({...pseData, payment_description: e.target.value})}
               />
@@ -1196,7 +1196,7 @@ export function WompiPayment({
         <ShieldCheck className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
         <div className="flex-1">
           <p className="text-xs text-gray-400 mb-1">
-            Tus datos están protegidos por Wompi (Bancolombia). Melo Sportt no almacena la información de tu tarjeta.
+            Tus datos están protegidos por Wompi (Bancolombia). GomeLooskin no almacena la información de tu tarjeta.
           </p>
           {isSandbox && (
             <p className="text-xs text-yellow-400/80">

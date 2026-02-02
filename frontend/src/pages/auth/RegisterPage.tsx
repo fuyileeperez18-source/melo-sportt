@@ -92,10 +92,10 @@ export function RegisterPage() {
         <div className="absolute inset-0 flex items-center justify-center p-12">
           <div className="max-w-lg text-center">
             <Link to="/" className="inline-block mb-8">
-              <span className="text-4xl font-bold text-white tracking-wider">MELO SPORTT</span>
+              <span className="text-4xl font-bold text-white tracking-wider">GOMELOOSKIN</span>
             </Link>
             <h2 className="text-3xl font-bold text-white mb-4">
-              Únete a la familia MELO SPORTT
+              Únete a la familia GOMELOOSKIN
             </h2>
             <p className="text-gray-300 mb-8">
               Crea una cuenta para disfrutar de beneficios exclusivos, compras más rápidas y seguimiento de pedidos.
@@ -128,7 +128,7 @@ export function RegisterPage() {
         >
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden block text-center mb-8">
-            <span className="text-3xl font-bold text-white tracking-wider">MELO SPORTT</span>
+            <span className="text-3xl font-bold text-white tracking-wider">GOMELOOSKIN</span>
           </Link>
 
           <h1 className="text-3xl font-bold text-white mb-2">Crear Cuenta</h1>
