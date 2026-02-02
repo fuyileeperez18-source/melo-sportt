@@ -22,21 +22,21 @@ const heroSlides = [
     title: 'Nueva Temporada',
     subtitle: 'Descubre las últimas tendencias',
     cta: 'Ver Colección',
-    image: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768413330/WhatsApp_Image_2026-01-13_at_12.40.52_PM_1_rmu3e9.jpg',
+    image: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1769995812/upscalemedia-transformed_gp8dsx.jpg',
   },
   {
     id: 2,
     title: 'Esenciales Minimalistas',
     subtitle: 'Piezas atemporales para tu guardarropa',
     cta: 'Explorar Ahora',
-    image: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768413683/WhatsApp_Image_2026-01-14_at_1.01.06_PM_wwlf8z.jpg',
+    image: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1769996150/upscalemedia-transformed_1_xkcbt1.jpg',
   },
   {
     id: 3,
     title: 'Estilo Urbano',
     subtitle: 'Moda urbana redefinida',
     cta: 'Comprar Ahora',
-    image: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1768413731/WhatsApp_Image_2026-01-14_at_1.01.06_PM_1_qurdmt.jpg',
+    image: 'https://res.cloudinary.com/dpqtlalhr/image/upload/v1769996375/images_4_1_hiuweu.jpg',
   },
 ];
 
