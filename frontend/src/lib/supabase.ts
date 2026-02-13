@@ -3,9 +3,19 @@ import type { User, Product, Category, Order, Conversation, ChatMessage } from '
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const isProduction = import.meta.env.PROD;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables not set. Using demo mode.');
+  if (isProduction) {
+    throw new Error(
+      'SECURITY ERROR: Missing Supabase credentials in production. ' +
+      'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.'
+    );
+  }
+  console.warn(
+    '[DEV MODE] Supabase environment variables not set. ' +
+    'Some features will not work. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  );
 }
 
 export const supabase = createClient(
