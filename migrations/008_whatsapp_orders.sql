@@ -51,16 +51,38 @@ CREATE INDEX IF NOT EXISTS idx_whatsapp_orders_created ON whatsapp_orders(create
 CREATE INDEX IF NOT EXISTS idx_whatsapp_orders_order_number ON whatsapp_orders(order_number);
 
 -- Función para generar número de orden único
-CREATE OR REPLACE FUNCTION generate_whatsapp_order_number()
-RETURNS VARCHAR(50) AS $$
+-- Drop first to handle return type changes
+DROP FUNCTION IF EXISTS generate_whatsapp_order_number() CASCADE;
+
+CREATE FUNCTION generate_whatsapp_order_number()
+RETURNS TRIGGER
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
-    RETURN 'WA-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0');
+    NEW.order_number := 'WA-' || to_char(NOW(), 'YYYYMMDD') || '-' ||
+        LPAD((SELECT COALESCE(MAX(CAST(SUBSTRING(order_number FROM '[0-9]+$') AS INTEGER)), 0) + 1
+              FROM public.whatsapp_orders WHERE order_number LIKE 'WA-' || to_char(NOW(), 'YYYYMMDD') || '-%')::TEXT, 4, '0');
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+-- Trigger para auto-generar número de orden
+DROP TRIGGER IF EXISTS set_whatsapp_order_number ON whatsapp_orders;
+CREATE TRIGGER set_whatsapp_order_number
+    BEFORE INSERT ON whatsapp_orders
+    FOR EACH ROW
+    WHEN (NEW.order_number IS NULL OR NEW.order_number = '')
+    EXECUTE FUNCTION generate_whatsapp_order_number();
+
 -- Trigger para actualizar timestamp
-CREATE OR REPLACE FUNCTION update_whatsapp_order_timestamp()
-RETURNS TRIGGER AS $$
+DROP FUNCTION IF EXISTS update_whatsapp_order_timestamp() CASCADE;
+
+CREATE FUNCTION update_whatsapp_order_timestamp()
+RETURNS TRIGGER
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
